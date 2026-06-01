@@ -22,6 +22,8 @@ import {
   Sparkles,
   Play,
   Pause,
+  GraduationCap,
+  Heart,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -37,6 +39,7 @@ const allModes: LabMode[] = [
   'polar1', 'polar2',
   'convergence1', 'convergence2',
   'triple1',
+  'jacobian1',
 ]
 
 function ThemeToggle() {
@@ -82,6 +85,7 @@ function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void
             ['T', '开始/停止自动导览'],
             ['Space', '展开/收起详情面板'],
             ['D', '切换深色/浅色模式'],
+            ['S', '截图保存3D视图'],
             ['?', '显示快捷键帮助'],
           ].map(([key, desc]) => (
             <div key={key} className="flex items-center justify-between gap-4 py-0.5">
@@ -179,12 +183,27 @@ export default function Home() {
         localStorage.setItem('theme', isDark ? 'light' : 'dark')
         break
       }
+      case 's':
+      case 'S': {
+        // Trigger screenshot from viewport
+        const canvas = document.querySelector('canvas')
+        if (canvas) {
+          try {
+            const dataUrl = canvas.toDataURL('image/png')
+            const link = document.createElement('a')
+            link.download = `double-integral-${mode}-${Date.now()}.png`
+            link.href = dataUrl
+            link.click()
+          } catch {}
+        }
+        break
+      }
       case '?': {
         setShortcutsOpen(prev => !prev)
         break
       }
     }
-  }, [autoTourActive, currentIndex, info, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2])
+  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -342,6 +361,26 @@ export default function Home() {
             </div>
           </main>
         </div>
+
+        {/* Footer */}
+        <footer className="flex items-center justify-between px-3 sm:px-4 py-1 border-t bg-background/95 backdrop-blur shrink-0">
+          <div className="flex items-center gap-1.5">
+            <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[9px] text-muted-foreground">
+              二重积分全功能互动实验室 · 高等数学可视化教学工具
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-muted-foreground hidden sm:inline">
+              共 {totalModes} 个可视化模式 · 已探索 {visitedCount} 个
+            </span>
+            <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+              <span>用</span>
+              <Heart className="h-2.5 w-2.5 text-red-400" />
+              <span>构建</span>
+            </div>
+          </div>
+        </footer>
 
         {/* Shortcuts Dialog */}
         <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

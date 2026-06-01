@@ -27,6 +27,7 @@ import {
   TrendingUp,
   LineChart,
   Box,
+  RefreshCw,
   BookOpen,
   FlaskConical,
   Move3d,
@@ -131,6 +132,15 @@ const sections = [
       { mode: 'triple1' as LabMode, label: '三重积分', icon: Box },
     ],
   },
+  {
+    title: '变量代换',
+    subtitle: '雅可比行列式与坐标变换',
+    icon: RefreshCw,
+    color: 'lime',
+    modes: [
+      { mode: 'jacobian1' as LabMode, label: '变量代换', icon: RefreshCw },
+    ],
+  },
 ]
 
 // Color map for section accent
@@ -188,6 +198,12 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     activeText: 'text-purple-800 dark:text-purple-300',
     border: 'before:bg-purple-500',
     dot: 'bg-purple-500',
+  },
+  lime: {
+    activeBg: 'bg-lime-100 dark:bg-lime-900/40',
+    activeText: 'text-lime-800 dark:text-lime-300',
+    border: 'before:bg-lime-500',
+    dot: 'bg-lime-500',
   },
 }
 

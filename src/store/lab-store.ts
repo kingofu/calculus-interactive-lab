@@ -10,6 +10,7 @@ export type LabMode =
   | 'polar1' | 'polar2'
   | 'convergence1' | 'convergence2'
   | 'triple1'
+  | 'jacobian1'
 
 interface LabState {
   mode: LabMode
@@ -248,5 +249,15 @@ export const modeInfo: Record<LabMode, {
     description: '将积分区域 [0,1]³ 用小立方体填充，每个立方体颜色表示函数值 f(x,y,z)=x²+y²+z² 的大小，所有立方体贡献之和即为三重积分近似值。',
     paramLabel: '分割数',
     paramMin: 2, paramMax: 10, paramStep: 1, paramDefault: 4,
+  },
+  jacobian1: {
+    title: '变量代换 (雅可比行列式)',
+    section: '变量代换',
+    math: '\\iint_D f(x,y)\\,dxdy = \\iint_{D\"} f(x(u,v),y(u,v))\\left|\\frac{\\partial(x,y)}{\\partial(u,v)}\\right|\\,dudv',
+    description: '通过变量代换 x=x(u,v), y=y(u,v)，将原积分区域 D 变换为新区域 D\'。雅可比行列式 |∂(x,y)/∂(u,v)| 是面积变换因子，将新坐标系中的面积微元 dudv 放大为原坐标系中的 dxdy。拖动参数观察坐标网格在变换下的变形。',
+    paramLabel: '变换缩放',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    paramLabel2: '旋转角度',
+    paramMin2: 0, paramMax2: 1.57, paramStep2: 0.05, paramDefault2: 0,
   },
 }

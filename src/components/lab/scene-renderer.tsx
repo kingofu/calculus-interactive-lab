@@ -1576,6 +1576,191 @@ function AutoRotate({ children, speed = 0.002 }: { children: React.ReactNode; sp
   return <group ref={ref}>{children}</group>
 }
 
+// --- Jacobian / Change of Variables (jacobian1) ---
+function JacobianScene() {
+  const { paramValue: a, paramValue2: theta } = useLabStore()
+  
+  // Regular grid lines in uv-space (before transformation)
+  const regularGridLines = useMemo(() => {
+    const lines: Float32Array[] = []
+    const n = 6
+    const range = 2
+    // Horizontal lines (v = const)
+    for (let i = -n; i <= n; i++) {
+      const v = (i / n) * range
+      const pts: number[] = []
+      for (let j = -100; j <= 100; j++) {
+        const u = (j / 100) * range
+        pts.push(u, 0.01, v)
+      }
+      lines.push(new Float32Array(pts))
+    }
+    // Vertical lines (u = const)
+    for (let i = -n; i <= n; i++) {
+      const u = (i / n) * range
+      const pts: number[] = []
+      for (let j = -100; j <= 100; j++) {
+        const v = (j / 100) * range
+        pts.push(u, 0.01, v)
+      }
+      lines.push(new Float32Array(pts))
+    }
+    return lines
+  }, [])
+
+  // Transformed grid lines: x = a*u*cos(θ) - a*v*sin(θ), y = a*u*sin(θ) + a*v*cos(θ)
+  const transformedGridLines = useMemo(() => {
+    const lines: Float32Array[] = []
+    const n = 6
+    const range = 2
+    const cosT = Math.cos(theta)
+    const sinT = Math.sin(theta)
+    
+    // Horizontal lines (v = const)
+    for (let i = -n; i <= n; i++) {
+      const v = (i / n) * range
+      const pts: number[] = []
+      for (let j = -100; j <= 100; j++) {
+        const u = (j / 100) * range
+        const x = a * u * cosT - a * v * sinT
+        const y = a * u * sinT + a * v * cosT
+        pts.push(x, 0.02, y)
+      }
+      lines.push(new Float32Array(pts))
+    }
+    // Vertical lines (u = const)
+    for (let i = -n; i <= n; i++) {
+      const u = (i / n) * range
+      const pts: number[] = []
+      for (let j = -100; j <= 100; j++) {
+        const v = (j / 100) * range
+        const x = a * u * cosT - a * v * sinT
+        const y = a * u * sinT + a * v * cosT
+        pts.push(x, 0.02, y)
+      }
+      lines.push(new Float32Array(pts))
+    }
+    return lines
+  }, [a, theta])
+
+  // Area element: original square and deformed parallelogram
+  const areaElement = useMemo(() => {
+    const u0 = 0.5, v0 = 0.5, du = 0.3, dv = 0.3
+    const cosT = Math.cos(theta)
+    const sinT = Math.sin(theta)
+    
+    // Original square corners in uv
+    const origCorners = [
+      [u0, v0], [u0 + du, v0], [u0 + du, v0 + dv], [u0, v0 + dv]
+    ]
+    
+    // Transformed corners
+    const transCorners = origCorners.map(([u, v]) => [
+      a * u * cosT - a * v * sinT,
+      a * u * sinT + a * v * cosT
+    ])
+    
+    return { origCorners, transCorners }
+  }, [a, theta])
+
+  const jacobianValue = a * a
+
+  return (
+    <AutoRotate speed={0.001}>
+      {/* Regular grid (uv-space) */}
+      {regularGridLines.map((pts, idx) => (
+        <line key={`reg-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#22c55e" opacity={0.3} transparent />
+        </line>
+      ))}
+
+      {/* Transformed grid (xy-space) */}
+      {transformedGridLines.map((pts, idx) => (
+        <line key={`trans-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#f59e0b" opacity={0.6} transparent />
+        </line>
+      ))}
+
+      {/* Original area element (green square) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([
+            ...areaElement.origCorners[0], 0.03,
+            ...areaElement.origCorners[1], 0.03,
+            ...areaElement.origCorners[2], 0.03,
+            ...areaElement.origCorners[3], 0.03,
+            ...areaElement.origCorners[0], 0.03,
+          ]), 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#22c55e" linewidth={3} />
+      </line>
+
+      {/* Original area fill */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5 + 0.15, 0.025, 0.5 + 0.15]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshPhongMaterial color="#22c55e" transparent opacity={0.4} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Transformed area element (amber parallelogram) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([
+            ...areaElement.transCorners[0], 0.035,
+            ...areaElement.transCorners[1], 0.035,
+            ...areaElement.transCorners[2], 0.035,
+            ...areaElement.transCorners[3], 0.035,
+            ...areaElement.transCorners[0], 0.035,
+          ]), 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={3} />
+      </line>
+
+      {/* Transformed area fill */}
+      <mesh>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([
+            ...areaElement.transCorners[0], 0.03,
+            ...areaElement.transCorners[1], 0.03,
+            ...areaElement.transCorners[2], 0.03,
+            ...areaElement.transCorners[3], 0.03,
+          ]), 3]} count={4} />
+          <bufferAttribute attach="index" args={[new Uint16Array([0, 1, 2, 0, 2, 3]), 1]} count={6} />
+        </bufferGeometry>
+        <meshPhongMaterial color="#f59e0b" transparent opacity={0.4} side={THREE.DoubleSide} />
+      </mesh>
+
+      <Axes length={4} />
+      <AxisLabels length={4} />
+      <XYGrid size={4} divisions={8} color="#888888" />
+
+      {/* Info overlay */}
+      <Html position={[0, 5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-amber-600 dark:text-amber-400 mb-1">
+            变换: x = au cosθ - av sinθ, y = au sinθ + av cosθ
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400 mb-1">
+            雅可比行列式 J = a² = {jacobianValue.toFixed(2)}
+          </div>
+          <div className="text-muted-foreground">
+            面积放大倍数 = |J| = {jacobianValue.toFixed(2)}倍
+          </div>
+          <div className="text-muted-foreground mt-1">
+            <span className="inline-block w-3 h-0.5 bg-emerald-500 mr-1" />原始网格 (uv)
+            <span className="inline-block w-3 h-0.5 bg-amber-500 mr-1 ml-3" />变换网格 (xy)
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 // ============= MAIN SCENE RENDERER =============
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
@@ -1815,6 +2000,10 @@ export function SceneRenderer() {
 
       {mode === 'triple1' && (
         <TripleIntegralScene />
+      )}
+
+      {mode === 'jacobian1' && (
+        <JacobianScene />
       )}
     </>
   )

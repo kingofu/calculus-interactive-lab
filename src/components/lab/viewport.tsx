@@ -3,9 +3,11 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useCallback, useRef } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
-import { Loader2, Move3d } from 'lucide-react'
+import { Loader2, Move3d, Camera } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Camera presets for different modes
 function getCameraForMode(mode: string): { position: [number, number, number]; fov: number } {
@@ -25,6 +27,8 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
       return { position: [5, 5, 5], fov: 50 }
     case 'triple1':
       return { position: [6, 5, 6], fov: 45 }
+    case 'jacobian1':
+      return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
   }
@@ -59,6 +63,9 @@ function getBackgroundForMode(mode: string): string {
   if (mode.startsWith('triple')) {
     return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
   }
+  if (mode === 'jacobian1') {
+    return 'from-lime-50 to-slate-100 dark:from-lime-950/30 dark:to-slate-900'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -73,6 +80,7 @@ function getModeAccentColor(mode: string): string {
   if (mode.startsWith('sphere_cyl')) return 'bg-violet-500'
   if (mode.startsWith('convergence')) return 'bg-cyan-500'
   if (mode.startsWith('triple')) return 'bg-purple-500'
+  if (mode === 'jacobian1') return 'bg-lime-500'
   return 'bg-slate-500'
 }
 
@@ -93,15 +101,49 @@ export function Viewport() {
   const cameraConfig = getCameraForMode(mode)
   const bgClass = getBackgroundForMode(mode)
   const accentColor = getModeAccentColor(mode)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleScreenshot = useCallback(() => {
+    const canvas = containerRef.current?.querySelector('canvas')
+    if (!canvas) return
+    try {
+      // Force a render to make sure the canvas is up-to-date
+      const dataUrl = canvas.toDataURL('image/png')
+      const link = document.createElement('a')
+      link.download = `double-integral-${mode}-${Date.now()}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (e) {
+      console.warn('Screenshot failed:', e)
+    }
+  }, [mode])
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-300`}>
+    <div ref={containerRef} className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-300`}>
       {/* Mode indicator overlay */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 pointer-events-none">
         <div className={cn("w-2 h-2 rounded-full", accentColor, "animate-pulse")} />
         <span className="text-[10px] font-medium text-foreground/60 bg-background/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
           {info.title}
         </span>
+      </div>
+
+      {/* Screenshot button */}
+      <div className="absolute top-2 right-2 z-10">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 bg-background/40 backdrop-blur-sm hover:bg-background/70"
+              onClick={handleScreenshot}
+            >
+              <Camera className="h-3.5 w-3.5" />
+              <span className="sr-only">截图保存</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">截图保存 (S)</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Controls hint */}
@@ -115,9 +157,14 @@ export function Viewport() {
       <Suspense fallback={<LoadingIndicator />}>
         <Canvas
           camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
-          gl={{ antialias: true, alpha: true }}
+          gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
           dpr={[1, 2]}
         >
+          {/* Enhanced lighting */}
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
+          <directionalLight position={[-5, 10, -5]} intensity={0.3} color="#e0e7ff" />
+          <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
           <SceneRenderer />
           <OrbitControls
             key={`orbit-${mode}`}

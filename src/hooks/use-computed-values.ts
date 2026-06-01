@@ -250,6 +250,17 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'jacobian1': {
+        const J = paramValue * paramValue
+        return {
+          mainValue: formatValue(J),
+          approxValue: formatValue(J),
+          exactValue: `a² = ${paramValue.toFixed(1)}²`,
+          error: '0',
+          label: '雅可比行列式 |J|',
+        }
+      }
+
       default:
         return null
     }
