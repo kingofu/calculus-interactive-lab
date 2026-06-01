@@ -1802,3 +1802,49 @@ Stage Summary:
 6. **更多数学模式**: 参数曲面、向量势、散度定理2（一般区域）、条件极值
 7. **数据持久化**: 将探索进度、收藏等同步到服务端
 8. **国际化**: 添加英文/多语言支持
+
+---
+Task ID: 14 (Bug Fix + QA)
+Agent: Main
+Task: Fix sidebar section collapse bug, comprehensive QA testing
+
+Work Log:
+- User reported "概念理解" section cannot be collapsed when clicked
+- Root cause: `isSectionExpanded()` used `isSectionActive(section) || !collapsedSections.has(section.title)` which OR'd the conditions, meaning active sections could never be collapsed
+- Fix: Changed `isSectionExpanded` to check `collapsedSections` first (explicit user collapse takes priority)
+- Created `handleModeChange` callback that both sets mode AND auto-expands the section, replacing direct `setMode` calls in sidebar
+- Auto-expand now happens only when user clicks a mode (not forced by the expanded logic)
+- Used `requestAnimationFrame` for auto-scroll after mode change for better timing
+- Comprehensive QA testing with agent-browser: all 45 modes, sidebar collapse/expand, search, favorites, dark/light mode — ALL PASS
+- Lint passes with zero errors
+
+Stage Summary:
+- **Bug fixed**: Sidebar sections (including active ones) can now be collapsed by clicking
+- **Auto-expand preserved**: Clicking a mode auto-expands its section
+- **QA verified**: All 45 modes functional, sidebar collapse/expand works for all sections
+
+---
+## 项目当前状态 (最新更新)
+
+### 项目概况
+- **名称**: 多元微积分互动实验室 (Multivariable Calculus Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 45个
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ 修复Bug: 侧边栏"概念理解"分区无法收起 → 现在可以正常折叠/展开
+2. ✅ QA测试: 45个模式全部通过agent-browser测试
+3. ✅ 折叠/展开逻辑优化: 用户手动折叠优先，点击模式自动展开
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **交互增强**: 点击3D对象显示详情tooltip，hover高亮效果
+2. **性能优化**: 使用InstancedMesh替代大量独立mesh
+3. **动画时间线**: 为每个概念添加逐步动画讲解
+4. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
+5. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
+6. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer

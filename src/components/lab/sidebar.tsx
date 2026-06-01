@@ -616,10 +616,29 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
 
   // Auto-scroll to active mode when it changes
   useEffect(() => {
-    if (activeRef.current) {
-      activeRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    }
+    requestAnimationFrame(() => {
+      if (activeRef.current) {
+        activeRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
+    })
   }, [mode])
+
+  // Handle mode change: set mode AND auto-expand the section containing the new mode
+  const handleModeChange = useCallback((newMode: LabMode) => {
+    setMode(newMode)
+    // Auto-expand the section containing the new active mode
+    const activeSection = sections.find(s => s.modes.some(m => m.mode === newMode))
+    if (activeSection) {
+      setCollapsedSections(prev => {
+        if (prev.has(activeSection.title)) {
+          const next = new Set(prev)
+          next.delete(activeSection.title)
+          return next
+        }
+        return prev
+      })
+    }
+  }, [setMode])
 
   const toggleSection = useCallback((title: string) => {
     setCollapsedSections(prev => {
@@ -649,9 +668,13 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const isSectionActive = (section: typeof sections[number]) =>
     section.modes.some(m => m.mode === mode)
 
-  // A section should be expanded if it contains the active mode, is not collapsed, or has search matches
-  const isSectionExpanded = (section: typeof sections[number]) =>
-    isSectionActive(section) || !collapsedSections.has(section.title) || debouncedQuery.length > 0
+  // A section is expanded unless explicitly collapsed. Search overrides collapse.
+  // When mode changes, the active section auto-expands (in useEffect above),
+  // but user can manually collapse it afterward.
+  const isSectionExpanded = (section: typeof sections[number]) => {
+    if (debouncedQuery.length > 0) return true
+    return !collapsedSections.has(section.title)
+  }
 
   const allCollapsed = sections.every(s => collapsedSections.has(s.title))
 
@@ -723,7 +746,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                         : "bg-muted/40 text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                     onClick={() => {
-                      setMode(recentMode)
+                      handleModeChange(recentMode)
                       onModeSelect?.()
                     }}
                     title={recentInfo.title}
@@ -782,7 +805,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                             : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                         )}
                         onClick={() => {
-                          setMode(favMode)
+                          handleModeChange(favMode)
                           onModeSelect?.()
                         }}
                       >
@@ -910,7 +933,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                               : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                           )}
                           onClick={() => {
-                            setMode(m)
+                            handleModeChange(m)
                             onModeSelect?.()
                           }}
                         >
