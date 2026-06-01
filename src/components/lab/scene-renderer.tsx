@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useCallback, useState } from 'react'
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useFrame, ThreeEvent } from '@react-three/fiber'
 import { Text, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -367,7 +367,7 @@ function SurfaceSplit({
   )
 }
 
-// --- Riemann bars (with optional hover tooltip) ---
+// --- Riemann bars (with optional hover tooltip) - OPTIMIZED with InstancedMesh ---
 type TooltipMode = 'step3' | 'convergence1' | 'none'
 
 function RiemannBars({
@@ -393,7 +393,10 @@ function RiemannBars({
   approxValue?: number
   exactValue?: number
 }) {
-  const bars = useMemo(() => {
+  const meshRef = useRef<THREE.InstancedMesh>(null!)
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [])
+
+  const barData = useMemo(() => {
     const result: { x: number; z: number; w: number; d: number; h: number; sign: number; xi: number; eta: number; idx: number }[] = []
     const [xMin, xMax] = xRange
     const [yMin, yMax] = yRange
@@ -414,12 +417,60 @@ function RiemannBars({
     return result
   }, [func, n, xRange, yRange])
 
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const count = barData.length
+  const barDataRef = useRef(barData)
 
-  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>, bar: typeof bars[0]) => {
+  // Keep ref in sync with data for event handlers
+  useEffect(() => { barDataRef.current = barData }, [barData])
+
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const lastHoveredRef = useRef<number | null>(null)
+
+  // Set instance matrices and colors
+  useEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh || count === 0) return
+
+    const dummy = new THREE.Object3D()
+    const col = new THREE.Color()
+    const effectiveHovered = hoveredIdx !== null && hoveredIdx < count ? hoveredIdx : null
+
+    for (let i = 0; i < count; i++) {
+      const bar = barData[i]
+      const isHovered = effectiveHovered === i
+      const s = isHovered ? 1.06 : 1
+      dummy.position.set(bar.x, bar.h / 2, bar.z)
+      dummy.scale.set(bar.w * s, Math.abs(bar.h) * s, bar.d * s)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+
+      if (isHovered) {
+        col.set('#34d399')
+      } else if (showColorSign) {
+        col.set(bar.sign >= 0 ? '#f97316' : '#06b6d4')
+      } else {
+        col.set(color)
+      }
+      mesh.setColorAt(i, col)
+    }
+
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [count, barData, hoveredIdx, showColorSign, color])
+
+  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (e.instanceId === undefined || tooltipMode === 'none') return
     e.stopPropagation()
-    setHoveredIdx(bar.idx)
-    document.body.style.cursor = 'pointer'
+    const id = e.instanceId
+
+    const bar = barDataRef.current[id]
+    if (!bar) return
+
+    if (id !== lastHoveredRef.current) {
+      lastHoveredRef.current = id
+      setHoveredIdx(id)
+      document.body.style.cursor = 'pointer'
+    }
 
     const dx = (xRange[1] - xRange[0]) / n
     const dy = (yRange[1] - yRange[0]) / n
@@ -446,39 +497,23 @@ function RiemannBars({
   }, [tooltipMode, n, xRange, yRange, approxValue, exactValue])
 
   const handlePointerOut = useCallback(() => {
+    lastHoveredRef.current = null
     setHoveredIdx(null)
     document.body.style.cursor = 'auto'
     hideBarTooltip()
   }, [])
 
+  if (count === 0) return null
+
   return (
-    <group>
-      {bars.map((bar) => {
-        const isHovered = hoveredIdx === bar.idx
-        return (
-          <mesh
-            key={bar.idx}
-            position={[bar.x, bar.h / 2, bar.z]}
-            scale={isHovered ? 1.06 : 1}
-            onPointerOver={tooltipMode !== 'none' ? (e) => handlePointerOver(e, bar) : undefined}
-            onPointerOut={tooltipMode !== 'none' ? handlePointerOut : undefined}
-          >
-            <boxGeometry args={[bar.w, Math.abs(bar.h), bar.d]} />
-            <meshPhongMaterial
-              color={
-                isHovered
-                  ? '#34d399'
-                  : showColorSign
-                    ? bar.sign >= 0 ? '#f97316' : '#06b6d4'
-                    : color
-              }
-              transparent
-              opacity={isHovered ? Math.min(1, opacity + 0.2) : opacity}
-            />
-          </mesh>
-        )
-      })}
-    </group>
+    <instancedMesh
+      ref={meshRef}
+      args={[geometry, undefined, count]}
+      onPointerMove={tooltipMode !== 'none' ? handlePointerMove : undefined}
+      onPointerOut={tooltipMode !== 'none' ? handlePointerOut : undefined}
+    >
+      <meshPhongMaterial color="#ffffff" transparent opacity={opacity} />
+    </instancedMesh>
   )
 }
 
@@ -910,17 +945,22 @@ function CartesianRegion({ type = 'x' as 'x' | 'y' }: { type?: 'x' | 'y' }) {
   )
 }
 
-// --- Rectangular approximation bars (IMPROVED with floor projection + hover tooltip) ---
+// --- Rectangular approximation bars - OPTIMIZED with InstancedMesh ---
 function RectApproxBars({ n = 10 }: { n?: number }) {
+  const mainMeshRef = useRef<THREE.InstancedMesh>(null!)
+  const floorMeshRef = useRef<THREE.InstancedMesh>(null!)
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [])
+
   const barData = useMemo(() => {
-    const result: { x: number; h: number; w: number; positive: boolean; fVal: number; dx: number }[] = []
+    const result: { x: number; h: number; w: number; positive: boolean; fVal: number; dx: number; barColor: string }[] = []
     const a = -2
     const b = 2
     const dx = (b - a) / n
     for (let i = 0; i < n; i++) {
       const x = a + (i + 0.5) * dx
       const h = fRect(x)
-      result.push({ x, h, w: dx * 0.9, positive: h > 0, fVal: fRect(x), dx })
+      const barColor = h > 2 ? '#10b981' : h > 1 ? '#34d399' : '#6ee7b7'
+      result.push({ x, h, w: dx * 0.9, positive: h > 0, fVal: fRect(x), dx, barColor })
     }
     return result
   }, [n])
@@ -928,60 +968,103 @@ function RectApproxBars({ n = 10 }: { n?: number }) {
   const approxValue = useMemo(() => rectApprox(fRect, -2, 2, n), [n])
   const exactValue = useMemo(() => numericalIntegral1D(fRect, -2, 2), [])
 
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const count = barData.length
+  const barDataRef = useRef(barData)
 
-  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>, bar: typeof barData[0], idx: number) => {
+  // Keep ref in sync with data for event handlers
+  useEffect(() => { barDataRef.current = barData }, [barData])
+
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const lastHoveredRef = useRef<number | null>(null)
+
+  // Set instance matrices and colors for both main bars and floor projections
+  useEffect(() => {
+    const mainMesh = mainMeshRef.current
+    const floorMesh = floorMeshRef.current
+    if (!mainMesh || !floorMesh || count === 0) return
+
+    const dummy = new THREE.Object3D()
+    const col = new THREE.Color()
+    const effectiveHovered = hoveredIdx !== null && hoveredIdx < count ? hoveredIdx : null
+
+    for (let i = 0; i < count; i++) {
+      const bar = barData[i]
+      const isHovered = effectiveHovered === i
+      const s = isHovered ? 1.06 : 1
+
+      // Main 3D bar
+      dummy.position.set(bar.x, bar.h / 2, 0)
+      dummy.scale.set(bar.w * s, Math.abs(bar.h) * s, 0.4 * s)
+      dummy.updateMatrix()
+      mainMesh.setMatrixAt(i, dummy.matrix)
+      col.set(isHovered ? '#34d399' : bar.barColor)
+      mainMesh.setColorAt(i, col)
+
+      // Floor projection bar
+      dummy.position.set(bar.x, 0.005, -1.5)
+      dummy.scale.set(bar.w, 0.01, 0.3)
+      dummy.updateMatrix()
+      floorMesh.setMatrixAt(i, dummy.matrix)
+      col.set(bar.barColor)
+      floorMesh.setColorAt(i, col)
+    }
+
+    mainMesh.instanceMatrix.needsUpdate = true
+    if (mainMesh.instanceColor) mainMesh.instanceColor.needsUpdate = true
+    floorMesh.instanceMatrix.needsUpdate = true
+    if (floorMesh.instanceColor) floorMesh.instanceColor.needsUpdate = true
+  }, [count, barData, hoveredIdx])
+
+  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (e.instanceId === undefined) return
     e.stopPropagation()
-    setHoveredIdx(idx)
-    document.body.style.cursor = 'pointer'
+    const id = e.instanceId
+
+    const bar = barDataRef.current[id]
+    if (!bar) return
+
+    if (id !== lastHoveredRef.current) {
+      lastHoveredRef.current = id
+      setHoveredIdx(id)
+      document.body.style.cursor = 'pointer'
+    }
 
     const contribution = bar.fVal * bar.dx
-    const content = `<div class="text-teal-600 dark:text-teal-400 font-semibold mb-0.5">📐 矩形 #${idx + 1}</div>` +
+    const content = `<div class="text-teal-600 dark:text-teal-400 font-semibold mb-0.5">📐 矩形 #${id + 1}</div>` +
       `<div>f(${bar.x.toFixed(2)}) = ${bar.fVal.toFixed(4)}</div>` +
       `<div>Δx = ${bar.dx.toFixed(4)}</div>` +
       `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${contribution.toFixed(4)}</div>`
 
     showBarTooltip(e, content)
-  }, [barData])
+  }, [])
 
   const handlePointerOut = useCallback(() => {
+    lastHoveredRef.current = null
     setHoveredIdx(null)
     document.body.style.cursor = 'auto'
     hideBarTooltip()
   }, [])
 
+  if (count === 0) return null
+
   return (
     <group>
-      {/* 3D bars */}
-      {barData.map((bar, idx) => {
-        const isHovered = hoveredIdx === idx
-        return (
-          <group key={idx}>
-            <mesh
-              position={[bar.x, bar.h / 2, 0]}
-              scale={isHovered ? 1.06 : 1}
-              onPointerOver={(e) => handlePointerOver(e, bar, idx)}
-              onPointerOut={handlePointerOut}
-            >
-              <boxGeometry args={[bar.w, bar.h, 0.4]} />
-              <meshPhongMaterial
-                color={isHovered ? '#34d399' : bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
-                transparent
-                opacity={isHovered ? 0.9 : 0.7}
-              />
-            </mesh>
-            {/* Floor projection (2D view from above) */}
-            <mesh position={[bar.x, 0.005, -1.5]}>
-              <boxGeometry args={[bar.w, 0.01, 0.3]} />
-              <meshPhongMaterial
-                color={bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
-                transparent
-                opacity={0.5}
-              />
-            </mesh>
-          </group>
-        )
-      })}
+      {/* 3D bars - InstancedMesh */}
+      <instancedMesh
+        ref={mainMeshRef}
+        args={[geometry, undefined, count]}
+        onPointerMove={handlePointerMove}
+        onPointerOut={handlePointerOut}
+      >
+        <meshPhongMaterial color="#ffffff" transparent opacity={0.7} />
+      </instancedMesh>
+      {/* Floor projection bars - InstancedMesh */}
+      <instancedMesh
+        ref={floorMeshRef}
+        args={[geometry, undefined, count]}
+      >
+        <meshPhongMaterial color="#ffffff" transparent opacity={0.5} />
+      </instancedMesh>
       {/* Numerical value display */}
       <Html position={[0, 4.5, 0]} center>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
@@ -1287,24 +1370,23 @@ function PolarRegionScene() {
   )
 }
 
-// --- Polar Riemann Sum (polar2) ---
+// --- Polar Riemann Sum (polar2) - OPTIMIZED with InstancedMesh ---
 function PolarRiemannScene() {
   const { paramValue: nR } = useLabStore()
   const R = 2
   const beta = 2 * Math.PI
   const nTheta = Math.max(4, Math.round(nR * 2))
 
+  const meshRef = useRef<THREE.InstancedMesh>(null!)
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [])
+
   const wedgeData = useMemo(() => {
     const result: {
-      vertices: Float32Array
-      indices: Uint16Array
-      height: number
+      posX: number; posZ: number; posY: number
+      scaleX: number; scaleY: number; scaleZ: number
+      rotY: number
       color: string
-      labelPos: [number, number, number]
-      rMid: number
-      thetaMid: number
-      x: number
-      y: number
+      rMid: number; thetaMid: number; x: number; y: number; height: number
       idx: number
     }[] = []
     const dr = R / nR
@@ -1312,14 +1394,10 @@ function PolarRiemannScene() {
     let wIdx = 0
 
     for (let i = 0; i < nR; i++) {
-      const rInner = i * dr
-      const rOuter = (i + 1) * dr
       const rMid = (i + 0.5) * dr
 
       for (let j = 0; j < nTheta; j++) {
-        const thetaMin = j * dTheta
-        const thetaMid = thetaMin + dTheta / 2
-        const thetaMax = thetaMin + dTheta
+        const thetaMid = (j + 0.5) * dTheta
 
         const x = rMid * Math.cos(thetaMid)
         const y = rMid * Math.sin(thetaMid)
@@ -1327,63 +1405,22 @@ function PolarRiemannScene() {
 
         if (h < 0.01) continue
 
-        // Build wedge vertices (4 corners on the floor + 4 corners on top)
-        const arcRes = 4
-        const vPts: number[] = []
-        const idxPts: number[] = []
-
-        // Inner arc (bottom)
-        for (let k = 0; k <= arcRes; k++) {
-          const t = thetaMin + (k / arcRes) * dTheta
-          vPts.push(rInner * Math.cos(t), 0, rInner * Math.sin(t))
-        }
-        // Outer arc (bottom)
-        for (let k = 0; k <= arcRes; k++) {
-          const t = thetaMin + (k / arcRes) * dTheta
-          vPts.push(rOuter * Math.cos(t), 0, rOuter * Math.sin(t))
-        }
-        // Inner arc (top)
-        for (let k = 0; k <= arcRes; k++) {
-          const t = thetaMin + (k / arcRes) * dTheta
-          vPts.push(rInner * Math.cos(t), h, rInner * Math.sin(t))
-        }
-        // Outer arc (top)
-        for (let k = 0; k <= arcRes; k++) {
-          const t = thetaMin + (k / arcRes) * dTheta
-          vPts.push(rOuter * Math.cos(t), h, rOuter * Math.sin(t))
-        }
-
-        const s = arcRes + 1
-        // Bottom face
-        for (let k = 0; k < arcRes; k++) {
-          idxPts.push(k, k + 1, s + k, s + k, k + 1, s + k + 1)
-        }
-        // Top face
-        for (let k = 0; k < arcRes; k++) {
-          idxPts.push(2 * s + k + 1, 2 * s + k, 3 * s + k, 3 * s + k, 3 * s + k + 1, 2 * s + k + 1)
-        }
-        // Inner side
-        idxPts.push(0, 2 * s, 2 * s + 1, 0, 2 * s + 1, 1)
-        // Outer side
-        idxPts.push(s, s + 1, 3 * s + 1, s, 3 * s + 1, 3 * s)
-        // Left side
-        idxPts.push(0, s, 3 * s, 0, 3 * s, 2 * s)
-        // Right side
-        const li = arcRes
-        idxPts.push(li + 1, li + s + 1, 3 * s + li + 1, li + 1, 3 * s + li + 1, 2 * s + li + 1)
-
         const color = (i + j) % 2 === 0 ? '#10b981' : '#14b8a6'
 
         result.push({
-          vertices: new Float32Array(vPts),
-          indices: new Uint16Array(idxPts),
-          height: h,
+          posX: x,
+          posY: h / 2,
+          posZ: y,
+          scaleX: dr,
+          scaleY: h,
+          scaleZ: rMid * dTheta,
+          rotY: -thetaMid, // Rotate box to align with radial direction
           color,
-          labelPos: [x, h + 0.2, y],
           rMid,
           thetaMid,
           x,
           y,
+          height: h,
           idx: wIdx,
         })
         wIdx++
@@ -1392,16 +1429,60 @@ function PolarRiemannScene() {
     return result
   }, [nR, R, beta, nTheta])
 
+  const count = wedgeData.length
+  const wedgeDataRef = useRef(wedgeData)
+
+  // Keep ref in sync with data for event handlers
+  useEffect(() => { wedgeDataRef.current = wedgeData }, [wedgeData])
+
   const approxValue = useMemo(() => {
     return polarRiemannSum(fPolar, R, 0, beta, nR, nTheta)
   }, [nR, R, beta, nTheta])
 
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const lastHoveredRef = useRef<number | null>(null)
 
-  const handleWedgePointerOver = useCallback((e: ThreeEvent<PointerEvent>, wedge: typeof wedgeData[0]) => {
+  // Set instance matrices and colors
+  useEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh || count === 0) return
+
+    const dummy = new THREE.Object3D()
+    const col = new THREE.Color()
+    const effectiveHovered = hoveredIdx !== null && hoveredIdx < count ? hoveredIdx : null
+
+    for (let i = 0; i < count; i++) {
+      const wedge = wedgeData[i]
+      const isHovered = effectiveHovered === i
+      const s = isHovered ? 1.06 : 1
+
+      dummy.position.set(wedge.posX, wedge.posY, wedge.posZ)
+      dummy.rotation.set(0, wedge.rotY, 0)
+      dummy.scale.set(wedge.scaleX * s, wedge.scaleY * s, wedge.scaleZ * s)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+
+      col.set(isHovered ? '#34d399' : wedge.color)
+      mesh.setColorAt(i, col)
+    }
+
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [count, wedgeData, hoveredIdx])
+
+  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (e.instanceId === undefined) return
     e.stopPropagation()
-    setHoveredIdx(wedge.idx)
-    document.body.style.cursor = 'pointer'
+    const id = e.instanceId
+
+    const wedge = wedgeDataRef.current[id]
+    if (!wedge) return
+
+    if (id !== lastHoveredRef.current) {
+      lastHoveredRef.current = id
+      setHoveredIdx(id)
+      document.body.style.cursor = 'pointer'
+    }
 
     const dr = R / nR
     const dTheta = beta / nTheta
@@ -1415,9 +1496,10 @@ function PolarRiemannScene() {
       `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${(fVal * areaElement).toFixed(4)}</div>`
 
     showBarTooltip(e, content)
-  }, [nR, R, beta, nTheta, wedgeData])
+  }, [nR, R, beta, nTheta])
 
-  const handleWedgePointerOut = useCallback(() => {
+  const handlePointerOut = useCallback(() => {
+    lastHoveredRef.current = null
     setHoveredIdx(null)
     document.body.style.cursor = 'auto'
     hideBarTooltip()
@@ -1425,29 +1507,17 @@ function PolarRiemannScene() {
 
   return (
     <AutoRotate speed={0.002}>
-      {/* Wedge bars */}
-      {wedgeData.map((wedge) => {
-        const isHovered = hoveredIdx === wedge.idx
-        return (
-          <mesh
-            key={wedge.idx}
-            scale={isHovered ? 1.06 : 1}
-            onPointerOver={(e) => handleWedgePointerOver(e, wedge)}
-            onPointerOut={handleWedgePointerOut}
-          >
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" args={[wedge.vertices, 3]} />
-              <bufferAttribute attach="index" args={[wedge.indices, 1]} count={wedge.indices.length} />
-            </bufferGeometry>
-            <meshPhongMaterial
-              color={isHovered ? '#34d399' : wedge.color}
-              transparent
-              opacity={isHovered ? 0.85 : 0.6}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        )
-      })}
+      {/* Wedge bars - InstancedMesh */}
+      {count > 0 && (
+        <instancedMesh
+          ref={meshRef}
+          args={[geometry, undefined, count]}
+          onPointerMove={handlePointerMove}
+          onPointerOut={handlePointerOut}
+        >
+          <meshPhongMaterial color="#ffffff" transparent opacity={0.6} side={THREE.DoubleSide} />
+        </instancedMesh>
+      )}
 
       {/* Surface overlay */}
       <Surface
@@ -1535,7 +1605,7 @@ function ConvergenceScene() {
   )
 }
 
-// --- Error Analysis (convergence2) ---
+// --- Error Analysis (convergence2) - OPTIMIZED with InstancedMesh ---
 function ErrorAnalysisScene() {
   const { paramValue: maxN } = useLabStore()
 
@@ -1564,37 +1634,86 @@ function ErrorAnalysisScene() {
   const logRange = Math.max(1, maxLog - minLog)
   const scaleH = 4 / logRange
 
+  const midMeshRef = useRef<THREE.InstancedMesh>(null!)
+  const leftMeshRef = useRef<THREE.InstancedMesh>(null!)
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [])
+
+  const count = barData.bars.length
+
+  // Compute normalized heights for instances
+  const instanceData = useMemo(() => {
+    return barData.bars.map(bar => ({
+      x: bar.x,
+      hMid: Math.max(0.02, (bar.hMid - minLog) * scaleH),
+      hLeft: Math.max(0.02, (bar.hLeft - minLog) * scaleH),
+      label: bar.label,
+    }))
+  }, [barData.bars, minLog, scaleH])
+
+  // Set instance matrices and colors
+  useEffect(() => {
+    const midMesh = midMeshRef.current
+    const leftMesh = leftMeshRef.current
+    if (!midMesh || !leftMesh || count === 0) return
+
+    const dummy = new THREE.Object3D()
+    const col = new THREE.Color()
+
+    for (let i = 0; i < count; i++) {
+      const bar = instanceData[i]
+
+      // Midpoint error bar (emerald)
+      dummy.position.set(bar.x - 0.15, bar.hMid / 2, -0.2)
+      dummy.scale.set(0.25, bar.hMid, 0.3)
+      dummy.rotation.set(0, 0, 0)
+      dummy.updateMatrix()
+      midMesh.setMatrixAt(i, dummy.matrix)
+      col.set('#10b981')
+      midMesh.setColorAt(i, col)
+
+      // Left endpoint error bar (amber)
+      dummy.position.set(bar.x + 0.15, bar.hLeft / 2, 0.2)
+      dummy.scale.set(0.25, bar.hLeft, 0.3)
+      dummy.updateMatrix()
+      leftMesh.setMatrixAt(i, dummy.matrix)
+      col.set('#f59e0b')
+      leftMesh.setColorAt(i, col)
+    }
+
+    midMesh.instanceMatrix.needsUpdate = true
+    if (midMesh.instanceColor) midMesh.instanceColor.needsUpdate = true
+    leftMesh.instanceMatrix.needsUpdate = true
+    if (leftMesh.instanceColor) leftMesh.instanceColor.needsUpdate = true
+  }, [count, instanceData])
+
   return (
     <AutoRotate speed={0.001}>
-      {/* Bars for midpoint error */}
-      {barData.bars.map((bar, idx) => {
-        const hMid = Math.max(0.02, (bar.hMid - minLog) * scaleH)
-        const hLeft = Math.max(0.02, (bar.hLeft - minLog) * scaleH)
+      {/* Midpoint error bars - InstancedMesh */}
+      {count > 0 && (
+        <instancedMesh ref={midMeshRef} args={[geometry, undefined, count]}>
+          <meshPhongMaterial color="#ffffff" transparent opacity={0.7} />
+        </instancedMesh>
+      )}
+      {/* Left endpoint error bars - InstancedMesh */}
+      {count > 0 && (
+        <instancedMesh ref={leftMeshRef} args={[geometry, undefined, count]}>
+          <meshPhongMaterial color="#ffffff" transparent opacity={0.7} />
+        </instancedMesh>
+      )}
+      {/* n labels (kept as individual Text elements since they are sparse) */}
+      {instanceData.map((bar, idx) => {
+        if (idx % Math.max(1, Math.floor(instanceData.length / 8)) !== 0) return null
         return (
-          <group key={idx}>
-            {/* Midpoint error bar (emerald) */}
-            <mesh position={[bar.x - 0.15, hMid / 2, -0.2]}>
-              <boxGeometry args={[0.25, hMid, 0.3]} />
-              <meshPhongMaterial color="#10b981" transparent opacity={0.7} />
-            </mesh>
-            {/* Left endpoint error bar (amber) */}
-            <mesh position={[bar.x + 0.15, hLeft / 2, 0.2]}>
-              <boxGeometry args={[0.25, hLeft, 0.3]} />
-              <meshPhongMaterial color="#f59e0b" transparent opacity={0.7} />
-            </mesh>
-            {/* n label */}
-            {idx % Math.max(1, Math.floor(barData.bars.length / 8)) === 0 && (
-              <Text
-                position={[bar.x, -0.4, 0]}
-                fontSize={0.2}
-                color="#94a3b8"
-                anchorX="center"
-                anchorY="middle"
-              >
-                {bar.label}
-              </Text>
-            )}
-          </group>
+          <Text
+            key={`label-${idx}`}
+            position={[bar.x, -0.4, 0]}
+            fontSize={0.2}
+            color="#94a3b8"
+            anchorX="center"
+            anchorY="middle"
+          >
+            {bar.label}
+          </Text>
         )
       })}
 
@@ -1615,10 +1734,13 @@ function ErrorAnalysisScene() {
   )
 }
 
-// --- Triple Integral Visualization (triple1) ---
+// --- Triple Integral Visualization (triple1) - OPTIMIZED with InstancedMesh ---
 function TripleIntegralScene() {
   const { paramValue: n } = useLabStore()
   const nInt = Math.max(2, Math.round(n))
+
+  const meshRef = useRef<THREE.InstancedMesh>(null!)
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), [])
 
   const voxelData = useMemo(() => {
     const result: { pos: [number, number, number]; color: string; size: number; origX: number; origY: number; origZ: number; val: number; idx: number }[] = []
@@ -1679,12 +1801,56 @@ function TripleIntegralScene() {
   // Exact value of ∫₀¹∫₀¹∫₀¹ (x²+y²+z²) dV = 3 * (1/3) = 1
   const exactValue = 1
 
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const count = voxelData.length
+  const voxelDataRef = useRef(voxelData)
 
-  const handleVoxelPointerOver = useCallback((e: ThreeEvent<PointerEvent>, voxel: typeof voxelData[0]) => {
+  // Keep ref in sync with data for event handlers
+  useEffect(() => { voxelDataRef.current = voxelData }, [voxelData])
+
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const lastHoveredRef = useRef<number | null>(null)
+
+  // Set instance matrices and colors
+  useEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh || count === 0) return
+
+    const dummy = new THREE.Object3D()
+    const col = new THREE.Color()
+    const effectiveHovered = hoveredIdx !== null && hoveredIdx < count ? hoveredIdx : null
+
+    for (let i = 0; i < count; i++) {
+      const voxel = voxelData[i]
+      const isHovered = effectiveHovered === i
+      const s = isHovered ? 1.08 : 1
+
+      dummy.position.set(voxel.pos[0], voxel.pos[1], voxel.pos[2])
+      dummy.scale.set(voxel.size * s, voxel.size * s, voxel.size * s)
+      dummy.rotation.set(0, 0, 0)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+
+      col.set(isHovered ? '#c084fc' : voxel.color)
+      mesh.setColorAt(i, col)
+    }
+
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [count, voxelData, hoveredIdx])
+
+  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (e.instanceId === undefined) return
     e.stopPropagation()
-    setHoveredIdx(voxel.idx)
-    document.body.style.cursor = 'pointer'
+    const id = e.instanceId
+
+    const voxel = voxelDataRef.current[id]
+    if (!voxel) return
+
+    if (id !== lastHoveredRef.current) {
+      lastHoveredRef.current = id
+      setHoveredIdx(id)
+      document.body.style.cursor = 'pointer'
+    }
 
     const dV = (1 / nInt) ** 3
     const contribution = voxel.val * dV
@@ -1696,9 +1862,10 @@ function TripleIntegralScene() {
       `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${contribution.toFixed(6)}</div>`
 
     showBarTooltip(e, content)
-  }, [nInt, voxelData])
+  }, [nInt])
 
-  const handleVoxelPointerOut = useCallback(() => {
+  const handlePointerOut = useCallback(() => {
+    lastHoveredRef.current = null
     setHoveredIdx(null)
     document.body.style.cursor = 'auto'
     hideBarTooltip()
@@ -1706,27 +1873,17 @@ function TripleIntegralScene() {
 
   return (
     <AutoRotate speed={0.002}>
-      {/* Voxels */}
-      {voxelData.map((voxel) => {
-        const isHovered = hoveredIdx === voxel.idx
-        return (
-          <mesh
-            key={voxel.idx}
-            position={voxel.pos}
-            scale={isHovered ? 1.08 : 1}
-            onPointerOver={(e) => handleVoxelPointerOver(e, voxel)}
-            onPointerOut={handleVoxelPointerOut}
-          >
-            <boxGeometry args={[voxel.size, voxel.size, voxel.size]} />
-            <meshPhongMaterial
-              color={isHovered ? '#c084fc' : voxel.color}
-              transparent
-              opacity={isHovered ? 0.85 : 0.5}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        )
-      })}
+      {/* Voxels - InstancedMesh */}
+      {count > 0 && (
+        <instancedMesh
+          ref={meshRef}
+          args={[geometry, undefined, count]}
+          onPointerMove={handlePointerMove}
+          onPointerOut={handlePointerOut}
+        >
+          <meshPhongMaterial color="#ffffff" transparent opacity={0.5} side={THREE.DoubleSide} />
+        </instancedMesh>
+      )}
 
       {/* Wireframe cube outline */}
       <line>

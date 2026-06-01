@@ -58,279 +58,337 @@ import {
   RotateCw,
   Shield,
   Clock,
+  Calculator,
+  type LucideIcon,
 } from 'lucide-react'
 
-const sections = [
+// ── Two-level directory: Chapters → Sections → Modes ──
+
+interface ModeEntry {
+  mode: LabMode
+  label: string
+  icon: LucideIcon
+}
+
+interface SectionEntry {
+  title: string
+  subtitle: string
+  color: string
+  modes: ModeEntry[]
+}
+
+interface ChapterEntry {
+  title: string
+  subtitle: string
+  icon: LucideIcon
+  color: string
+  sections: SectionEntry[]
+}
+
+const chapters: ChapterEntry[] = [
   {
-    title: '概念理解',
-    subtitle: '二重积分定义与步骤',
+    title: '二重积分基础',
+    subtitle: '定义、性质与对称性',
     icon: BookOpen,
     color: 'emerald',
-    modes: [
-      { mode: 'step1' as LabMode, label: '区域划分', icon: Grid3x3 },
-      { mode: 'step2' as LabMode, label: '网格划分', icon: LayoutGrid },
-      { mode: 'step3' as LabMode, label: '方柱近似', icon: BarChart3 },
-      { mode: 'step4' as LabMode, label: '取极限', icon: Layers },
+    sections: [
+      {
+        title: '概念理解',
+        subtitle: '二重积分定义与步骤',
+        color: 'emerald',
+        modes: [
+          { mode: 'step1' as LabMode, label: '区域划分', icon: Grid3x3 },
+          { mode: 'step2' as LabMode, label: '网格划分', icon: LayoutGrid },
+          { mode: 'step3' as LabMode, label: '方柱近似', icon: BarChart3 },
+          { mode: 'step4' as LabMode, label: '取极限', icon: Layers },
+        ],
+      },
+      {
+        title: '基本性质',
+        subtitle: '线性、可加性、比较等',
+        color: 'sky',
+        modes: [
+          { mode: 'prop1' as LabMode, label: '常数倍', icon: ArrowRightLeft },
+          { mode: 'prop2' as LabMode, label: '加减', icon: Plus },
+          { mode: 'prop3' as LabMode, label: '区域可加', icon: Split },
+          { mode: 'prop4' as LabMode, label: '常函数', icon: Square },
+          { mode: 'prop5' as LabMode, label: '比较', icon: ArrowUpDown },
+          { mode: 'prop6' as LabMode, label: '估值', icon: Gauge },
+          { mode: 'prop7' as LabMode, label: '中值', icon: Target },
+        ],
+      },
+      {
+        title: '奇偶性',
+        subtitle: '对称性化简积分',
+        color: 'orange',
+        modes: [
+          { mode: 'parity1' as LabMode, label: '奇函数', icon: ToggleLeft },
+          { mode: 'parity2' as LabMode, label: '偶函数', icon: ToggleRight },
+        ],
+      },
     ],
   },
   {
-    title: '基本性质',
-    subtitle: '线性、可加性、比较等',
-    icon: FlaskConical,
+    title: '积分计算方法',
+    subtitle: '坐标变换与累次积分',
+    icon: Calculator,
     color: 'sky',
-    modes: [
-      { mode: 'prop1' as LabMode, label: '常数倍', icon: ArrowRightLeft },
-      { mode: 'prop2' as LabMode, label: '加减', icon: Plus },
-      { mode: 'prop3' as LabMode, label: '区域可加', icon: Split },
-      { mode: 'prop4' as LabMode, label: '常函数', icon: Square },
-      { mode: 'prop5' as LabMode, label: '比较', icon: ArrowUpDown },
-      { mode: 'prop6' as LabMode, label: '估值', icon: Gauge },
-      { mode: 'prop7' as LabMode, label: '中值', icon: Target },
+    sections: [
+      {
+        title: '直角坐标',
+        subtitle: 'X型/Y型区域计算',
+        color: 'amber',
+        modes: [
+          { mode: 'cartesian1' as LabMode, label: 'X型区域', icon: LayoutList },
+          { mode: 'cartesian2' as LabMode, label: 'Y型区域', icon: LayoutGrid },
+        ],
+      },
+      {
+        title: '极坐标',
+        subtitle: '极坐标系下计算',
+        color: 'rose',
+        modes: [
+          { mode: 'polar1' as LabMode, label: '极坐标区域', icon: CircleDot },
+          { mode: 'polar2' as LabMode, label: '极坐标黎曼和', icon: Compass },
+        ],
+      },
+      {
+        title: '变量代换',
+        subtitle: '雅可比行列式与坐标变换',
+        color: 'lime',
+        modes: [
+          { mode: 'jacobian1' as LabMode, label: '变量代换', icon: RefreshCw },
+        ],
+      },
+      {
+        title: '富比尼定理',
+        subtitle: '富比尼定理与累次积分',
+        color: 'fuchsia',
+        modes: [
+          { mode: 'fubini1' as LabMode, label: '富比尼定理', icon: GitMerge },
+        ],
+      },
     ],
   },
   {
-    title: '奇偶性',
-    subtitle: '对称性化简积分',
-    icon: Move3d,
-    color: 'orange',
-    modes: [
-      { mode: 'parity1' as LabMode, label: '奇函数', icon: ToggleLeft },
-      { mode: 'parity2' as LabMode, label: '偶函数', icon: ToggleRight },
-    ],
-  },
-  {
-    title: '直角坐标',
-    subtitle: 'X型/Y型区域计算',
-    icon: Sigma,
+    title: '积分应用',
+    subtitle: '面积、弧长与物理应用',
+    icon: FlaskConical,
     color: 'amber',
-    modes: [
-      { mode: 'cartesian1' as LabMode, label: 'X型区域', icon: LayoutList },
-      { mode: 'cartesian2' as LabMode, label: 'Y型区域', icon: LayoutGrid },
-    ],
-  },
-  {
-    title: '极坐标',
-    subtitle: '极坐标系下计算',
-    icon: Orbit,
-    color: 'rose',
-    modes: [
-      { mode: 'polar1' as LabMode, label: '极坐标区域', icon: CircleDot },
-      { mode: 'polar2' as LabMode, label: '极坐标黎曼和', icon: Compass },
-    ],
-  },
-  {
-    title: '矩形近似',
-    subtitle: '一维定积分近似',
-    icon: Puzzle,
-    color: 'teal',
-    modes: [
-      { mode: 'rect_approx' as LabMode, label: '矩形近似面积', icon: BoxSelect },
-    ],
-  },
-  {
-    title: '球柱相交',
-    subtitle: 'Viviani体与截面法',
-    icon: Layers,
-    color: 'violet',
-    modes: [
-      { mode: 'sphere_cyl1' as LabMode, label: '相交体', icon: CircleDot },
-      { mode: 'sphere_cyl2' as LabMode, label: '截面法', icon: ScanLine },
-    ],
-  },
-  {
-    title: '收敛演示',
-    subtitle: '数值积分收敛分析',
-    icon: TrendingUp,
-    color: 'cyan',
-    modes: [
-      { mode: 'convergence1' as LabMode, label: '收敛动画', icon: TrendingUp },
-      { mode: 'convergence2' as LabMode, label: '误差分析', icon: LineChart },
+    sections: [
+      {
+        title: '矩形近似',
+        subtitle: '一维定积分近似',
+        color: 'teal',
+        modes: [
+          { mode: 'rect_approx' as LabMode, label: '矩形近似面积', icon: BoxSelect },
+        ],
+      },
+      {
+        title: '曲面面积',
+        subtitle: '曲面面积与弧长',
+        color: 'indigo',
+        modes: [
+          { mode: 'surface_area1' as LabMode, label: '曲面面积计算', icon: Mountain },
+        ],
+      },
+      {
+        title: '弧长与曲线积分',
+        subtitle: '弧长近似与精确计算',
+        color: 'pink',
+        modes: [
+          { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
+        ],
+      },
+      {
+        title: '质心与转动惯量',
+        subtitle: '变密度质心与惯量计算',
+        color: 'cyan',
+        modes: [
+          { mode: 'mass_center1' as LabMode, label: '质心计算', icon: Crosshair },
+          { mode: 'moment_of_inertia1' as LabMode, label: '转动惯量', icon: Crosshair },
+        ],
+      },
+      {
+        title: '球柱相交',
+        subtitle: 'Viviani体与截面法',
+        color: 'violet',
+        modes: [
+          { mode: 'sphere_cyl1' as LabMode, label: '相交体', icon: CircleDot },
+          { mode: 'sphere_cyl2' as LabMode, label: '截面法', icon: ScanLine },
+        ],
+      },
     ],
   },
   {
     title: '三重积分',
-    subtitle: '体积分可视化',
+    subtitle: '体积分与坐标变换',
     icon: Box,
     color: 'purple',
-    modes: [
-      { mode: 'triple1' as LabMode, label: '三重积分', icon: Box },
+    sections: [
+      {
+        title: '三重积分',
+        subtitle: '体积分可视化',
+        color: 'purple',
+        modes: [
+          { mode: 'triple1' as LabMode, label: '三重积分', icon: Box },
+        ],
+      },
+      {
+        title: '柱坐标系',
+        subtitle: '柱坐标系下体积计算',
+        color: 'sky',
+        modes: [
+          { mode: 'cylindrical1' as LabMode, label: '柱坐标计算', icon: Cylinder },
+        ],
+      },
+      {
+        title: '球坐标系计算',
+        subtitle: '球坐标体积元素与积分',
+        color: 'green',
+        modes: [
+          { mode: 'spherical1' as LabMode, label: '球坐标计算', icon: Globe },
+        ],
+      },
     ],
   },
   {
-    title: '变量代换',
-    subtitle: '雅可比行列式与坐标变换',
-    icon: RefreshCw,
-    color: 'lime',
-    modes: [
-      { mode: 'jacobian1' as LabMode, label: '变量代换', icon: RefreshCw },
-    ],
-  },
-  {
-    title: '格林公式',
-    subtitle: '线积分与面积分的关系',
+    title: '积分定理',
+    subtitle: '格林、斯托克斯、高斯',
     icon: Waypoints,
     color: 'red',
-    modes: [
-      { mode: 'green1' as LabMode, label: '格林公式', icon: Waypoints },
+    sections: [
+      {
+        title: '格林公式',
+        subtitle: '线积分与面积分的关系',
+        color: 'red',
+        modes: [
+          { mode: 'green1' as LabMode, label: '格林公式', icon: Waypoints },
+        ],
+      },
+      {
+        title: '斯托克斯定理',
+        subtitle: '环量与旋度通量',
+        color: 'violet',
+        modes: [
+          { mode: 'stokes1' as LabMode, label: '斯托克斯定理', icon: Waypoints },
+        ],
+      },
+      {
+        title: '高斯散度定理',
+        subtitle: '通量与散度积分',
+        color: 'orange',
+        modes: [
+          { mode: 'divergence1' as LabMode, label: '高斯散度定理', icon: Atom },
+        ],
+      },
     ],
   },
   {
-    title: '曲面面积',
-    subtitle: '曲面面积与弧长',
-    icon: Mountain,
-    color: 'indigo',
-    modes: [
-      { mode: 'surface_area1' as LabMode, label: '曲面面积计算', icon: Mountain },
-    ],
-  },
-  {
-    title: '富比尼定理',
-    subtitle: '富比尼定理与累次积分',
-    icon: GitMerge,
-    color: 'fuchsia',
-    modes: [
-      { mode: 'fubini1' as LabMode, label: '富比尼定理', icon: GitMerge },
-    ],
-  },
-  {
-    title: '斯托克斯定理',
-    subtitle: '环量与旋度通量',
-    icon: Waypoints,
-    color: 'violet',
-    modes: [
-      { mode: 'stokes1' as LabMode, label: '斯托克斯定理', icon: Waypoints },
-    ],
-  },
-  {
-    title: '高斯散度定理',
-    subtitle: '通量与散度积分',
-    icon: Atom,
-    color: 'orange',
-    modes: [
-      { mode: 'divergence1' as LabMode, label: '高斯散度定理', icon: Atom },
-    ],
-  },
-  {
-    title: '弧长与曲线积分',
-    subtitle: '弧长近似与精确计算',
-    icon: Spline,
-    color: 'pink',
-    modes: [
-      { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
-    ],
-  },
-  {
-    title: '质心与转动惯量',
-    subtitle: '变密度质心与惯量计算',
-    icon: Crosshair,
-    color: 'cyan',
-    modes: [
-      { mode: 'mass_center1' as LabMode, label: '质心计算', icon: Crosshair },
-      { mode: 'moment_of_inertia1' as LabMode, label: '转动惯量', icon: Crosshair },
-    ],
-  },
-  {
-    title: '柱坐标系',
-    subtitle: '柱坐标系下体积计算',
-    icon: Cylinder,
-    color: 'sky',
-    modes: [
-      { mode: 'cylindrical1' as LabMode, label: '柱坐标计算', icon: Cylinder },
-    ],
-  },
-  {
-    title: '梯度场与方向导数',
-    subtitle: '梯度向量场与方向导数',
+    title: '向量场与微分算子',
+    subtitle: '梯度、旋度、散度与势函数',
     icon: Navigation,
-    color: 'yellow',
-    modes: [
-      { mode: 'gradient1' as LabMode, label: '梯度场可视化', icon: Navigation },
-      { mode: 'directional1' as LabMode, label: '方向导数', icon: Compass },
-    ],
-  },
-  {
-    title: '球坐标系计算',
-    subtitle: '球坐标体积元素与积分',
-    icon: Globe,
-    color: 'green',
-    modes: [
-      { mode: 'spherical1' as LabMode, label: '球坐标计算', icon: Globe },
-    ],
-  },
-  {
-    title: '拉普拉斯方程',
-    subtitle: '调和函数与拉普拉斯算子',
-    icon: Waves,
-    color: 'slate',
-    modes: [
-      { mode: 'laplace1' as LabMode, label: '拉普拉斯算子', icon: Waves },
-    ],
-  },
-  {
-    title: '傅里叶级数与逼近',
-    subtitle: '傅里叶级数展开与近似',
-    icon: Activity,
-    color: 'warm',
-    modes: [
-      { mode: 'fourier1' as LabMode, label: '傅里叶级数逼近', icon: Activity },
-    ],
-  },
-  {
-    title: '向量场与线积分',
-    subtitle: '向量场线积分计算',
-    icon: Wind,
     color: 'teal',
-    modes: [
-      { mode: 'vector_field1' as LabMode, label: '向量场线积分', icon: Wind },
+    sections: [
+      {
+        title: '梯度场与方向导数',
+        subtitle: '梯度向量场与方向导数',
+        color: 'yellow',
+        modes: [
+          { mode: 'gradient1' as LabMode, label: '梯度场可视化', icon: Navigation },
+          { mode: 'directional1' as LabMode, label: '方向导数', icon: Compass },
+        ],
+      },
+      {
+        title: '向量场与线积分',
+        subtitle: '向量场线积分计算',
+        color: 'teal',
+        modes: [
+          { mode: 'vector_field1' as LabMode, label: '向量场线积分', icon: Wind },
+        ],
+      },
+      {
+        title: '旋度场与散度场',
+        subtitle: '旋度与散度可视化',
+        color: 'rose',
+        modes: [
+          { mode: 'curl1' as LabMode, label: '旋度场可视化', icon: RotateCw },
+          { mode: 'divergence_field1' as LabMode, label: '散度场可视化', icon: RotateCw },
+        ],
+      },
+      {
+        title: '保守场与势函数',
+        subtitle: '保守场、势函数与路径无关性',
+        color: 'emerald',
+        modes: [
+          { mode: 'conservative1' as LabMode, label: '保守场与势函数', icon: Shield },
+        ],
+      },
+      {
+        title: '拉普拉斯方程',
+        subtitle: '调和函数与拉普拉斯算子',
+        color: 'slate',
+        modes: [
+          { mode: 'laplace1' as LabMode, label: '拉普拉斯算子', icon: Waves },
+        ],
+      },
     ],
   },
   {
-    title: '等值面与等高线',
-    subtitle: '等值面与等高线可视化',
-    icon: Layers,
-    color: 'cyan',
-    modes: [
-      { mode: 'isosurface1' as LabMode, label: '等值面与等高线', icon: Layers },
-    ],
-  },
-  {
-    title: '旋度场与散度场',
-    subtitle: '旋度与散度可视化',
-    icon: RotateCw,
-    color: 'rose',
-    modes: [
-      { mode: 'curl1' as LabMode, label: '旋度场可视化', icon: RotateCw },
-      { mode: 'divergence_field1' as LabMode, label: '散度场可视化', icon: RotateCw },
-    ],
-  },
-  {
-    title: '保守场与势函数',
-    subtitle: '保守场、势函数与路径无关性',
-    icon: Shield,
-    color: 'emerald2',
-    modes: [
-      { mode: 'conservative1' as LabMode, label: '保守场与势函数', icon: Shield },
-    ],
-  },
-  {
-    title: '泰勒展开与逼近',
-    subtitle: '泰勒展开与多项式逼近',
+    title: '数值分析与逼近',
+    subtitle: '收敛、级数与等值面',
     icon: TrendingUp,
-    color: 'amber2',
-    modes: [
-      { mode: 'taylor1' as LabMode, label: '泰勒展开逼近', icon: TrendingUp },
-    ],
-  },
-  {
-    title: '曲面积分',
-    subtitle: '对面积的曲面积分',
-    icon: Mountain,
-    color: 'violet2',
-    modes: [
-      { mode: 'surface_integral1' as LabMode, label: '对面积的曲面积分', icon: Mountain },
+    color: 'orange',
+    sections: [
+      {
+        title: '收敛演示',
+        subtitle: '数值积分收敛分析',
+        color: 'cyan',
+        modes: [
+          { mode: 'convergence1' as LabMode, label: '收敛动画', icon: TrendingUp },
+          { mode: 'convergence2' as LabMode, label: '误差分析', icon: LineChart },
+        ],
+      },
+      {
+        title: '傅里叶级数与逼近',
+        subtitle: '傅里叶级数展开与近似',
+        color: 'orange',
+        modes: [
+          { mode: 'fourier1' as LabMode, label: '傅里叶级数逼近', icon: Activity },
+        ],
+      },
+      {
+        title: '泰勒展开与逼近',
+        subtitle: '泰勒展开与多项式逼近',
+        color: 'amber',
+        modes: [
+          { mode: 'taylor1' as LabMode, label: '泰勒展开逼近', icon: TrendingUp },
+        ],
+      },
+      {
+        title: '等值面与等高线',
+        subtitle: '等值面与等高线可视化',
+        color: 'cyan',
+        modes: [
+          { mode: 'isosurface1' as LabMode, label: '等值面与等高线', icon: Layers },
+        ],
+      },
+      {
+        title: '曲面积分',
+        subtitle: '对面积的曲面积分',
+        color: 'violet',
+        modes: [
+          { mode: 'surface_integral1' as LabMode, label: '对面积的曲面积分', icon: Mountain },
+        ],
+      },
     ],
   },
 ]
+
+// Flatten for utility lookups
+const flatSections = chapters.flatMap(ch =>
+  ch.sections.map(sec => ({ ...sec, chapterTitle: ch.title, chapterColor: ch.color }))
+)
 
 // Color map for section accent
 const colorMap: Record<string, { activeBg: string; activeText: string; border: string; dot: string; badge: string; badgeText: string; hoverBg: string }> = {
@@ -487,42 +545,6 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     badgeText: 'text-slate-700 dark:text-slate-300',
     hoverBg: 'hover:bg-gradient-to-r hover:from-slate-50/80 hover:to-slate-50/30 dark:hover:from-slate-900/20 dark:hover:to-slate-900/10',
   },
-  warm: {
-    activeBg: 'bg-orange-100 dark:bg-orange-900/40',
-    activeText: 'text-orange-800 dark:text-orange-300',
-    border: 'before:bg-orange-500',
-    dot: 'bg-orange-500',
-    badge: 'bg-orange-200/60 dark:bg-orange-800/40',
-    badgeText: 'text-orange-700 dark:text-orange-300',
-    hoverBg: 'hover:bg-gradient-to-r hover:from-orange-50/80 hover:to-orange-50/30 dark:hover:from-orange-900/20 dark:hover:to-orange-900/10',
-  },
-  emerald2: {
-    activeBg: 'bg-emerald-100 dark:bg-emerald-900/40',
-    activeText: 'text-emerald-800 dark:text-emerald-300',
-    border: 'before:bg-emerald-500',
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-200/60 dark:bg-emerald-800/40',
-    badgeText: 'text-emerald-700 dark:text-emerald-300',
-    hoverBg: 'hover:bg-gradient-to-r hover:from-emerald-50/80 hover:to-emerald-50/30 dark:hover:from-emerald-900/20 dark:hover:to-emerald-900/10',
-  },
-  amber2: {
-    activeBg: 'bg-amber-100 dark:bg-amber-900/40',
-    activeText: 'text-amber-800 dark:text-amber-300',
-    border: 'before:bg-amber-500',
-    dot: 'bg-amber-500',
-    badge: 'bg-amber-200/60 dark:bg-amber-800/40',
-    badgeText: 'text-amber-700 dark:text-amber-300',
-    hoverBg: 'hover:bg-gradient-to-r hover:from-amber-50/80 hover:to-amber-50/30 dark:hover:from-amber-900/20 dark:hover:to-amber-900/10',
-  },
-  violet2: {
-    activeBg: 'bg-violet-100 dark:bg-violet-900/40',
-    activeText: 'text-violet-800 dark:text-violet-300',
-    border: 'before:bg-violet-500',
-    dot: 'bg-violet-500',
-    badge: 'bg-violet-200/60 dark:bg-violet-800/40',
-    badgeText: 'text-violet-700 dark:text-violet-300',
-    hoverBg: 'hover:bg-gradient-to-r hover:from-violet-50/80 hover:to-violet-50/30 dark:hover:from-violet-900/20 dark:hover:to-violet-900/10',
-  },
 }
 
 interface SidebarProps {
@@ -533,6 +555,7 @@ interface SidebarProps {
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const { mode, setMode, visitedModes, recentModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
+  const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set())
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [favoritesCollapsed, setFavoritesCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -552,62 +575,49 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Filter sections based on search query
-  const filteredSections = debouncedQuery
-    ? sections.map(s => ({
-        ...s,
-        modes: s.modes.filter(m =>
-          m.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-          s.title.toLowerCase().includes(debouncedQuery.toLowerCase())
-        )
-      })).filter(s => s.modes.length > 0)
-    : sections
-
-  const hasNoResults = debouncedQuery.length > 0 && filteredSections.length === 0
-
   // Total mode count for progress calculation
-  const totalModeCount = sections.reduce((acc, s) => acc + s.modes.length, 0)
+  const totalModeCount = flatSections.reduce((acc, s) => acc + s.modes.length, 0)
 
-  // Build a map from mode to section color for favorites
+  // Build utility maps from flat sections
   const modeToSectionColor = useMemo(() => {
     const map: Record<string, string> = {}
-    for (const section of sections) {
-      for (const m of section.modes) {
-        map[m.mode] = section.color
+    for (const sec of flatSections) {
+      for (const m of sec.modes) {
+        map[m.mode] = sec.color
       }
     }
     return map
   }, [])
 
-  // Build a map from mode to icon component for favorites
   const modeToIcon = useMemo(() => {
     const map: Record<string, typeof Star> = {}
-    for (const section of sections) {
-      for (const m of section.modes) {
+    for (const sec of flatSections) {
+      for (const m of sec.modes) {
         map[m.mode] = m.icon
       }
     }
     return map
   }, [])
 
-  // Build a map from mode to label for favorites
   const modeToLabel = useMemo(() => {
     const map: Record<string, string> = {}
-    for (const section of sections) {
-      for (const m of section.modes) {
+    for (const sec of flatSections) {
+      for (const m of sec.modes) {
         map[m.mode] = m.label
       }
     }
     return map
   }, [])
 
-  // Favorites list (ordered by sections order)
+  // Favorites list (ordered by chapters/sections order)
   const favoriteModes = useMemo(() => {
     const ordered: LabMode[] = []
-    for (const section of sections) {
-      for (const m of section.modes) {
-        if (favorites.has(m.mode)) {
-          ordered.push(m.mode)
+    for (const ch of chapters) {
+      for (const sec of ch.sections) {
+        for (const m of sec.modes) {
+          if (favorites.has(m.mode)) {
+            ordered.push(m.mode)
+          }
         }
       }
     }
@@ -623,25 +633,38 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     })
   }, [mode])
 
-  // Handle mode change: set mode AND auto-expand the section containing the new mode
+  // Handle mode change: set mode AND auto-expand the chapter+section
   const handleModeChange = useCallback((newMode: LabMode) => {
     setMode(newMode)
-    // Auto-expand the section containing the new active mode
-    const activeSection = sections.find(s => s.modes.some(m => m.mode === newMode))
-    if (activeSection) {
-      setCollapsedSections(prev => {
-        if (prev.has(activeSection.title)) {
-          const next = new Set(prev)
-          next.delete(activeSection.title)
-          return next
+    // Find which chapter and section contain this mode
+    for (const ch of chapters) {
+      for (const sec of ch.sections) {
+        if (sec.modes.some(m => m.mode === newMode)) {
+          setCollapsedChapters(prev => {
+            if (prev.has(ch.title)) {
+              const next = new Set(prev)
+              next.delete(ch.title)
+              return next
+            }
+            return prev
+          })
+          setCollapsedSections(prev => {
+            const key = `${ch.title}/${sec.title}`
+            if (prev.has(key)) {
+              const next = new Set(prev)
+              next.delete(key)
+              return next
+            }
+            return prev
+          })
+          return
         }
-        return prev
-      })
+      }
     }
   }, [setMode])
 
-  const toggleSection = useCallback((title: string) => {
-    setCollapsedSections(prev => {
+  const toggleChapter = useCallback((title: string) => {
+    setCollapsedChapters(prev => {
       const next = new Set(prev)
       if (next.has(title)) {
         next.delete(title)
@@ -652,35 +675,71 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     })
   }, [])
 
-  const toggleAllSections = useCallback(() => {
+  const toggleSection = useCallback((key: string) => {
     setCollapsedSections(prev => {
-      // If any section is expanded, collapse all. Otherwise, expand all.
-      const anyExpanded = sections.some(s => !prev.has(s.title))
+      const next = new Set(prev)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }, [])
+
+  const toggleAllChapters = useCallback(() => {
+    setCollapsedChapters(prev => {
+      const anyExpanded = chapters.some(ch => !prev.has(ch.title))
       if (anyExpanded) {
-        return new Set(sections.map(s => s.title))
+        return new Set(chapters.map(ch => ch.title))
       } else {
         return new Set()
       }
     })
   }, [])
 
+  // Check if a chapter contains the active mode
+  const isChapterActive = (chapter: ChapterEntry) =>
+    chapter.sections.some(sec => sec.modes.some(m => m.mode === mode))
+
   // Check if a section contains the active mode
-  const isSectionActive = (section: typeof sections[number]) =>
+  const isSectionActive = (section: SectionEntry) =>
     section.modes.some(m => m.mode === mode)
 
-  // A section is expanded unless explicitly collapsed. Search overrides collapse.
-  // When mode changes, the active section auto-expands (in useEffect above),
-  // but user can manually collapse it afterward.
-  const isSectionExpanded = (section: typeof sections[number]) => {
+  // Chapter is expanded unless explicitly collapsed (search overrides)
+  const isChapterExpanded = (chapter: ChapterEntry) => {
     if (debouncedQuery.length > 0) return true
-    return !collapsedSections.has(section.title)
+    return !collapsedChapters.has(chapter.title)
   }
 
-  const allCollapsed = sections.every(s => collapsedSections.has(s.title))
+  // Section is expanded unless explicitly collapsed (search overrides)
+  const isSectionExpanded = (chapterTitle: string, sectionTitle: string) => {
+    if (debouncedQuery.length > 0) return true
+    return !collapsedSections.has(`${chapterTitle}/${sectionTitle}`)
+  }
+
+  // Filter chapters based on search query
+  const filteredChapters = useMemo(() => {
+    if (!debouncedQuery) return chapters
+    return chapters.map(ch => ({
+      ...ch,
+      sections: ch.sections.map(sec => ({
+        ...sec,
+        modes: sec.modes.filter(m =>
+          m.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          sec.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          ch.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+        ),
+      })).filter(sec => sec.modes.length > 0),
+    })).filter(ch => ch.sections.length > 0)
+  }, [debouncedQuery])
+
+  const hasNoResults = debouncedQuery.length > 0 && filteredChapters.length === 0
+  const allCollapsed = chapters.every(ch => collapsedChapters.has(ch.title))
 
   return (
     <ScrollArea className={cn('h-full', className)}>
-      <div className="p-2 space-y-0">
+      <nav role="navigation" aria-label="模式导航" className="p-2 space-y-0">
         {/* Expand/Collapse all button */}
         <div className="flex items-center justify-between px-2 mb-1.5">
           <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -690,7 +749,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
             variant="ghost"
             size="sm"
             className="h-5 px-1.5 text-[9px] text-muted-foreground hover:text-foreground gap-1"
-            onClick={toggleAllSections}
+            onClick={toggleAllChapters}
           >
             <ChevronsUpDown className="h-2.5 w-2.5" />
             {allCollapsed ? '全部展开' : '全部收起'}
@@ -766,6 +825,8 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
               type="button"
               className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20"
               onClick={() => setFavoritesCollapsed(prev => !prev)}
+              aria-expanded={!favoritesCollapsed}
+              aria-controls="favorites-list"
             >
               <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500" />
               <div className="flex-1 min-w-0 text-left">
@@ -782,7 +843,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                 <ChevronDown className="h-3 w-3 shrink-0 text-amber-500/50" />
               )}
             </button>
-            <div className={cn(
+            <div id="favorites-list" className={cn(
               "overflow-hidden transition-all duration-200 ease-in-out",
               favoritesCollapsed ? "max-h-0 opacity-0" : "max-h-96 opacity-100"
             )}>
@@ -793,7 +854,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                   const sectionColor = modeToSectionColor[favMode] || 'emerald'
                   const colors = colorMap[sectionColor] || colorMap.emerald
                   return (
-                    <div key={favMode} className="relative">
+                    <div key={favMode} className="relative" role="treeitem" aria-selected={isActive}>
                       <Button
                         ref={isActive ? activeRef : undefined}
                         variant="ghost"
@@ -808,6 +869,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                           handleModeChange(favMode)
                           onModeSelect?.()
                         }}
+                        aria-label={modeToLabel[favMode] + (isActive ? ' (当前)' : '')}
                       >
                         {FavIcon && <FavIcon className={cn(
                           "h-3.5 w-3.5 shrink-0 transition-colors",
@@ -844,131 +906,191 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           </div>
         )}
 
-        {filteredSections.map((section, sectionIndex) => {
-          const colors = colorMap[section.color] || colorMap.emerald
-          const SectionIcon = section.icon
-          const sectionActive = isSectionActive(section)
-          const expanded = isSectionExpanded(section)
-          const modeCount = section.modes.length
-          const visitedInSection = section.modes.filter(m => visitedModes.has(m.mode)).length
-          const allVisited = visitedInSection === modeCount
+        {/* ── Two-level directory: Chapters → Sections → Modes ── */}
+        {filteredChapters.map((chapter) => {
+          const chapterColors = colorMap[chapter.color] || colorMap.emerald
+          const ChapterIcon = chapter.icon
+          const chapterActive = isChapterActive(chapter)
+          const chapterExpanded = isChapterExpanded(chapter)
+          const totalModes = chapter.sections.reduce((a, s) => a + s.modes.length, 0)
+          const visitedModes_ = chapter.sections.flatMap(s => s.modes).filter(m => visitedModes.has(m.mode)).length
+          const allVisited_ = visitedModes_ === totalModes
 
           return (
-            <div key={section.title} className={cn(
-              sectionIndex > 0 && "mt-1 pt-1 border-t border-border/30"
-            )}>
-              {/* Section header - clickable to toggle collapse */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all cursor-pointer",
-                      sectionActive ? colors.activeBg + ' ' + colors.activeText : colors.hoverBg
-                    )}
-                    onClick={() => toggleSection(section.title)}
-                  >
-                    <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", sectionActive ? colors.dot : 'bg-muted-foreground/30')} />
-                    <SectionIcon className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground')} />
-                    <div className="flex-1 min-w-0 text-left">
-                      <h3 className={cn(
-                        "text-[10px] font-semibold leading-none",
-                        sectionActive ? '' : 'text-muted-foreground'
-                      )}>
-                        {section.title}
-                      </h3>
-                      {/* Progress bar below section title */}
-                      <div className="mt-1 w-full h-[2px] bg-muted/50 rounded-full overflow-hidden">
-                        <div
-                          className={cn("h-full rounded-full transition-all duration-500", sectionActive ? colors.dot : 'bg-muted-foreground/30')}
-                          style={{ width: `${modeCount > 0 ? (visitedInSection / modeCount) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                    {/* Section count badge: visited/total */}
-                    <span className={cn(
-                      "text-[8px] font-mono px-1 py-0 rounded-full shrink-0 flex items-center gap-0.5",
-                      sectionActive
-                        ? cn(colors.badge, colors.badgeText)
-                        : 'bg-muted/50 text-muted-foreground/50'
-                    )}>
-                      {allVisited && <Check className="h-2 w-2 text-emerald-500" />}
-                      {visitedInSection}/{modeCount}
-                    </span>
-                    {expanded ? (
-                      <ChevronDown className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground/50')} />
-                    ) : (
-                      <ChevronRight className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground/50')} />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs max-w-[200px]">
-                  <span className="font-medium">{section.title}</span>
-                  <span className="text-muted-foreground"> — {section.subtitle}</span>
-                </TooltipContent>
-              </Tooltip>
+            <div key={chapter.title} className="mt-1 pt-1 border-t border-border/30">
+              {/* ── Level 1: Chapter header ── */}
+              <button
+                type="button"
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-2 rounded-md transition-all cursor-pointer group",
+                  chapterActive
+                    ? cn(chapterColors.activeBg, chapterColors.activeText, 'shadow-sm')
+                    : 'hover:bg-accent/50'
+                )}
+                onClick={() => toggleChapter(chapter.title)}
+                aria-expanded={chapterExpanded}
+                aria-controls={`chapter-${chapter.title}`}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors",
+                  chapterActive ? chapterColors.dot + ' text-white' : 'bg-muted-foreground/10 text-muted-foreground'
+                )}>
+                  <ChapterIcon className="h-3 w-3" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <h2 className={cn(
+                    "text-[11px] font-bold leading-tight tracking-tight",
+                    chapterActive ? '' : 'text-foreground/80'
+                  )}>
+                    {chapter.title}
+                  </h2>
+                  <p className={cn(
+                    "text-[8px] leading-tight mt-0.5",
+                    chapterActive ? 'opacity-70' : 'text-muted-foreground/60'
+                  )}>
+                    {chapter.subtitle}
+                  </p>
+                </div>
+                <span className={cn(
+                  "text-[8px] font-mono px-1.5 py-0.5 rounded-full shrink-0 flex items-center gap-0.5",
+                  chapterActive
+                    ? cn(chapterColors.badge, chapterColors.badgeText)
+                    : 'bg-muted/50 text-muted-foreground/50'
+                )}>
+                  {allVisited_ && <Check className="h-2.5 w-2.5 text-emerald-500" />}
+                  {visitedModes_}/{totalModes}
+                </span>
+                {chapterExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                )}
+              </button>
 
-              {/* Mode buttons - collapsible */}
+              {/* ── Chapter body (collapsible) ── */}
               <div
+                id={`chapter-${chapter.title}`}
                 className={cn(
                   "overflow-hidden transition-all duration-200 ease-in-out",
-                  expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                  chapterExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
                 )}
               >
-                <div className="space-y-0.5 mt-0.5">
-                  {section.modes.map(({ mode: m, label, icon: Icon }) => {
-                    const isActive = mode === m
-                    const isFavorited = favorites.has(m)
+                <div className="ml-2 pl-2 border-l-2 border-border/30 space-y-0 mt-0.5 mb-1">
+                  {chapter.sections.map((section) => {
+                    const secColors = colorMap[section.color] || colorMap[chapter.color] || colorMap.emerald
+                    const secActive = isSectionActive(section)
+                    const secExpanded = isSectionExpanded(chapter.title, section.title)
+                    const secKey = `${chapter.title}/${section.title}`
+                    const modeCount = section.modes.length
+                    const visitedInSection = section.modes.filter(m => visitedModes.has(m.mode)).length
+                    const allVisited = visitedInSection === modeCount
+
                     return (
-                      <div key={m} className="relative">
-                        <Button
-                          ref={isActive ? activeRef : undefined}
-                          key={`btn-${m}`}
-                          variant="ghost"
-                          size="sm"
+                      <div key={section.title} className="mt-0.5">
+                        {/* ── Level 2: Section header ── */}
+                        <button
+                          type="button"
                           className={cn(
-                            'w-full justify-start gap-2 text-xs h-7 px-2 pr-8 transition-all relative group',
-                            isActive
-                              ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border} animate-[count-up_0.3s_ease-out]`
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                            "w-full flex items-center gap-1.5 px-1.5 py-1 rounded transition-all cursor-pointer",
+                            secActive ? secColors.activeBg + ' ' + secColors.activeText : secColors.hoverBg
                           )}
-                          onClick={() => {
-                            handleModeChange(m)
-                            onModeSelect?.()
-                          }}
+                          onClick={() => toggleSection(secKey)}
+                          aria-expanded={secExpanded}
+                          aria-controls={`section-${secKey}`}
                         >
-                          <Icon className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-colors",
-                            isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
-                          )} />
-                          <span className="truncate">{label}</span>
-                        </Button>
-                        {/* Star toggle button */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className={cn(
-                                "absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full transition-all active:scale-75 z-10",
-                                isFavorited
-                                  ? 'text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40'
-                                  : 'opacity-0 group-hover:opacity-100 text-muted-foreground/30 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                              )}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                toggleFavorite(m)
-                              }}
-                            >
-                              <Star className={cn(
-                                "h-3 w-3 transition-all",
-                                isFavorited && 'fill-amber-500'
-                              )} />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs">
-                            {isFavorited ? '取消收藏' : '收藏'}
-                          </TooltipContent>
-                        </Tooltip>
+                          <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", secActive ? secColors.dot : 'bg-muted-foreground/30')} />
+                          <div className="flex-1 min-w-0 text-left">
+                            <h3 className={cn(
+                              "text-[10px] font-semibold leading-none",
+                              secActive ? '' : 'text-muted-foreground'
+                            )}>
+                              {section.title}
+                            </h3>
+                          </div>
+                          <span className={cn(
+                            "text-[7px] font-mono px-1 py-0 rounded-full shrink-0 flex items-center gap-0.5",
+                            secActive
+                              ? cn(secColors.badge, secColors.badgeText)
+                              : 'bg-muted/50 text-muted-foreground/50'
+                          )}>
+                            {allVisited && <Check className="h-2 w-2 text-emerald-500" />}
+                            {visitedInSection}/{modeCount}
+                          </span>
+                          {secExpanded ? (
+                            <ChevronDown className={cn("h-2.5 w-2.5 shrink-0", secActive ? '' : 'text-muted-foreground/50')} />
+                          ) : (
+                            <ChevronRight className={cn("h-2.5 w-2.5 shrink-0", secActive ? '' : 'text-muted-foreground/50')} />
+                          )}
+                        </button>
+
+                        {/* ── Level 3: Mode items (collapsible) ── */}
+                        <div
+                          id={`section-${secKey}`}
+                          className={cn(
+                            "overflow-hidden transition-all duration-200 ease-in-out",
+                            secExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          )}
+                        >
+                          <div role="tree" aria-label={section.title} className="space-y-0.5 mt-0.5">
+                            {section.modes.map(({ mode: m, label, icon: Icon }) => {
+                              const isActive = mode === m
+                              const isFavorited = favorites.has(m)
+                              return (
+                                <div key={m} className="relative" role="treeitem" aria-selected={isActive}>
+                                  <Button
+                                    ref={isActive ? activeRef : undefined}
+                                    key={`btn-${m}`}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                      'w-full justify-start gap-2 text-xs h-7 px-2 pr-8 transition-all relative group',
+                                      isActive
+                                        ? `${secColors.activeBg} ${secColors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${secColors.border} animate-[count-up_0.3s_ease-out]`
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                    )}
+                                    onClick={() => {
+                                      handleModeChange(m)
+                                      onModeSelect?.()
+                                    }}
+                                    aria-label={label + (isActive ? ' (当前)' : '')}
+                                  >
+                                    <Icon className={cn(
+                                      "h-3.5 w-3.5 shrink-0 transition-colors",
+                                      isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
+                                    )} />
+                                    <span className="truncate">{label}</span>
+                                  </Button>
+                                  {/* Star toggle button */}
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        className={cn(
+                                          "absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full transition-all active:scale-75 z-10",
+                                          isFavorited
+                                            ? 'text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40'
+                                            : 'opacity-0 group-hover:opacity-100 text-muted-foreground/30 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                        )}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          toggleFavorite(m)
+                                        }}
+                                      >
+                                        <Star className={cn(
+                                          "h-3 w-3 transition-all",
+                                          isFavorited && 'fill-amber-500'
+                                        )} />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="text-xs">
+                                      {isFavorited ? '取消收藏' : '收藏'}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
                     )
                   })}
@@ -1025,7 +1147,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
             </div>
           </div>
         </div>
-      </div>
+      </nav>
     </ScrollArea>
   )
 }

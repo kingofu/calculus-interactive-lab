@@ -249,9 +249,15 @@ export function Viewport() {
     }
   }, [])
 
+  // Accessibility: generate ARIA description for the current mode
+  const ariaLabel = `3D可视化: ${info.title} - 交互式数学可视化，可拖拽旋转和滚轮缩放`
+  const ariaDescription = `${info.section}类别的${info.title}模式。${info.description} 使用鼠标拖拽可旋转3D视图，滚轮可缩放。`
+
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label={ariaLabel}
       className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-500 ${isFullscreen ? 'rounded-none' : ''}`}
     >
       {/* Mode transition animation overlay */}
@@ -360,6 +366,11 @@ export function Viewport() {
 
       {/* Interactive hover tooltip overlay */}
       <SceneTooltip />
+
+      {/* Visually hidden description for screen readers */}
+      <div id={`viewport-desc-${mode}`} className="sr-only" aria-live="polite">
+        {ariaDescription}
+      </div>
     </div>
   )
 }

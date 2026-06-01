@@ -1848,3 +1848,151 @@ Stage Summary:
 4. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
 5. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
 6. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer
+
+---
+Task ID: 3
+Agent: Accessibility Agent
+Task: Add ARIA labels, keyboard input, screen reader support
+
+Work Log:
+- Read worklog.md and all 4 target files (viewport.tsx, controls-panel.tsx, info-panel.tsx, sidebar.tsx)
+- **viewport.tsx — ARIA labels for 3D Canvas**:
+  - Added `role="img"` to the canvas container div
+  - Added dynamic `aria-label` that describes the current visualization mode (e.g. "3D可视化: 梯度场可视化 - 交互式数学可视化，可拖拽旋转和滚轮缩放")
+  - Added visually hidden description (`sr-only` + `aria-live="polite"`) below the canvas for screen readers, combining section, title, and description
+  - aria-label updates automatically when mode changes
+- **controls-panel.tsx — Keyboard-only parameter input**:
+  - Added `useState`, `useRef` imports
+  - Added `isEditing`, `editValue`, `hasError`, `inputRef` state to SliderWithProgress
+  - Value display is now a `<button>` that can be clicked to start editing
+  - When editing, shows an `<input type="text" inputMode="decimal">` with current value
+  - Enter applies the value (rounded to step precision, clamped to min/max)
+  - Escape cancels editing and reverts to slider value
+  - ArrowUp/ArrowRight call incrementFn, ArrowDown/ArrowLeft call decrementFn
+  - Real-time validation: red border (`border-red-500`) if value is out of range or NaN
+  - Blur behavior: applies if valid, cancels if invalid
+  - Added `aria-label` to the input with range info, `aria-invalid` and `aria-describedby` for error state
+  - Added visually hidden error message (`role="alert"`) for screen readers when value is out of range
+  - Added `aria-label`, `aria-valuemin`, `aria-valuemax`, `aria-valuenow` to the Slider component
+  - Fixed React Compiler memoization error by wrapping `formatValue` in `useCallback`
+- **info-panel.tsx — Screen reader support**:
+  - Added `role="region"` and `aria-label="数学公式与描述"` to the info panel container
+  - Added `aria-live="polite"` to the formula display area so screen readers announce formula changes
+  - Added visually hidden description (`sr-only` + `aria-live="polite"`) with mode section, title, and description
+- **sidebar.tsx — Screen reader support**:
+  - Added `role="navigation"` and `aria-label="模式导航"` to the sidebar container
+  - Added `aria-expanded` attribute to section header buttons (true/false based on expanded state)
+  - Added `aria-controls` linking section headers to their content containers
+  - Added `role="tree"` and `aria-label` to section content containers
+  - Added `role="treeitem"` and `aria-selected` to mode button wrappers
+  - Added `aria-label` to mode buttons indicating current mode status
+- Ran `bun run lint` — passes with zero errors
+- Fixed template literal syntax error in viewport.tsx (stray `}` in ariaDescription)
+
+Stage Summary:
+- **ARIA labels on 3D Canvas**: `role="img"`, dynamic `aria-label`, visually hidden description for screen readers
+- **Keyboard-only parameter input**: Click value to edit, Enter to apply, Escape to cancel, arrow keys for increment/decrement, red border for errors, screen reader error announcements
+- **Screen reader support in info panel**: `role="region"`, `aria-label="数学公式与描述"`, `aria-live="polite"` on formula area, hidden descriptions
+- **Screen reader support in sidebar**: `role="navigation"`, `aria-label="模式导航"`, `aria-expanded` on section headers, `role="tree"` on sections, `role="treeitem"` on modes, `aria-selected` on active mode
+- All lint checks pass with zero errors
+
+---
+Task ID: 2
+Agent: InstancedMesh Agent
+Task: Performance optimization with InstancedMesh
+
+Work Log:
+- Read worklog.md to understand project context (36 visualization modes, stable)
+- Read scene-renderer.tsx (6720 lines) to understand current implementations of 5 target modes
+- Added `useEffect` to React imports in scene-renderer.tsx
+- **RiemannBars (step3, convergence1)**: Replaced n² individual `<mesh>` elements with single `<instancedMesh>` using BoxGeometry(1,1,1). Each instance gets its own position, scale, and color via `setMatrixAt`/`setColorAt`. Hover detection uses `onPointerMove` with `e.instanceId` to track which bar is hovered. Hover highlight changes color to '#34d399' and scales up 1.06x. Tooltip content preserved exactly.
+- **RectApproxBars (rect_approx)**: Replaced n individual `<mesh>` groups (3D bar + floor projection) with two `<instancedMesh>` components - one for main 3D bars and one for floor projections. Main bars support hover/tooltip via `onPointerMove`/`instanceId`. Floor projections are non-interactive. Both share BoxGeometry(1,1,1). Html overlay with numerical values preserved.
+- **PolarRiemannScene (polar2)**: Replaced nR*nTheta custom geometry wedge meshes with single `<instancedMesh>` using BoxGeometry. Each wedge is approximated as a box positioned at (rMid·cos(θMid), h/2, rMid·sin(θMid)), rotated by -θMid around Y axis, and scaled to (dr, h, rMid·dTheta). This approximation replaces curved arc edges with straight edges for GPU efficiency while preserving the mathematical concept. Hover/tooltip preserved with `onPointerMove`/`instanceId`.
+- **ErrorAnalysisScene (convergence2)**: Replaced 2·maxN individual bar meshes with two `<instancedMesh>` components - one for midpoint error bars (emerald) and one for left endpoint error bars (amber). Sparse n-labels kept as individual `<Text>` elements. Legend Html overlay preserved.
+- **TripleIntegralScene (triple1)**: Replaced n³ individual voxel meshes with single `<instancedMesh>` using BoxGeometry. Heat map colors (blue→green→red) preserved via per-instance colors. Hover changes color to '#c084fc' and scales up 1.08x. Wireframe cube, axis labels, and info overlay preserved as individual elements.
+- Fixed lint errors: moved ref updates (`barDataRef.current = barData`) from render-time to `useEffect` callbacks to comply with react-hooks/refs rule
+- Fixed lint error: added missing `yRange` dependency to RiemannBars `handlePointerMove` useCallback
+- All lint checks pass with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **5 modes optimized** with InstancedMesh: step3, convergence1, rect_approx, polar2, convergence2, triple1
+- Draw call reduction: from O(n²) individual meshes to O(1) InstancedMesh per bar type per mode
+  - step3: n² bars → 1 InstancedMesh (was ~64 meshes at n=8, ~400 at n=20)
+  - convergence1: n² bars → 1 InstancedMesh
+  - rect_approx: 2n meshes → 2 InstancedMesh
+  - polar2: nR×nTheta wedges → 1 InstancedMesh (was ~80 meshes at nR=4)
+  - convergence2: 2×maxN bars → 2 InstancedMesh
+  - triple1: n³ voxels → 1 InstancedMesh (was 125 at n=5, 1000 at n=10)
+- Hover/tooltip functionality preserved using `onPointerMove` + `e.instanceId` pattern
+- Visual appearance preserved: per-instance colors, scale-on-hover, tooltip content all match original
+- Minor visual change: polar2 wedge bars now use box approximation instead of curved arcs (acceptable trade-off for GPU batching)
+
+---
+Task ID: 15
+Agent: Main
+Task: Sidebar two-level directory restructure, InstancedMesh optimization, Accessibility improvements
+
+Work Log:
+- **Restructured sidebar into two-level directory** (chapters → sections → modes):
+  - Grouped 26 sections into 7 chapters following textbook organization:
+    1. 二重积分基础 (概念理解、基本性质、奇偶性)
+    2. 积分计算方法 (直角坐标、极坐标、变量代换、富比尼定理)
+    3. 积分应用 (矩形近似、曲面面积、弧长与曲线积分、质心与转动惯量、球柱相交)
+    4. 三重积分 (三重积分、柱坐标系、球坐标系计算)
+    5. 积分定理 (格林公式、斯托克斯定理、高斯散度定理)
+    6. 向量场与微分算子 (梯度场、向量场、旋度场、保守场、拉普拉斯方程)
+    7. 数值分析与逼近 (收敛演示、傅里叶级数、泰勒展开、等值面、曲面积分)
+  - Chapter headers (Level 1): icon box + bold title + subtitle + progress badge
+  - Section headers (Level 2): colored dot + section title + mode count badge
+  - Mode items (Level 3): icon + label + star/favorite button
+  - Two-level collapse state: collapsedChapters + collapsedSections (keyed by "chapter/section")
+  - Visual hierarchy: chapters have left border line for sections underneath
+  - Search filters across both chapter and section levels
+  - handleModeChange auto-expands both parent chapter and section
+- **InstancedMesh performance optimization** (via subagent):
+  - step3 (方柱近似): ~64 individual meshes → 1 instancedMesh
+  - convergence1 (收敛动画): ~64 individual meshes → 1 instancedMesh
+  - rect_approx (矩形近似): ~20 individual meshes → 2 instancedMesh
+  - polar2 (极坐标黎曼和): ~80 individual meshes → 1 instancedMesh
+  - convergence2 (误差分析): ~20 individual meshes → 2 instancedMesh
+  - triple1 (三重积分): 125-1000 individual meshes → 1 instancedMesh
+  - Preserved hover/tooltip interaction using e.instanceId
+  - Per-instance colors and transforms maintained
+- **Accessibility improvements** (via subagent):
+  - Canvas: role="img", dynamic aria-label, sr-only description with aria-live="polite"
+  - Controls: clickable value → editable input, Enter/Escape/Arrow keys, range validation, ARIA attributes
+  - Info panel: role="region", aria-label, aria-live="polite", sr-only descriptions
+  - Sidebar: role="navigation", aria-expanded on headers, aria-controls, role="tree"/"treeitem", aria-selected
+- All lint checks pass, dev server compiles successfully
+- QA verified via agent-browser: two-level directory works, search works, mode switching works
+
+Stage Summary:
+- **Sidebar restructured**: 7 chapters → 26 sections → 45 modes, clean textbook-like hierarchy
+- **Performance optimized**: 6 modes converted from individual meshes to InstancedMesh (up to 1000→1 draw calls)
+- **Accessibility improved**: ARIA labels, keyboard input, screen reader support across all components
+- No remaining critical bugs
+
+---
+## 项目当前状态 (最新更新)
+
+### 项目概况
+- **名称**: 多元微积分互动实验室 (Multivariable Calculus Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 45个
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ 侧边栏重构: 两级目录结构 (7章→26节→45模式)
+2. ✅ 性能优化: 6个高频模式使用InstancedMesh (draw call减少最多1000:1)
+3. ✅ 辅助功能: ARIA标签、键盘参数输入、屏幕阅读器支持
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **动画时间线**: 为每个概念添加逐步动画讲解
+2. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
+3. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
+4. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer

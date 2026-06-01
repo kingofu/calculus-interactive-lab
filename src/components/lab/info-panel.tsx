@@ -467,8 +467,19 @@ export function InfoPanel() {
   const prevMode = currentIdx > 0 ? sameSectionModes[currentIdx - 1] : null
   const nextMode = currentIdx < sameSectionModes.length - 1 ? sameSectionModes[currentIdx + 1] : null
 
+  // Visually hidden description for screen readers
+  const srDescription = `${info.section} - ${info.title}。${info.description}`
+
   return (
-    <div className="p-3 space-y-2.5 font-[serif] animate-[mode-switch_0.4s_ease-out]">
+    <div
+      role="region"
+      aria-label="数学公式与描述"
+      className="p-3 space-y-2.5 font-[serif] animate-[mode-switch_0.4s_ease-out]"
+    >
+      {/* Visually hidden mode description for screen readers */}
+      <div className="sr-only" aria-live="polite">
+        {srDescription}
+      </div>
       {/* Title row with section-colored badge and mode title */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 gap-1 shadow-sm", colors.bg, colors.text, colors.border)}>
@@ -482,11 +493,14 @@ export function InfoPanel() {
       </div>
 
       {/* Math formula with animated border glow */}
-      <div className={cn(
-        "relative bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60 dark:from-muted/35 dark:via-muted/25 dark:to-muted/35 rounded-lg p-3 overflow-x-auto border border-border/40 shadow-sm",
-        "transition-shadow duration-1000",
-        "hover:shadow-md", colors.glow
-      )}>
+      <div
+        aria-live="polite"
+        className={cn(
+          "relative bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60 dark:from-muted/35 dark:via-muted/25 dark:to-muted/35 rounded-lg p-3 overflow-x-auto border border-border/40 shadow-sm",
+          "transition-shadow duration-1000",
+          "hover:shadow-md", colors.glow
+        )}
+      >
         {/* Animated border glow effect */}
         <div className="absolute inset-0 rounded-lg pointer-events-none animate-[glow-pulse_3s_ease-in-out_infinite] border border-transparent"
           style={{

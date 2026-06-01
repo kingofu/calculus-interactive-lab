@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
@@ -35,6 +35,77 @@ function SliderWithProgress({
 }) {
   const percent = ((value - min) / (max - min)) * 100
 
+  // Keyboard-only parameter input state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState('')
+  const [hasError, setHasError] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Format display value based on step precision
+  const formatValue = useCallback((v: number) => step < 1 ? v.toFixed(step < 0.1 ? 2 : 1) : v.toFixed(0), [step])
+
+  // Start editing: copy current value into the input
+  const startEditing = useCallback(() => {
+    setEditValue(formatValue(value))
+    setHasError(false)
+    setIsEditing(true)
+    // Focus the input on next tick after it renders
+    requestAnimationFrame(() => {
+      inputRef.current?.select()
+    })
+  }, [value, formatValue])
+
+  // Apply the typed value
+  const applyValue = useCallback(() => {
+    const num = parseFloat(editValue)
+    if (isNaN(num) || num < min || num > max) {
+      setHasError(true)
+      return
+    }
+    // Round to step precision
+    const rounded = Math.round(num / step) * step
+    const clamped = Math.round(Math.min(max, Math.max(min, rounded)) / step) * step
+    onValueChange([parseFloat(clamped.toFixed(10))])
+    setIsEditing(false)
+    setHasError(false)
+  }, [editValue, min, max, step, onValueChange])
+
+  // Cancel editing
+  const cancelEditing = useCallback(() => {
+    setIsEditing(false)
+    setHasError(false)
+    setEditValue('')
+  }, [])
+
+  // Handle key events in the input
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      applyValue()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      cancelEditing()
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+      e.preventDefault()
+      incrementFn()
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+      e.preventDefault()
+      decrementFn()
+    }
+  }, [applyValue, cancelEditing, incrementFn, decrementFn])
+
+  // Validate on change
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newInput = e.target.value
+    setEditValue(newInput)
+    const num = parseFloat(newInput)
+    setHasError(newInput !== '' && (isNaN(num) || num < min || num > max))
+  }, [min, max])
+
+  const valueColorClasses = colorClass === 'bg-amber-500'
+    ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30'
+    : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+
   return (
     <div className="flex items-center gap-2">
       <Label className="text-[11px] font-medium text-muted-foreground whitespace-nowrap min-w-[56px]">
@@ -66,6 +137,10 @@ function SliderWithProgress({
           step={step}
           onValueChange={onValueChange}
           className="relative z-10"
+          aria-label={label}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
         />
         {/* Visual progress bar under slider */}
         <div className="absolute top-1/2 left-0 h-[3px] -translate-y-1/2 rounded-full pointer-events-none overflow-hidden" style={{ width: '100%' }}>
@@ -93,14 +168,56 @@ function SliderWithProgress({
           </TooltipContent>
         </Tooltip>
       </div>
-      <span className={cn(
-        "text-[11px] font-mono px-1.5 py-0.5 rounded-md min-w-[40px] text-center font-semibold shadow-sm tabular-nums",
-        colorClass === 'bg-amber-500'
-          ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30'
-          : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
-      )}>
-        {step < 1 ? value.toFixed(step < 0.1 ? 2 : 1) : value.toFixed(0)}
-      </span>
+      {/* Editable value display: click to type, Enter to apply, Escape to cancel */}
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="decimal"
+          value={editValue}
+          onChange={handleInputChange}
+          onKeyDown={handleInputKeyDown}
+          onBlur={() => {
+            // Apply on blur if valid, otherwise cancel
+            const num = parseFloat(editValue)
+            if (!isNaN(num) && num >= min && num <= max) {
+              applyValue()
+            } else {
+              cancelEditing()
+            }
+          }}
+          aria-label={`${label} 数值输入，范围 ${min} 到 ${max}`}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? `param-error-${label}` : undefined}
+          className={cn(
+            "text-[11px] font-mono px-1.5 py-0.5 rounded-md min-w-[40px] text-center font-semibold shadow-sm tabular-nums outline-none transition-colors",
+            "w-[52px]",
+            hasError
+              ? "border-2 border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+              : valueColorClasses + " border border-border/40"
+          )}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={startEditing}
+          className={cn(
+            "text-[11px] font-mono px-1.5 py-0.5 rounded-md min-w-[40px] text-center font-semibold shadow-sm tabular-nums cursor-text transition-colors",
+            valueColorClasses,
+            "hover:ring-1 hover:ring-emerald-400/50 dark:hover:ring-emerald-500/50"
+          )}
+          aria-label={`${label}: ${formatValue(value)}，点击编辑数值`}
+          title="点击输入精确数值"
+        >
+          {formatValue(value)}
+        </button>
+      )}
+      {/* Error hint for screen readers */}
+      {hasError && (
+        <span id={`param-error-${label}`} className="sr-only" role="alert">
+          数值超出范围，请输入 {min} 到 {max} 之间的值
+        </span>
+      )}
     </div>
   )
 }
