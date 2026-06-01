@@ -1056,3 +1056,188 @@ Stage Summary:
 - **Keyboard shortcut F**: Toggles favorite for current mode, listed in shortcuts dialog.
 - **Section progress indicators**: Thin 2px progress bar per section, visited/total count in badge, green checkmark when all visited.
 - All lint checks pass, dev server compiles
+
+---
+Task ID: 6-b
+Agent: Animation Timeline Agent
+Task: Add step-by-step animation timeline for concept modes (step1-step4)
+
+Work Log:
+- Read worklog.md to understand project status (36+ existing modes, stable)
+- Read viewport.tsx, page.tsx, lab-store.ts to understand current code structure
+- Created `/src/components/lab/animation-timeline.tsx`:
+  - 4 connected step nodes: 区域划分 → 网格划分 → 方柱近似 → 取极限
+  - Horizontal timeline with 24px circle nodes and 2px connector lines
+  - Completed steps show emerald fill with checkmark icon
+  - Current step highlighted with ring-2 emerald ring and step icon
+  - Pending steps show muted circle with number
+  - In-progress connector line animates from 0→100% during 4-second intervals
+  - "播放"/"暂停" button with Play/Pause icons, emerald accent styling
+  - Auto-play: steps through step1→step2→step3→step4 at 4-second intervals
+  - Stops at step4 (end), or pauses on button click
+  - Clicking a step node navigates to that mode (only when not playing)
+  - If at last step and play is pressed, restarts from step1
+  - Only visible when mode is one of step1-step4
+  - Slide-up animation on appearance
+  - Semi-transparent background with backdrop blur
+  - Emerald gradient border on top
+  - Custom event listener ('timeline-toggle-play') for keyboard shortcut integration
+  - Uses `effectivePlaying` derived state to avoid setState-in-effect lint errors
+  - Progress tracking via ref-based approach with requestAnimationFrame
+  - Properly cleans up timers on unmount or mode change
+- Modified `/src/components/lab/viewport.tsx`:
+  - Added AnimationTimeline import
+  - Rendered <AnimationTimeline /> at bottom of viewport (above controls hint)
+  - z-20 positioning ensures it's above canvas overlays
+  - pointer-events: auto only on timeline container
+- Modified `/src/app/page.tsx`:
+  - Added 'p'/'P' keyboard shortcut case in handleKeyDown
+  - Dispatches 'timeline-toggle-play' custom event to control timeline playback
+  - Added ['P', '播放/暂停概念步骤动画'] to ShortcutsDialog shortcuts array
+  - Keyboard shortcuts now total 10 (↑↓←→, R, T, F, Space, D, S, P, ?)
+- Fixed lint errors:
+  - Avoided setState synchronously within useEffect (3 errors)
+  - Used derived `effectivePlaying` state instead of setState-in-effect for concept mode check
+  - Used requestAnimationFrame for progress reset instead of direct setState in effect
+  - Ref-based tracking for mode/playing changes
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **Animation timeline feature complete**: Horizontal step-by-step walkthrough for concept modes
+- **Auto-play**: step1→step2→step3→step4 at 4-second intervals with progress animation
+- **Interactive navigation**: Click any step node to jump to that mode
+- **Keyboard shortcut**: P key to play/pause animation timeline
+- **Visual design**: Emerald-themed, semi-transparent with backdrop blur, compact layout
+- **Lint clean**: Zero errors, all setState-in-effect patterns resolved
+
+---
+Task ID: 6-a
+Agent: New Modes Agent
+Task: Add fourier1 and vector_field1 visualization modes
+
+Work Log:
+- Read worklog.md to understand project status (36 existing modes including gradient1, spherical1, laplace1)
+- Confirmed `fourier1` and `vector_field1` already existed in lab-store.ts LabMode type and modeInfo entries
+- Added `FourierScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Target function f(x) = sign(sin(x)) as a red curve on the xz-plane (y=0)
+  - Fourier approximation S_N(x) as a blue curve at y=0.3 offset for visibility
+  - First 5 individual harmonics (odd n) as colored curves at different y-levels
+  - Gibbs phenomenon vertical lines at x=0, ±π
+  - Html overlay with N, L² error, key coefficients (bn = 4/(nπ))
+  - AutoRotate for dynamic viewing
+- Added `VectorFieldScene` component in `src/components/lab/scene-renderer.tsx`:
+  - 10×10 grid of vector field arrows for F=(-y/2, x/2), colored by magnitude (green→red)
+  - Path C: r(t) = (2t, a·sin(πt)) in amber
+  - 6 red direction cones along C showing orientation
+  - 8 amber tangential component lines showing F·T
+  - Green fill under path showing "work" area
+  - Path endpoint spheres (green start, red end)
+  - Html overlay with line integral value, path length
+  - AutoRotate for dynamic viewing
+- Fixed naming conflict: renamed `AutoRotate` import from drei to `DreiAutoRotate` to avoid collision with custom AutoRotate function at line 1782
+- Used `useCallback` for path functions (pY, pDy) to satisfy React Compiler memoization requirements
+- Added "傅里叶级数与逼近" section in sidebar with Activity icon and warm (orange) color
+- Added "向量场与线积分" section in sidebar with Wind icon and teal color
+- Added `warm` colorMap entry in sidebar
+- Added 'fourier1' and 'vector_field1' to allModes array in page.tsx
+- Added camera presets [6,8,4] fov 50 for both modes in viewport.tsx
+- Added orange-to-amber gradient background for fourier1, teal-to-emerald for vector_field1
+- Added bg-orange-500 accent for fourier1, bg-teal-500 for vector_field1 in viewport.tsx
+- Added fourier1 and vector_field1 computed values cases in use-computed-values.ts:
+  - fourier1: L² error computation, Gibbs overshoot reference
+  - vector_field1: Line integral numerical computation, path length
+- Added fourier1 and vector_field1 to allModes in scene-error-boundary.tsx
+- Added '傅里叶级数与逼近' and '向量场与线积分' section colors and section modes in info-panel.tsx
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **38 visualization modes** (was 36)
+- **fourier1**: Fourier series approximation with target curve, approximation curve, individual harmonics, Gibbs phenomenon visualization, L² error display
+- **vector_field1**: Vector field line integral with 10×10 arrow grid, curved path with adjustable curvature, direction cones, tangential components, work area fill
+- Both scenes use AutoRotate for dynamic viewing
+- Both new sections have proper color themes (warm/orange for Fourier, teal for vector field)
+
+---
+## 项目当前状态 (2026-06-01 更新 - 第六轮)
+
+### 项目概况
+- **名称**: 二重积分全功能互动实验室 (Double Integral Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 38个
+
+### 全部38个可视化模式
+1. **概念理解 (4)**: step1-step4 — 区域划分、网格划分、方柱近似、取极限
+2. **基本性质 (7)**: prop1-prop7 — 常数倍、加减、区域可加、常函数、比较、估值、中值
+3. **奇偶性 (2)**: parity1-parity2 — 奇函数/偶函数积分
+4. **直角坐标 (2)**: cartesian1-cartesian2 — X型/Y型区域
+5. **极坐标 (2)**: polar1-polar2 — 极坐标区域、黎曼和
+6. **矩形近似 (1)**: rect_approx — 一维矩形近似
+7. **球柱相交 (2)**: sphere_cyl1-sphere_cyl2 — Viviani体、截面法
+8. **收敛演示 (2)**: convergence1-convergence2 — 收敛动画、误差分析
+9. **三重积分 (1)**: triple1 — 体积分可视化
+10. **变量代换 (1)**: jacobian1 — 雅可比行列式
+11. **格林公式 (1)**: green1 — 线积分与面积分
+12. **曲面面积 (1)**: surface_area1 — 曲面面积计算
+13. **富比尼定理 (1)**: fubini1 — 累次积分等价性
+14. **斯托克斯定理 (1)**: stokes1 — 环量与旋度通量
+15. **高斯散度定理 (1)**: divergence1 — 通量与散度积分
+16. **弧长与曲线积分 (1)**: arc_length1 — 弧长近似与精确计算
+17. **质心与转动惯量 (2)**: mass_center1, moment_of_inertia1 — 质心计算、转动惯量
+18. **柱坐标系 (1)**: cylindrical1 — 柱坐标体积元素与积分
+19. **梯度场与方向导数 (1)**: gradient1 — 梯度向量场与方向导数
+20. **球坐标系计算 (1)**: spherical1 — 球坐标体积元素与积分
+21. **拉普拉斯方程 (1)**: laplace1 — 调和函数与拉普拉斯算子
+22. **傅里叶级数与逼近 (1)**: fourier1 — 傅里叶级数逼近 (NEW)
+23. **向量场与线积分 (1)**: vector_field1 — 向量场线积分 (NEW)
+
+### 功能特性
+- ✅ 38个交互式3D可视化模式
+- ✅ 实时参数调整（滑块 + +/-按钮）
+- ✅ KaTeX数学公式渲染
+- ✅ 数值计算（近似值、精确值、误差）
+- ✅ 截图导出（Camera按钮 + S快捷键 + Toast反馈）
+- ✅ 深色/浅色模式切换
+- ✅ 键盘快捷键（↑↓←→, R, T, Space, D, S, F, P, ?）
+- ✅ 自动导览模式（按T）
+- ✅ 进度追踪（已探索模式数 + 分区进度条）
+- ✅ 响应式设计（移动端侧边栏抽屉）
+- ✅ 彩色分区（23种颜色主题）
+- ✅ Toast通知系统
+- ✅ 全屏模式切换
+- ✅ 相机重置按钮
+- ✅ 侧边栏折叠/展开 + 搜索过滤
+- ✅ 信息面板关联模式导航
+- ✅ 控制面板进度条
+- ✅ 场景错误边界
+- ✅ 首次访问引导提示
+- ✅ 微动画效果（浮动、滑入、渐变等）
+- ✅ 自定义滚动条样式
+- ✅ 3D悬停提示框 (5个场景)
+- ✅ 收藏夹功能 (localStorage持久化)
+- ✅ 模式切换过渡动画
+- ✅ 概念步骤动画时间线 (NEW)
+- ✅ 侧边栏星标按钮hover才显示 (NEW)
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ QA测试: 所有38个模式通过测试，零错误
+2. ✅ 修复Bug: 侧边栏星标按钮重叠 → 仅hover显示（opacity-0 → group-hover:opacity-100），增加z-10
+3. ✅ 新增模式: fourier1 (傅里叶级数逼近)、vector_field1 (向量场线积分)
+4. ✅ 新增功能: 概念步骤动画时间线（4步动画播放，P快捷键）
+5. ✅ 38个模式全部可渲染，无控制台错误
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **性能优化**: 使用InstancedMesh替代大量独立mesh（polar2、convergence2、triple1模式）
+2. **动画增强**: 为更多模式添加逐步动画讲解（如prop系列、极坐标模式）
+3. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
+4. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
+5. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
+6. **更多数学模式**: 保角映射、复变函数积分、曲率可视化
+7. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer
+- All lint checks pass, dev server compiles

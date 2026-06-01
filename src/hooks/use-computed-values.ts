@@ -447,6 +447,64 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'fourier1': {
+        const N = Math.round(paramValue)
+        // Compute L² error for Fourier approximation of square wave
+        let sumSq = 0
+        const res = 500
+        for (let i = 0; i <= res; i++) {
+          const x = -Math.PI + (2 * Math.PI * i) / res
+          const target = Math.sign(Math.sin(x))
+          let approx = 0
+          for (let n = 1; n <= N; n++) {
+            const bn = n % 2 === 1 ? 4 / (n * Math.PI) : 0
+            approx += bn * Math.sin(n * x)
+          }
+          const diff = target - approx
+          sumSq += diff * diff
+        }
+        const l2Error = Math.sqrt(sumSq / res)
+        // Max overshoot at Gibbs phenomenon ≈ 0.0895 (9% of jump height 2)
+        return {
+          mainValue: formatValue(l2Error),
+          approxValue: `N=${N} 项`,
+          exactValue: 'Gibbs过冲 ≈ 0.0895',
+          error: formatValue(l2Error),
+          label: `L²误差 (N=${N})`,
+        }
+      }
+
+      case 'vector_field1': {
+        const a = paramValue
+        // Compute line integral numerically for F=(-y/2, x/2) along r(t)=(2t, a·sin(πt))
+        let integral = 0
+        const intRes = 1000
+        for (let i = 0; i < intRes; i++) {
+          const t = (i + 0.5) / intRes
+          const x = 2 * t
+          const y = a * Math.sin(Math.PI * t)
+          const dx = 2 / intRes
+          const dy = a * Math.PI * Math.cos(Math.PI * t) / intRes
+          integral += (-y / 2) * dx + (x / 2) * dy
+        }
+        // Path length
+        let pathLen = 0
+        for (let i = 0; i < intRes; i++) {
+          const t1 = i / intRes
+          const t2 = (i + 1) / intRes
+          const dx = 2 * (t2 - t1)
+          const dy = a * Math.sin(Math.PI * t2) - a * Math.sin(Math.PI * t1)
+          pathLen += Math.sqrt(dx * dx + dy * dy)
+        }
+        return {
+          mainValue: formatValue(integral),
+          approxValue: `路径长度: ${formatValue(pathLen)}`,
+          exactValue: `∫C F·dr`,
+          error: formatValue(Math.abs(integral)),
+          label: `线积分值 = ${formatValue(integral)}`,
+        }
+      }
+
       default:
         return null
     }

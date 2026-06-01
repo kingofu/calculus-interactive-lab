@@ -52,6 +52,8 @@ import {
   Waves,
   Star,
   Check,
+  Activity,
+  Wind,
 } from 'lucide-react'
 
 const sections = [
@@ -259,6 +261,24 @@ const sections = [
       { mode: 'laplace1' as LabMode, label: '拉普拉斯算子', icon: Waves },
     ],
   },
+  {
+    title: '傅里叶级数与逼近',
+    subtitle: '傅里叶级数展开与近似',
+    icon: Activity,
+    color: 'warm',
+    modes: [
+      { mode: 'fourier1' as LabMode, label: '傅里叶级数逼近', icon: Activity },
+    ],
+  },
+  {
+    title: '向量场与线积分',
+    subtitle: '向量场线积分计算',
+    icon: Wind,
+    color: 'teal',
+    modes: [
+      { mode: 'vector_field1' as LabMode, label: '向量场线积分', icon: Wind },
+    ],
+  },
 ]
 
 // Color map for section accent
@@ -398,6 +418,14 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-slate-500',
     badge: 'bg-slate-200/60 dark:bg-slate-800/40',
     badgeText: 'text-slate-700 dark:text-slate-300',
+  },
+  warm: {
+    activeBg: 'bg-orange-100 dark:bg-orange-900/40',
+    activeText: 'text-orange-800 dark:text-orange-300',
+    border: 'before:bg-orange-500',
+    dot: 'bg-orange-500',
+    badge: 'bg-orange-200/60 dark:bg-orange-800/40',
+    badgeText: 'text-orange-700 dark:text-orange-300',
   },
 }
 
@@ -739,7 +767,7 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                           variant="ghost"
                           size="sm"
                           className={cn(
-                            'w-full justify-start gap-2 text-xs h-7 px-2 pr-7 transition-all relative group',
+                            'w-full justify-start gap-2 text-xs h-7 px-2 pr-8 transition-all relative group',
                             isActive
                               ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
                               : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -761,10 +789,10 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                             <button
                               type="button"
                               className={cn(
-                                "absolute right-1.5 top-1/2 -translate-y-1/2 h-4 w-4 flex items-center justify-center rounded-full transition-all active:scale-75",
+                                "absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full transition-all active:scale-75 z-10",
                                 isFavorited
                                   ? 'text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40'
-                                  : 'text-muted-foreground/20 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                  : 'opacity-0 group-hover:opacity-100 text-muted-foreground/30 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                               )}
                               onClick={(e) => {
                                 e.stopPropagation()

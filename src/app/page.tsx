@@ -50,6 +50,7 @@ const allModes: LabMode[] = [
   'arc_length1', 'mass_center1',
   'moment_of_inertia1', 'cylindrical1',
   'gradient1', 'spherical1', 'laplace1',
+  'fourier1', 'vector_field1',
 ]
 
 function ThemeToggle() {
@@ -97,6 +98,7 @@ function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void
             ['Space', '展开/收起详情面板'],
             ['D', '切换深色/浅色模式'],
             ['S', '截图保存3D视图'],
+            ['P', '播放/暂停概念步骤动画'],
             ['?', '显示快捷键帮助'],
           ].map(([key, desc]) => (
             <div key={key} className="flex items-center justify-between gap-4 py-0.5">
@@ -231,6 +233,11 @@ function HomeContent() {
       case 'f':
       case 'F': {
         toggleFavorite(mode)
+        break
+      }
+      case 'p':
+      case 'P': {
+        window.dispatchEvent(new CustomEvent('timeline-toggle-play'))
         break
       }
       case '?': {

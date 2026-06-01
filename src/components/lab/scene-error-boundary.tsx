@@ -33,6 +33,7 @@ const allModes: LabMode[] = [
   'arc_length1', 'mass_center1',
   'moment_of_inertia1', 'cylindrical1',
   'gradient1', 'spherical1', 'laplace1',
+  'fourier1', 'vector_field1',
 ]
 
 export class SceneErrorBoundary extends Component<Props, State> {

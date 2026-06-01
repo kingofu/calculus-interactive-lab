@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useCallback, useState } from 'react'
 import { useFrame, ThreeEvent } from '@react-three/fiber'
-import { Text, Html } from '@react-three/drei'
+import { Text, Html, AutoRotate as DreiAutoRotate } from '@react-three/drei'
 import * as THREE from 'three'
 import { useLabStore } from '@/store/lab-store'
 import {
@@ -3584,6 +3584,14 @@ export function SceneRenderer() {
       {mode === 'laplace1' && (
         <LaplaceScene />
       )}
+
+      {mode === 'fourier1' && (
+        <FourierScene />
+      )}
+
+      {mode === 'vector_field1' && (
+        <VectorFieldScene />
+      )}
     </>
   )
 }
@@ -4618,6 +4626,488 @@ function LaplaceScene() {
           </div>
           <div className="text-slate-500 dark:text-slate-400">
             f(x,y)值域: [{(-a).toFixed(1)}, {(a * maxCoshY).toFixed(2)}]
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Fourier Series Scene (fourier1) ---
+function FourierScene() {
+  const { paramValue } = useLabStore()
+  const N = Math.round(paramValue)
+
+  // Target function: square wave f(x) = sign(sin(x))
+  const targetFunc = (x: number) => Math.sign(Math.sin(x))
+
+  // Fourier coefficients for square wave
+  // a0 = 0, an = 0, bn = 4/(nπ) for odd n, 0 for even n
+  const fourierApprox = useCallback((x: number, numTerms: number) => {
+    let sum = 0
+    for (let n = 1; n <= numTerms; n++) {
+      const bn = n % 2 === 1 ? 4 / (n * Math.PI) : 0
+      sum += bn * Math.sin(n * x)
+    }
+    return sum
+  }, [])
+
+  // Generate curve points
+  const xRange = [-Math.PI, Math.PI]
+  const resolution = 200
+
+  // Target curve (red) - on xz-plane at y=0
+  const targetPoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 0; i <= resolution; i++) {
+      const x = xRange[0] + (xRange[1] - xRange[0]) * (i / resolution)
+      const z = targetFunc(x)
+      pts.push(x, 0, z)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // Fourier approximation curve (blue) - at y=0.3 offset for visibility
+  const approxPoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 0; i <= resolution; i++) {
+      const x = xRange[0] + (xRange[1] - xRange[0]) * (i / resolution)
+      const z = fourierApprox(x, N)
+      pts.push(x, 0.3, z)
+    }
+    return new Float32Array(pts)
+  }, [N, fourierApprox])
+
+  // Harmonic curves - first 5 individual harmonics at different y-levels
+  const harmonicCurves = useMemo(() => {
+    const curves: { pts: Float32Array; color: string; label: string; yLevel: number }[] = []
+    const numHarmonics = Math.min(5, N)
+    const colors = ['#22c55e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899']
+    for (let h = 0; h < numHarmonics; h++) {
+      const n = h * 2 + 1 // odd harmonics only for square wave
+      const yLevel = -0.3 * (h + 1)
+      const pts: number[] = []
+      for (let i = 0; i <= resolution; i++) {
+        const x = xRange[0] + (xRange[1] - xRange[0]) * (i / resolution)
+        const bn = 4 / (n * Math.PI)
+        const z = bn * Math.sin(n * x)
+        pts.push(x, yLevel, z)
+      }
+      curves.push({
+        pts: new Float32Array(pts),
+        color: colors[h % colors.length],
+        label: `n=${n}`,
+        yLevel,
+      })
+    }
+    return curves
+  }, [N])
+
+  // Gibbs phenomenon vertical lines at x=0, ±π
+  const gibbsLines = useMemo(() => {
+    const lines: { x: number; z1: number; z2: number }[] = []
+    for (const xPos of [0, Math.PI, -Math.PI]) {
+      const approxVal = fourierApprox(xPos + 0.001, N)
+      lines.push({ x: xPos, z1: -1.2, z2: approxVal })
+    }
+    return lines
+  }, [N, fourierApprox])
+
+  // L² error computation
+  const l2Error = useMemo(() => {
+    let sumSq = 0
+    const res = 500
+    for (let i = 0; i <= res; i++) {
+      const x = xRange[0] + (xRange[1] - xRange[0]) * (i / res)
+      const diff = targetFunc(x) - fourierApprox(x, N)
+      sumSq += diff * diff
+    }
+    return Math.sqrt(sumSq / res)
+  }, [N, fourierApprox])
+
+  // Key coefficients
+  const keyCoeffs = useMemo(() => {
+    const coeffs: string[] = []
+    for (let n = 1; n <= Math.min(N, 5); n++) {
+      if (n % 2 === 1) {
+        coeffs.push(`b${n}=${(4 / (n * Math.PI)).toFixed(3)}`)
+      }
+    }
+    return coeffs
+  }, [N])
+
+  return (
+    <AutoRotate speed={0.005}>
+      {/* Axis indicators for the xz-plane view */}
+      {/* x-axis */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([-4, 0, 0, 4, 0, 0]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" opacity={0.4} transparent />
+      </line>
+
+      {/* Target function curve (red) at y=0 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[targetPoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+
+      {/* Fourier approximation curve (blue) at y=0.3 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[approxPoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+
+      {/* Harmonic curves */}
+      {harmonicCurves.map((curve, idx) => (
+        <line key={`harm-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[curve.pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color={curve.color} opacity={0.7} transparent />
+        </line>
+      ))}
+
+      {/* Harmonic labels */}
+      {harmonicCurves.map((curve, idx) => (
+        <Text
+          key={`hlabel-${idx}`}
+          position={[xRange[1] + 0.3, curve.yLevel, 0]}
+          fontSize={0.18}
+          color={curve.color}
+          anchorX="left"
+        >
+          {curve.label}
+        </Text>
+      ))}
+
+      {/* Gibbs phenomenon vertical lines */}
+      {gibbsLines.map((line, idx) => (
+        <line key={`gibbs-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([line.x, 0.3, line.z1, line.x, 0.3, line.z2]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#ef4444" opacity={0.3} transparent linewidth={1} />
+        </line>
+      ))}
+
+      {/* Label: target vs approximation */}
+      <Text position={[xRange[1] + 0.3, 0, 0.5]} fontSize={0.18} color="#ef4444" anchorX="left">
+        目标函数
+      </Text>
+      <Text position={[xRange[1] + 0.3, 0.3, 0.5]} fontSize={0.18} color="#3b82f6" anchorX="left">
+        傅里叶近似
+      </Text>
+
+      {/* Vertical separators at ±π, 0 */}
+      {[0, Math.PI, -Math.PI].map((xPos, idx) => (
+        <line key={`sep-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([xPos, -2, -1.5, xPos, 0.5, -1.5]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#ef4444" opacity={0.2} transparent />
+        </line>
+      ))}
+
+      {/* Labels at separators */}
+      <Text position={[0, 0.6, -1.5]} fontSize={0.15} color="#ef4444" anchorX="center">
+        x=0
+      </Text>
+      <Text position={[Math.PI, 0.6, -1.5]} fontSize={0.15} color="#ef4444" anchorX="center">
+        x=π
+      </Text>
+      <Text position={[-Math.PI, 0.6, -1.5]} fontSize={0.15} color="#ef4444" anchorX="center">
+        x=-π
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, 2.2, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-orange-600 dark:text-orange-400 font-semibold mb-1">
+            傅里叶级数逼近 (N={N})
+          </div>
+          <div className="text-muted-foreground">
+            f(x) = sign(sin(x)) 方波函数
+          </div>
+          <div className="text-blue-600 dark:text-blue-400">
+            S(x) = Σ bn·sin(nx), bn = 4/(nπ) (n为奇数)
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            L²误差: {l2Error.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            系数: {keyCoeffs.join(', ')}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Vector Field Line Integral Scene (vector_field1) ---
+function VectorFieldScene() {
+  const { paramValue } = useLabStore()
+  const curvature = paramValue
+
+  // Path C: r(t) = (2t, a*sin(πt)), t in [0,1]
+  const pX = (t: number) => 2 * t
+  const pY = useCallback((t: number) => curvature * Math.sin(Math.PI * t), [curvature])
+  const pDx = useCallback(() => 2, [])
+  const pDy = useCallback((t: number) => curvature * Math.PI * Math.cos(Math.PI * t), [curvature])
+
+  // 10x10 grid of vector field arrows
+  const fieldArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number]; color: string; len: number }[] = []
+    const gridSize = 10
+    const range = [-2, 2]
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        const x = range[0] + (range[1] - range[0]) * ((i + 0.5) / gridSize)
+        const y = range[0] + (range[1] - range[0]) * ((j + 0.5) / gridSize)
+        const fx = -y / 2
+        const fy = x / 2
+        const mag = Math.sqrt(fx * fx + fy * fy)
+        const maxMag = 1.1
+        const normalizedMag = Math.min(mag / maxMag, 1)
+        // Color: green (short) → red (long)
+        const r = Math.round(normalizedMag * 220 + 35)
+        const g = Math.round((1 - normalizedMag) * 200 + 55)
+        const color = `rgb(${r}, ${g}, 50)`
+        const scale = 0.3
+        arrows.push({
+          pos: [x, 0, y],
+          dir: [fx * scale / mag, 0, fy * scale / mag],
+          color,
+          len: mag,
+        })
+      }
+    }
+    return arrows
+  }, [])
+
+  // Path curve points
+  const pathPoints = useMemo(() => {
+    const pts: number[] = []
+    const res = 100
+    for (let i = 0; i <= res; i++) {
+      const t = i / res
+      pts.push(pX(t), 0.05, pY(t))
+    }
+    return new Float32Array(pts)
+  }, [pY])
+
+  // Direction cones (6 red cones along C)
+  const directionCones = useMemo(() => {
+    const cones: { pos: [number, number, number]; rot: number }[] = []
+    for (let i = 0; i < 6; i++) {
+      const t = (i + 0.5) / 6
+      const x = pX(t)
+      const y = pY(t)
+      const dy = pDy(t)
+      const angle = Math.atan2(dy, 2)
+      cones.push({ pos: [x, 0.05, y], rot: -angle + Math.PI / 2 })
+    }
+    return cones
+  }, [pY, pDy])
+
+  // Tangential components at 8 points
+  const tangentialComponents = useMemo(() => {
+    const comps: { pos: [number, number, number]; dir: [number, number, number]; projLen: number }[] = []
+    for (let i = 0; i < 8; i++) {
+      const t = (i + 0.5) / 8
+      const x = pX(t)
+      const y = pY(t)
+      const dx = 2
+      const dy = pDy(t)
+      const tMag = Math.sqrt(dx * dx + dy * dy)
+      const tx = dx / tMag
+      const ty = dy / tMag
+      const fx = -y / 2
+      const fy = x / 2
+      const projLen = fx * tx + fy * ty
+      const scale = 0.3
+      comps.push({
+        pos: [x, 0.1, y],
+        dir: [projLen * tx * scale, 0, projLen * ty * scale],
+        projLen,
+      })
+    }
+    return comps
+  }, [pY, pDy])
+
+  // Compute line integral numerically
+  const lineIntegral = useMemo(() => {
+    let integral = 0
+    const res = 1000
+    for (let i = 0; i < res; i++) {
+      const t = (i + 0.5) / res
+      const x = pX(t)
+      const y = pY(t)
+      const dx = 2 / res
+      const dy = pDy(t) / res
+      integral += (-y / 2) * dx + (x / 2) * dy
+    }
+    return integral
+  }, [pY, pDy])
+
+  // Path length
+  const pathLength = useMemo(() => {
+    let len = 0
+    const res = 1000
+    for (let i = 0; i < res; i++) {
+      const t1 = i / res
+      const t2 = (i + 1) / res
+      const dx = pX(t2) - pX(t1)
+      const dy = pY(t2) - pY(t1)
+      len += Math.sqrt(dx * dx + dy * dy)
+    }
+    return len
+  }, [pY])
+
+  // Green fill under path (triangulated)
+  const fillGeom = useMemo(() => {
+    const shape = new THREE.Shape()
+    const res = 60
+    shape.moveTo(pX(0), pY(0))
+    for (let i = 1; i <= res; i++) {
+      const t = i / res
+      shape.lineTo(pX(t), pY(t))
+    }
+    shape.lineTo(pX(1), 0)
+    shape.lineTo(pX(0), 0)
+    shape.lineTo(pX(0), pY(0))
+    const geom = new THREE.ShapeGeometry(shape)
+    geom.rotateX(-Math.PI / 2)
+    geom.translate(0, -0.01, 0)
+    return geom
+  }, [pY])
+
+  return (
+    <AutoRotate speed={0.005}>
+      {/* Grid floor */}
+      <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[5, 5]} />
+        <meshPhongMaterial color="#e2e8f0" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Vector field arrows */}
+      {fieldArrows.map((arrow, idx) => (
+        <group key={`vf-${idx}`} position={arrow.pos}>
+          {/* Arrow shaft */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([0, 0, 0, arrow.dir[0], arrow.dir[1], arrow.dir[2]]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color={arrow.color} opacity={0.7} transparent />
+          </line>
+          {/* Arrow head (small cone) */}
+          <mesh
+            position={[arrow.dir[0], arrow.dir[1], arrow.dir[2]]}
+            rotation={[0, Math.atan2(arrow.dir[2], arrow.dir[0]), -Math.PI / 2]}
+          >
+            <coneGeometry args={[0.04, 0.1, 6]} />
+            <meshPhongMaterial color={arrow.color} transparent opacity={0.8} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Green fill under path (work area) */}
+      <mesh geometry={fillGeom}>
+        <meshPhongMaterial color="#22c55e" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Path C curve (amber) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[pathPoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+
+      {/* Direction cones (red) along C */}
+      {directionCones.map((cone, idx) => (
+        <mesh key={`cone-${idx}`} position={cone.pos} rotation={[0, cone.rot, 0]}>
+          <coneGeometry args={[0.08, 0.2, 6]} />
+          <meshPhongMaterial color="#ef4444" transparent opacity={0.8} />
+        </mesh>
+      ))}
+
+      {/* Tangential components (amber lines at 8 points) */}
+      {tangentialComponents.map((comp, idx) => (
+        <line key={`tang-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([
+                comp.pos[0], comp.pos[1], comp.pos[2],
+                comp.pos[0] + comp.dir[0], comp.pos[1] + comp.dir[1], comp.pos[2] + comp.dir[2]
+              ]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#f59e0b" opacity={0.8} transparent />
+        </line>
+      ))}
+
+      {/* Path endpoints */}
+      <mesh position={[pX(0), 0.05, pY(0)]}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshPhongMaterial color="#22c55e" />
+      </mesh>
+      <mesh position={[pX(1), 0.05, pY(1)]}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+
+      {/* Labels */}
+      <Text position={[pX(0) - 0.2, 0.3, pY(0)]} fontSize={0.15} color="#22c55e" anchorX="right">
+        起点
+      </Text>
+      <Text position={[pX(1) + 0.2, 0.3, pY(1)]} fontSize={0.15} color="#ef4444" anchorX="left">
+        终点
+      </Text>
+      <Text position={[1, 0.3, pY(0.5) + 0.5]} fontSize={0.15} color="#f59e0b" anchorX="center">
+        路径C
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, 2.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold mb-1">
+            向量场线积分
+          </div>
+          <div className="text-muted-foreground">
+            F = (-y/2, x/2)
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            ∫C F·dr = {lineIntegral.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            路径长度: {pathLength.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            弯曲度 a = {curvature.toFixed(1)}
           </div>
         </div>
       </Html>

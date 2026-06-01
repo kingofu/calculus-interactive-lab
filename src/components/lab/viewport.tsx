@@ -5,6 +5,7 @@ import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
 import { SceneErrorBoundary } from './scene-error-boundary'
 import { SceneTooltip } from './scene-tooltip'
+import { AnimationTimeline } from './animation-timeline'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
@@ -43,6 +44,8 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'gradient1':
     case 'spherical1':
     case 'laplace1':
+    case 'fourier1':
+    case 'vector_field1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -114,6 +117,12 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'laplace1') {
     return 'from-slate-50 to-zinc-50 dark:from-slate-900/50 dark:to-zinc-900/30'
   }
+  if (mode === 'fourier1') {
+    return 'from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20'
+  }
+  if (mode === 'vector_field1') {
+    return 'from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -140,6 +149,8 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'gradient1') return 'bg-yellow-500'
   if (mode === 'spherical1') return 'bg-green-500'
   if (mode === 'laplace1') return 'bg-slate-500'
+  if (mode === 'fourier1') return 'bg-orange-500'
+  if (mode === 'vector_field1') return 'bg-teal-500'
   return 'bg-slate-500'
 }
 
@@ -275,6 +286,9 @@ export function Viewport() {
           <TooltipContent side="bottom" className="text-xs">截图保存 (S)</TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Animation timeline for concept modes (step1-step4) */}
+      <AnimationTimeline />
 
       {/* Controls hint */}
       <div className="absolute bottom-2 right-2 z-10 pointer-events-none">

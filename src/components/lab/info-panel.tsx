@@ -176,6 +176,22 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-slate-50/50 via-muted/30 to-zinc-50/50 dark:from-slate-950/20 dark:via-muted/20 dark:to-zinc-950/20',
     computedBorder: 'border-slate-200/40 dark:border-slate-800/30',
   },
+  '傅里叶级数与逼近': {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    text: 'text-orange-800 dark:text-orange-300',
+    border: 'border-0',
+    glow: 'shadow-orange-500/20',
+    computedBg: 'from-orange-50/50 via-muted/30 to-amber-50/50 dark:from-orange-950/20 dark:via-muted/20 dark:to-amber-950/20',
+    computedBorder: 'border-orange-200/40 dark:border-orange-800/30',
+  },
+  '向量场与线积分': {
+    bg: 'bg-teal-100 dark:bg-teal-900/40',
+    text: 'text-teal-800 dark:text-teal-300',
+    border: 'border-0',
+    glow: 'shadow-teal-500/20',
+    computedBg: 'from-teal-50/50 via-muted/30 to-emerald-50/50 dark:from-teal-950/20 dark:via-muted/20 dark:to-emerald-950/20',
+    computedBorder: 'border-teal-200/40 dark:border-teal-800/30',
+  },
 }
 
 // Get the section color config, fallback to emerald
@@ -206,6 +222,8 @@ const sectionModes: Record<string, LabMode[]> = {
   '梯度场与方向导数': ['gradient1'],
   '球坐标系计算': ['spherical1'],
   '拉普拉斯方程': ['laplace1'],
+  '傅里叶级数与逼近': ['fourier1'],
+  '向量场与线积分': ['vector_field1'],
 }
 
 export function InfoPanel() {

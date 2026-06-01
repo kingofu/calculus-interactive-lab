@@ -17,6 +17,7 @@ export type LabMode =
   | 'arc_length1' | 'mass_center1'
   | 'moment_of_inertia1' | 'cylindrical1'
   | 'gradient1' | 'spherical1' | 'laplace1'
+  | 'fourier1' | 'vector_field1'
 
 export interface TooltipData {
   content: string
@@ -421,5 +422,21 @@ export const modeInfo: Record<LabMode, {
     description: '调和函数满足拉普拉斯方程Δf=0，即函数在某点的值等于其邻域的平均值。图中展示调和函数z=cos(x)·cosh(y)的曲面及其拉普拉斯算子的值。在调和函数上Δf=0，曲面的平均曲率性质体现为"没有局部极值"的特点。调整参数观察不同调和函数。',
     paramLabel: '振幅系数',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  fourier1: {
+    title: '傅里叶级数逼近',
+    section: '傅里叶级数与逼近',
+    math: 'f(x) = \\frac{a_0}{2} + \\sum_{n=1}^{N} \\left(a_n \\cos nx + b_n \\sin nx\\right)',
+    description: '傅里叶级数将周期函数分解为正弦和余弦函数的叠加。随着项数N增加，部分和逐渐逼近原函数。图中展示目标函数（红色）和傅里叶级数部分和（蓝色），下方显示各阶分量。调整参数观察逼近精度随N的变化。',
+    paramLabel: '逼近项数 N',
+    paramMin: 1, paramMax: 20, paramStep: 1, paramDefault: 5,
+  },
+  vector_field1: {
+    title: '向量场线积分',
+    section: '向量场与线积分',
+    math: '\\int_C \\mathbf{F} \\cdot d\\mathbf{r} = \\int_C (P\\,dx + Q\\,dy)',
+    description: '向量场的线积分计算力场沿路径所做的功。图中展示向量场F=(P,Q)和积分路径C，箭头表示场方向，颜色表示场的大小。线积分值等于路径上F·dr的总和。调整参数观察不同路径和场的变化。',
+    paramLabel: '路径弯曲度',
+    paramMin: 0, paramMax: 2, paramStep: 0.1, paramDefault: 1,
   },
 }
