@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLabStore, type LabMode, modeInfo } from '@/store/lab-store'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,9 @@ import {
   Sigma,
   Puzzle,
   Orbit,
+  Waypoints,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 
 const sections = [
@@ -141,6 +144,15 @@ const sections = [
       { mode: 'jacobian1' as LabMode, label: '变量代换', icon: RefreshCw },
     ],
   },
+  {
+    title: '格林公式',
+    subtitle: '线积分与面积分的关系',
+    icon: Waypoints,
+    color: 'red',
+    modes: [
+      { mode: 'green1' as LabMode, label: '格林公式', icon: Waypoints },
+    ],
+  },
 ]
 
 // Color map for section accent
@@ -205,6 +217,12 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     border: 'before:bg-lime-500',
     dot: 'bg-lime-500',
   },
+  red: {
+    activeBg: 'bg-red-100 dark:bg-red-900/40',
+    activeText: 'text-red-800 dark:text-red-300',
+    border: 'before:bg-red-500',
+    dot: 'bg-red-500',
+  },
 }
 
 interface SidebarProps {
@@ -215,6 +233,7 @@ interface SidebarProps {
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const { mode, setMode } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
 
   // Auto-scroll to active mode when it changes
   useEffect(() => {
@@ -223,68 +242,105 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     }
   }, [mode])
 
+  const toggleSection = useCallback((title: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(title)) {
+        next.delete(title)
+      } else {
+        next.add(title)
+      }
+      return next
+    })
+  }, [])
+
+  // Check if a section contains the active mode
+  const isSectionActive = (section: typeof sections[number]) =>
+    section.modes.some(m => m.mode === mode)
+
+  // A section should be expanded if it contains the active mode or is not collapsed
+  const isSectionExpanded = (section: typeof sections[number]) =>
+    isSectionActive(section) || !collapsedSections.has(section.title)
+
   return (
     <ScrollArea className={cn('h-full', className)}>
       <div className="p-2 space-y-2">
         {sections.map((section) => {
           const colors = colorMap[section.color] || colorMap.emerald
           const SectionIcon = section.icon
-          const isSectionActive = section.modes.some(m => m.mode === mode)
+          const sectionActive = isSectionActive(section)
+          const expanded = isSectionExpanded(section)
 
           return (
             <div key={section.title}>
-              {/* Section header */}
-              <div className={cn(
-                "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",
-                isSectionActive ? colors.activeBg + ' ' + colors.activeText : ''
-              )}>
-                <div className={cn("w-1.5 h-1.5 rounded-full", isSectionActive ? colors.dot : 'bg-muted-foreground/30')} />
-                <SectionIcon className={cn("h-3 w-3", isSectionActive ? '' : 'text-muted-foreground')} />
-                <div className="flex-1 min-w-0">
+              {/* Section header - clickable to toggle collapse */}
+              <button
+                type="button"
+                className={cn(
+                  "w-full flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors cursor-pointer",
+                  sectionActive ? colors.activeBg + ' ' + colors.activeText : 'hover:bg-accent/50'
+                )}
+                onClick={() => toggleSection(section.title)}
+              >
+                <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", sectionActive ? colors.dot : 'bg-muted-foreground/30')} />
+                <SectionIcon className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground')} />
+                <div className="flex-1 min-w-0 text-left">
                   <h3 className={cn(
                     "text-[10px] font-semibold leading-none",
-                    isSectionActive ? '' : 'text-muted-foreground'
+                    sectionActive ? '' : 'text-muted-foreground'
                   )}>
                     {section.title}
                   </h3>
                   <p className={cn(
                     "text-[8px] leading-none mt-0.5 truncate",
-                    isSectionActive ? 'opacity-70' : 'text-muted-foreground/50'
+                    sectionActive ? 'opacity-70' : 'text-muted-foreground/50'
                   )}>
                     {section.subtitle}
                   </p>
                 </div>
-              </div>
+                {expanded ? (
+                  <ChevronDown className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground/50')} />
+                ) : (
+                  <ChevronRight className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground/50')} />
+                )}
+              </button>
 
-              {/* Mode buttons */}
-              <div className="space-y-0.5 mt-0.5">
-                {section.modes.map(({ mode: m, label, icon: Icon }) => {
-                  const isActive = mode === m
-                  return (
-                    <Button
-                      key={m}
-                      ref={isActive ? activeRef : undefined}
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'w-full justify-start gap-2 text-xs h-7 px-2 transition-all relative group',
-                        isActive
-                          ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                      )}
-                      onClick={() => {
-                        setMode(m)
-                        onModeSelect?.()
-                      }}
-                    >
-                      <Icon className={cn(
-                        "h-3.5 w-3.5 shrink-0 transition-colors",
-                        isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
-                      )} />
-                      <span className="truncate">{label}</span>
-                    </Button>
-                  )
-                })}
+              {/* Mode buttons - collapsible */}
+              <div
+                className={cn(
+                  "overflow-hidden transition-all duration-200 ease-in-out",
+                  expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                )}
+              >
+                <div className="space-y-0.5 mt-0.5">
+                  {section.modes.map(({ mode: m, label, icon: Icon }) => {
+                    const isActive = mode === m
+                    return (
+                      <Button
+                        key={m}
+                        ref={isActive ? activeRef : undefined}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          'w-full justify-start gap-2 text-xs h-7 px-2 transition-all relative group',
+                          isActive
+                            ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        )}
+                        onClick={() => {
+                          setMode(m)
+                          onModeSelect?.()
+                        }}
+                      >
+                        <Icon className={cn(
+                          "h-3.5 w-3.5 shrink-0 transition-colors",
+                          isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
+                        )} />
+                        <span className="truncate">{label}</span>
+                      </Button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )

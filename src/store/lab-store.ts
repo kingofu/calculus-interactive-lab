@@ -11,6 +11,7 @@ export type LabMode =
   | 'convergence1' | 'convergence2'
   | 'triple1'
   | 'jacobian1'
+  | 'green1'
 
 interface LabState {
   mode: LabMode
@@ -259,5 +260,13 @@ export const modeInfo: Record<LabMode, {
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
     paramLabel2: '旋转角度',
     paramMin2: 0, paramMax2: 1.57, paramStep2: 0.05, paramDefault2: 0,
+  },
+  green1: {
+    title: '格林公式',
+    section: '格林公式与线积分',
+    math: '\\oint_C (P\\,dx + Q\\,dy) = \\iint_D \\left(\\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y}\\right)dxdy',
+    description: '格林公式将沿闭曲线 C 的线积分与 C 所围区域 D 上的二重积分联系起来。图中展示闭曲线 C（红色箭头表示逆时针方向），区域 D（绿色填充），以及向量场 (P,Q) 沿边界曲线的流动。拖动参数改变曲线形状，观察线积分与面积分的等价关系。',
+    paramLabel: '区域变形',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
   },
 }

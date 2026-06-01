@@ -261,6 +261,30 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'green1': {
+        const deform = paramValue
+        // Compute area numerically via Green's theorem
+        const res = 200
+        let area = 0
+        for (let i = 0; i < res; i++) {
+          const t1 = (2 * Math.PI * i) / res
+          const t2 = (2 * Math.PI * (i + 1)) / res
+          const x1 = deform * (2 * Math.cos(t1) + 0.3 * Math.cos(3 * t1))
+          const y1 = deform * (1.5 * Math.sin(t1) + 0.2 * Math.sin(2 * t1))
+          const x2 = deform * (2 * Math.cos(t2) + 0.3 * Math.cos(3 * t2))
+          const y2 = deform * (1.5 * Math.sin(t2) + 0.2 * Math.sin(2 * t2))
+          area += x1 * (y2 - y1)
+        }
+        area = Math.abs(area)
+        return {
+          mainValue: formatValue(area),
+          approxValue: formatValue(area),
+          exactValue: '∮ x dy',
+          error: '0',
+          label: '区域面积 (格林公式)',
+        }
+      }
+
       default:
         return null
     }

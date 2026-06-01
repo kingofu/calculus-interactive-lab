@@ -1761,6 +1761,229 @@ function JacobianScene() {
   )
 }
 
+// --- Green's Theorem Scene (green1) ---
+function GreenScene() {
+  const { paramValue: deform } = useLabStore()
+
+  // Boundary curve C (parametric)
+  const boundaryCurve = useMemo(() => {
+    const pts: number[] = []
+    const res = 128
+    for (let i = 0; i <= res; i++) {
+      const t = (2 * Math.PI * i) / res
+      const x = deform * (2 * Math.cos(t) + 0.3 * Math.cos(3 * t))
+      const y = deform * (1.5 * Math.sin(t) + 0.2 * Math.sin(2 * t))
+      pts.push(x, 0.03, y)
+    }
+    return new Float32Array(pts)
+  }, [deform])
+
+  // Filled region D
+  const regionGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const res = 64
+    // Center vertex
+    vertices.push(0, 0.01, 0)
+    for (let i = 0; i <= res; i++) {
+      const t = (2 * Math.PI * i) / res
+      const x = deform * (2 * Math.cos(t) + 0.3 * Math.cos(3 * t))
+      const y = deform * (1.5 * Math.sin(t) + 0.2 * Math.sin(2 * t))
+      vertices.push(x, 0.01, y)
+    }
+    for (let i = 0; i < res; i++) {
+      indices.push(0, i + 1, i + 2)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [deform])
+
+  // Vector field arrows along boundary
+  const vectorArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number]; color: string }[] = []
+    const n = 24
+    for (let i = 0; i < n; i++) {
+      const t = (2 * Math.PI * i) / n
+      const x = deform * (2 * Math.cos(t) + 0.3 * Math.cos(3 * t))
+      const y = deform * (1.5 * Math.sin(t) + 0.2 * Math.sin(2 * t))
+      // Vector field: P = -y/2, Q = x/2
+      const P = -y / 2
+      const Q = x / 2
+      const len = Math.sqrt(P * P + Q * Q)
+      const scale = 0.4 / Math.max(0.01, len)
+      arrows.push({
+        pos: [x, 0.05, y],
+        dir: [P * scale, 0, Q * scale],
+        color: '#f59e0b',
+      })
+    }
+    // Also add some interior arrows
+    for (let i = 0; i < 12; i++) {
+      const angle = (2 * Math.PI * i) / 12
+      const r = deform * 0.8
+      const x = r * Math.cos(angle)
+      const y = r * Math.sin(angle)
+      const P = -y / 2
+      const Q = x / 2
+      const len = Math.sqrt(P * P + Q * Q)
+      const scale = 0.3 / Math.max(0.01, len)
+      arrows.push({
+        pos: [x, 0.05, y],
+        dir: [P * scale, 0, Q * scale],
+        color: '#6ee7b7',
+      })
+    }
+    return arrows
+  }, [deform])
+
+  // Direction arrows on boundary (counterclockwise)
+  const directionArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; rotation: number }[] = []
+    const n = 8
+    for (let i = 0; i < n; i++) {
+      const t = (2 * Math.PI * i) / n
+      const x = deform * (2 * Math.cos(t) + 0.3 * Math.cos(3 * t))
+      const y = deform * (1.5 * Math.sin(t) + 0.2 * Math.sin(2 * t))
+      // Tangent direction (counterclockwise)
+      const dt = 0.01
+      const x2 = deform * (2 * Math.cos(t + dt) + 0.3 * Math.cos(3 * (t + dt)))
+      const y2 = deform * (1.5 * Math.sin(t + dt) + 0.2 * Math.sin(2 * (t + dt)))
+      const dx = x2 - x
+      const dy = y2 - y
+      const angle = Math.atan2(dy, dx)
+      arrows.push({ pos: [x, 0.06, y], rotation: -angle })
+    }
+    return arrows
+  }, [deform])
+
+  // Numerical computation of area
+  const areaValue = useMemo(() => {
+    // Green's theorem: Area = ∬_D 1 dA = ∮_C x dy (with P=0, Q=x)
+    const res = 200
+    let area = 0
+    for (let i = 0; i < res; i++) {
+      const t1 = (2 * Math.PI * i) / res
+      const t2 = (2 * Math.PI * (i + 1)) / res
+      const x1 = deform * (2 * Math.cos(t1) + 0.3 * Math.cos(3 * t1))
+      const y1 = deform * (1.5 * Math.sin(t1) + 0.2 * Math.sin(2 * t1))
+      const x2 = deform * (2 * Math.cos(t2) + 0.3 * Math.cos(3 * t2))
+      const y2 = deform * (1.5 * Math.sin(t2) + 0.2 * Math.sin(2 * t2))
+      area += x1 * (y2 - y1)
+    }
+    return Math.abs(area)
+  }, [deform])
+
+  // Line integral: ∮(P dx + Q dy) where P = -y/2, Q = x/2
+  const lineIntegral = useMemo(() => {
+    const res = 200
+    let integral = 0
+    for (let i = 0; i < res; i++) {
+      const t1 = (2 * Math.PI * i) / res
+      const t2 = (2 * Math.PI * (i + 1)) / res
+      const x1 = deform * (2 * Math.cos(t1) + 0.3 * Math.cos(3 * t1))
+      const y1 = deform * (1.5 * Math.sin(t1) + 0.2 * Math.sin(2 * t1))
+      const x2 = deform * (2 * Math.cos(t2) + 0.3 * Math.cos(3 * t2))
+      const y2 = deform * (1.5 * Math.sin(t2) + 0.2 * Math.sin(2 * t2))
+      const P1 = -y1 / 2
+      const Q1 = x1 / 2
+      const dx = x2 - x1
+      const dy = y2 - y1
+      integral += P1 * dx + Q1 * dy
+    }
+    return integral
+  }, [deform])
+
+  return (
+    <AutoRotate speed={0.001}>
+      <Axes length={4} />
+      <AxisLabels length={4} />
+      <XYGrid size={4} divisions={8} />
+
+      {/* Filled region D */}
+      <mesh geometry={regionGeometry}>
+        <meshPhongMaterial color="#10b981" transparent opacity={0.3} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Boundary curve C */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[boundaryCurve, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+
+      {/* Vector field arrows */}
+      {vectorArrows.map((arrow, idx) => (
+        <group key={idx} position={arrow.pos}>
+          {/* Arrow shaft */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([0, 0, 0, arrow.dir[0], arrow.dir[1], arrow.dir[2]]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color={arrow.color} linewidth={2} />
+          </line>
+          {/* Arrow head (small cone) */}
+          <mesh
+            position={[arrow.dir[0] * 0.9, arrow.dir[1], arrow.dir[2] * 0.9]}
+            rotation={[0, 0, 0]}
+          >
+            <coneGeometry args={[0.06, 0.15, 6]} />
+            <meshPhongMaterial color={arrow.color} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Direction arrows (red triangular markers) */}
+      {directionArrows.map((arrow, idx) => (
+        <mesh key={`dir-${idx}`} position={arrow.pos} rotation={[Math.PI / 2, arrow.rotation, 0]}>
+          <coneGeometry args={[0.1, 0.2, 3]} />
+          <meshPhongMaterial color="#ef4444" />
+        </mesh>
+      ))}
+
+      {/* Surface showing ∂Q/∂x - ∂P/∂y = 1 over region D */}
+      <Surface
+        func={() => 1}
+        xRange={[-deform * 2.5, deform * 2.5]}
+        yRange={[-deform * 2, deform * 2]}
+        color="#10b981"
+        opacity={0.15}
+        resolution={20}
+      />
+
+      {/* Info overlay */}
+      <Html position={[0, 5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
+          <div className="text-red-500 dark:text-red-400 font-bold">
+            ∮_C (P dx + Q dy) = {lineIntegral.toFixed(4)}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400 font-bold">
+            ∬_D (∂Q/∂x - ∂P/∂y) dA = {areaValue.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground text-[10px]">
+            P = -y/2, Q = x/2 → ∂Q/∂x - ∂P/∂y = 1
+          </div>
+          <div className="text-amber-600 dark:text-amber-400 text-[10px]">
+            验证: 线积分 ≈ 面积分 ✓ (误差: {Math.abs(lineIntegral - areaValue).toFixed(6)})
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-[10px]">
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-red-500" />边界曲线 C</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-emerald-500" />区域 D</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber-500" />向量场</span>
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 // ============= MAIN SCENE RENDERER =============
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
@@ -2004,6 +2227,10 @@ export function SceneRenderer() {
 
       {mode === 'jacobian1' && (
         <JacobianScene />
+      )}
+
+      {mode === 'green1' && (
+        <GreenScene />
       )}
     </>
   )

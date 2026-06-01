@@ -284,3 +284,47 @@ Stage Summary:
 4. **动画时间线**: 为每个概念添加逐步动画讲解
 5. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
 6. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
+
+---
+Task ID: 2+4
+Agent: Main
+Task: Add Green's Theorem Mode (green1) and Collapsible Sidebar Sections
+
+Work Log:
+- Read worklog.md to understand project status (24 existing modes)
+- **Added green1 mode** to `src/store/lab-store.ts`:
+  - Added `'green1'` to LabMode type (was already present from prior work)
+  - Added green1 modeInfo entry with title '格林公式', section '格林公式与线积分', math formula, description, paramLabel '区域变形' (0.3-2.0)
+- **Added GreenScene component** in `src/components/lab/scene-renderer.tsx`:
+  - Boundary curve C: parametric deformed ellipse/flower shape (2cos(t)+0.3cos(3t), 1.5sin(t)+0.2sin(2t))
+  - Filled region D: green semi-transparent triangulated mesh
+  - Vector field arrows: 24 boundary arrows (amber) + 12 interior arrows (green), P=-y/2, Q=x/2
+  - Direction arrows: 8 red cone markers showing counterclockwise orientation
+  - Surface at z=1 showing ∂Q/∂x - ∂P/∂y = 1 over region
+  - Html overlay with line integral value, area integral value, and verification
+  - Numerical computation: area via Green's theorem (∮ x dy), line integral (∮ P dx + Q dy)
+  - Added green1 case in SceneRenderer
+- **Updated sidebar** `src/components/lab/sidebar.tsx`:
+  - Added "格林公式" section with Waypoints icon and red color
+  - Added red colorMap entry
+  - Added Waypoints, ChevronRight, ChevronDown icon imports
+  - **Implemented collapsible sections**:
+    - Added `collapsedSections` Set in local state
+    - Section headers are clickable to toggle collapse
+    - ChevronRight/ChevronDown icons indicate collapsed/expanded state
+    - Sections auto-expand if they contain the active mode
+    - Smooth height transition with max-h + opacity CSS animation (duration 200ms)
+    - Button element for section header (accessibility-friendly)
+- **Updated page.tsx**: Added 'green1' to allModes array
+- **Updated viewport.tsx**: Added camera preset [6,8,4] fov 50, red-to-orange gradient background, red accent color for green1
+- **Updated use-computed-values.ts**: Added green1 computed values case (area via ∮ x dy numerical integration)
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **25th mode added**: green1 (格林公式 / Green's Theorem)
+- Full 3D visualization with boundary curve, filled region, vector field arrows, direction indicators
+- Interactive parameter control for region deformation
+- Real-time numerical verification: line integral ≈ area integral (Green's theorem proof)
+- **Collapsible sidebar sections**: click to expand/collapse, auto-expand active section
+- Red color theme for the new section

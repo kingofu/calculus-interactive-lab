@@ -3,9 +3,9 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
-import { Suspense, useMemo, useCallback, useRef } from 'react'
+import { Suspense, useMemo, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
-import { Loader2, Move3d, Camera } from 'lucide-react'
+import { Loader2, Move3d, Camera, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -28,6 +28,7 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'triple1':
       return { position: [6, 5, 6], fov: 45 }
     case 'jacobian1':
+    case 'green1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -66,6 +67,9 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'jacobian1') {
     return 'from-lime-50 to-slate-100 dark:from-lime-950/30 dark:to-slate-900'
   }
+  if (mode === 'green1') {
+    return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -81,6 +85,7 @@ function getModeAccentColor(mode: string): string {
   if (mode.startsWith('convergence')) return 'bg-cyan-500'
   if (mode.startsWith('triple')) return 'bg-purple-500'
   if (mode === 'jacobian1') return 'bg-lime-500'
+  if (mode === 'green1') return 'bg-red-500'
   return 'bg-slate-500'
 }
 
@@ -103,11 +108,13 @@ export function Viewport() {
   const accentColor = getModeAccentColor(mode)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Transition key - changes trigger CSS animation
+  const transitionKey = mode
+
   const handleScreenshot = useCallback(() => {
     const canvas = containerRef.current?.querySelector('canvas')
     if (!canvas) return
     try {
-      // Force a render to make sure the canvas is up-to-date
       const dataUrl = canvas.toDataURL('image/png')
       const link = document.createElement('a')
       link.download = `double-integral-${mode}-${Date.now()}.png`
@@ -118,18 +125,23 @@ export function Viewport() {
     }
   }, [mode])
 
+
+
   return (
-    <div ref={containerRef} className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-300`}>
+    <div ref={containerRef} className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-500`}>
+      {/* Transition shimmer overlay */}
+      <div key={transitionKey} className="absolute inset-0 z-20 pointer-events-none animate-[shimmer_0.6s_ease-out]" />
+
       {/* Mode indicator overlay */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 pointer-events-none">
         <div className={cn("w-2 h-2 rounded-full", accentColor, "animate-pulse")} />
-        <span className="text-[10px] font-medium text-foreground/60 bg-background/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
+        <span className="text-[10px] font-medium text-foreground/60 bg-background/60 backdrop-blur-sm px-1.5 py-0.5 rounded transition-all duration-300">
           {info.title}
         </span>
       </div>
 
       {/* Screenshot button */}
-      <div className="absolute top-2 right-2 z-10">
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -153,6 +165,8 @@ export function Viewport() {
           拖拽旋转 · 滚轮缩放
         </div>
       </div>
+
+
 
       <Suspense fallback={<LoadingIndicator />}>
         <Canvas

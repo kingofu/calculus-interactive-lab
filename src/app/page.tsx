@@ -40,6 +40,7 @@ const allModes: LabMode[] = [
   'convergence1', 'convergence2',
   'triple1',
   'jacobian1',
+  'green1',
 ]
 
 function ThemeToggle() {
