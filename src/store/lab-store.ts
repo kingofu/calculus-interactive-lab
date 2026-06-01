@@ -15,6 +15,7 @@ export type LabMode =
   | 'surface_area1' | 'fubini1'
   | 'stokes1' | 'divergence1'
   | 'arc_length1' | 'mass_center1'
+  | 'moment_of_inertia1' | 'cylindrical1'
 
 interface LabState {
   mode: LabMode
@@ -319,5 +320,23 @@ export const modeInfo: Record<LabMode, {
     description: '质心是密度加权平均位置。对于变密度薄片，质心坐标等于一阶矩除以总质量。图中曲面按密度着色（蓝=低密度，红=高密度），标记点为质心位置。调整密度变化率观察质心移动。',
     paramLabel: '密度变化率',
     paramMin: 0.1, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+  },
+  moment_of_inertia1: {
+    title: '转动惯量',
+    section: '质心与转动惯量',
+    math: 'I_x = \\iint_D y^2\\rho\\,d\\sigma,\\quad I_y = \\iint_D x^2\\rho\\,d\\sigma',
+    description: '转动惯量衡量薄片绕轴旋转的惯性大小。对于变密度薄片 ρ(x,y)，绕x轴的转动惯量 Ix=∫∫y²ρ dσ，绕y轴的转动惯量 Iy=∫∫x²ρ dσ。调整参数观察密度变化对转动惯量的影响。',
+    paramLabel: '密度变化率',
+    paramMin: 0.1, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+  },
+  cylindrical1: {
+    title: '柱坐标计算',
+    section: '柱坐标系计算',
+    math: '\\int\\int\\int f(r,\\theta,z)\\,r\\,dr\\,d\\theta\\,dz',
+    description: '柱坐标系下，体积元素 dV = r dr dθ dz，多出的因子 r 来自坐标变换的雅可比行列式。将直角坐标转换为柱坐标 (r,θ,z)，积分区域可简化。调整参数观察柱体区域变化。',
+    paramLabel: '圆柱半径',
+    paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
+    paramLabel2: '圆柱高度',
+    paramMin2: 1, paramMax2: 4, paramStep2: 0.5, paramDefault2: 3,
   },
 }

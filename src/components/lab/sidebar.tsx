@@ -44,6 +44,9 @@ import {
   Atom,
   Spline,
   Crosshair,
+  Cylinder,
+  Search,
+  X,
 } from 'lucide-react'
 
 const sections = [
@@ -207,11 +210,21 @@ const sections = [
   },
   {
     title: '质心与转动惯量',
-    subtitle: '变密度质心计算',
+    subtitle: '变密度质心与惯量计算',
     icon: Crosshair,
     color: 'cyan',
     modes: [
       { mode: 'mass_center1' as LabMode, label: '质心计算', icon: Crosshair },
+      { mode: 'moment_of_inertia1' as LabMode, label: '转动惯量', icon: Crosshair },
+    ],
+  },
+  {
+    title: '柱坐标系',
+    subtitle: '柱坐标系下体积计算',
+    icon: Cylinder,
+    color: 'sky',
+    modes: [
+      { mode: 'cylindrical1' as LabMode, label: '柱坐标计算', icon: Cylinder },
     ],
   },
 ]
@@ -341,6 +354,30 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const { mode, setMode } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Debounce search input by 200ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Filter sections based on search query
+  const filteredSections = debouncedQuery
+    ? sections.map(s => ({
+        ...s,
+        modes: s.modes.filter(m =>
+          m.label.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          s.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+        )
+      })).filter(s => s.modes.length > 0)
+    : sections
+
+  const hasNoResults = debouncedQuery.length > 0 && filteredSections.length === 0
 
   // Auto-scroll to active mode when it changes
   useEffect(() => {
@@ -377,9 +414,9 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const isSectionActive = (section: typeof sections[number]) =>
     section.modes.some(m => m.mode === mode)
 
-  // A section should be expanded if it contains the active mode or is not collapsed
+  // A section should be expanded if it contains the active mode, is not collapsed, or has search matches
   const isSectionExpanded = (section: typeof sections[number]) =>
-    isSectionActive(section) || !collapsedSections.has(section.title)
+    isSectionActive(section) || !collapsedSections.has(section.title) || debouncedQuery.length > 0
 
   const allCollapsed = sections.every(s => collapsedSections.has(s.title))
 
@@ -402,7 +439,38 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           </Button>
         </div>
 
-        {sections.map((section, sectionIndex) => {
+        {/* Search input */}
+        <div className="relative px-1 mb-1.5">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/60" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="搜索模式..."
+            className="w-full h-6 pl-6 pr-5 text-[10px] bg-muted/50 border border-border/40 rounded-md placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-emerald-500/40 focus:border-emerald-500/40 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-colors"
+              onClick={() => {
+                setSearchQuery('')
+                searchInputRef.current?.focus()
+              }}
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          )}
+        </div>
+
+        {hasNoResults && (
+          <div className="text-center py-3 text-[10px] text-muted-foreground/60">
+            无匹配结果
+          </div>
+        )}
+
+        {filteredSections.map((section, sectionIndex) => {
           const colors = colorMap[section.color] || colorMap.emerald
           const SectionIcon = section.icon
           const sectionActive = isSectionActive(section)

@@ -409,3 +409,32 @@ export function massCenterComputation(a: number): { mass: number; cx: number; cy
     cy: mass > 0 ? my / mass : 0,
   }
 }
+
+// 转动惯量计算：z = 2 - x² - y² over [-1,1]×[-1,1]
+// 密度 ρ(x,y) = 1 + a*(x²+y²)
+// Ix = ∫∫ y²ρ dσ, Iy = ∫∫ x²ρ dσ
+export function momentOfInertia(a: number): { Ix: number; Iy: number; mass: number } {
+  const n = 50
+  const xMin = -1, xMax = 1, yMin = -1, yMax = 1
+  const dx = (xMax - xMin) / n
+  const dy = (yMax - yMin) / n
+  let Ix = 0, Iy = 0, mass = 0
+
+  for (let i = 0; i < n; i++) {
+    const x = xMin + (i + 0.5) * dx
+    for (let j = 0; j < n; j++) {
+      const y = yMin + (j + 0.5) * dy
+      const rho = 1 + a * (x * x + y * y)
+      mass += rho * dx * dy
+      Ix += y * y * rho * dx * dy
+      Iy += x * x * rho * dx * dy
+    }
+  }
+
+  return { Ix, Iy, mass }
+}
+
+// 柱坐标体积计算：V = πr²h
+export function cylindricalVolume(r: number, h: number): number {
+  return Math.PI * r * r * h
+}

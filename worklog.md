@@ -631,3 +631,129 @@ Stage Summary:
 - **MassCenterScene**: Heat-mapped paraboloid with density-based coloring, centroid visualization with crosshair and vertical line
 - Both scenes use AutoRotate for dynamic viewing
 - All lint checks pass, dev server compiles
+
+---
+Task ID: 12 (Cron Review Round 4)
+Agent: Main
+Task: QA testing, fix arc_length1 bug, add 2 new modes, add search/error boundary/onboarding, enhance styling
+
+Work Log:
+- Read worklog.md to understand project status (31 existing modes from prior sessions)
+- Used agent-browser for comprehensive QA testing of all 31 modes
+- **CRITICAL BUG FOUND & FIXED**: arc_length1 mode crashed entire app due to `approxl` typo (should be `approxL`)
+  - Variable name case mismatch: defined as `approxL` (capital L) but referenced as `approxl` (lowercase l)
+  - Fix: Changed `{approxl.toFixed(4)}` → `{approxL.toFixed(4)}` in scene-renderer.tsx line 2484
+- **Added 2 new visualization modes** (via subagent):
+  - **moment_of_inertia1 (转动惯量)**: 
+    - Section: 质心与转动惯量 (same as mass_center1)
+    - Heat-mapped surface z = 2 - x² - y² with density ρ = 1 + a·(x²+y²)
+    - Two rotation axis lines (red for Ix, blue for Iy)
+    - Distance indicator lines from 36 surface sample points to both axes
+    - 4 animated spinning indicator arrows using useFrame
+    - Html overlay: Ix, Iy values, density range, ρ formula
+    - Parameter: 密度变化率 (0.1-3.0, step 0.1, default 1.0)
+  - **cylindrical1 (柱坐标计算)**:
+    - Section: 柱坐标系计算 (new section, sky color)
+    - Semi-transparent cylinder with wireframe
+    - Concentric circle grid on bottom face, radial grid lines
+    - Amber wedge-shaped volume element showing dV = r·dr·dθ·dz
+    - Coordinate axes with r, θ, z labels, height markers
+    - Html overlay: volume = πr²h, r/θ/z ranges, dV formula
+    - Dual parameters: 圆柱半径 (0.5-2.5) + 圆柱高度 (1-4)
+- **Added 3 interactive features** (via subagent):
+  - **Search/Filter in Sidebar**: Search input with debounce (200ms), filters modes across all sections, auto-expands matching sections, shows "无匹配结果" when no matches, clear button
+  - **Error Boundary**: SceneErrorBoundary class component wrapping Canvas, fallback UI with "重新加载" and "切换到下一个" buttons, emerald-themed error display
+  - **Onboarding Tooltip**: One-time welcome tooltip checking localStorage, 1.5s delay, fade+slide animation, desktop/mobile positioning, dismissible with "知道了" button
+- **Enhanced styling** (direct):
+  - Added 8 section colors to info-panel.tsx for previously missing sections (曲面面积, 富比尼定理, 斯托克斯定理, 高斯散度定理, 弧长与曲线积分, 质心与转动惯量, 柱坐标系计算)
+  - Updated sectionModes map to include all 18 sections for "related modes" navigation
+  - Added 10+ CSS keyframe animations to globals.css (glow-pulse, shimmer, fade-in, slide-up, slide-down, bounce-subtle, pulse-glow, float)
+  - Added custom scrollbar styling (.custom-scrollbar class)
+  - Enhanced header: floating Box icon animation, English subtitle "DOUBLE INTEGRAL INTERACTIVE LAB", animated shimmer on gradient line
+  - Enhanced footer: secondary decorative line, animated GraduationCap dot, section name slide-down transition, hover:scale-110 on nav arrows, bounce-subtle on Heart icon
+  - Mode badge transition: slide-down animation on mode switch
+  - Info panel scroll container uses custom-scrollbar class
+- **Updated error boundary**: Added moment_of_inertia1 and cylindrical1 to allModes list in scene-error-boundary.tsx
+- All lint checks pass, dev server compiles successfully
+- QA verified: both new modes render correctly, search filter works, no errors
+
+Stage Summary:
+- **33 visualization modes** (was 31)
+- **Critical bug fixed**: arc_length1 crash from variable typo
+- **2 new modes**: moment_of_inertia1 (转动惯量), cylindrical1 (柱坐标计算)
+- **3 new features**: sidebar search, error boundary, onboarding tooltip
+- **Enhanced styling**: micro-animations, custom scrollbars, animated header/footer, section color completeness
+- All lint checks pass, no critical bugs
+
+---
+## 项目当前状态 (2026-06-01 更新 - 第四轮)
+
+### 项目概况
+- **名称**: 二重积分全功能互动实验室 (Double Integral Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 33个
+
+### 全部33个可视化模式
+1. **概念理解 (4)**: step1-step4 — 区域划分、网格划分、方柱近似、取极限
+2. **基本性质 (7)**: prop1-prop7 — 常数倍、加减、区域可加、常函数、比较、估值、中值
+3. **奇偶性 (2)**: parity1-parity2 — 奇函数/偶函数积分
+4. **直角坐标 (2)**: cartesian1-cartesian2 — X型/Y型区域
+5. **极坐标 (2)**: polar1-polar2 — 极坐标区域、黎曼和
+6. **矩形近似 (1)**: rect_approx — 一维矩形近似
+7. **球柱相交 (2)**: sphere_cyl1-sphere_cyl2 — Viviani体、截面法
+8. **收敛演示 (2)**: convergence1-convergence2 — 收敛动画、误差分析
+9. **三重积分 (1)**: triple1 — 体积分可视化
+10. **变量代换 (1)**: jacobian1 — 雅可比行列式
+11. **格林公式 (1)**: green1 — 线积分与面积分
+12. **曲面面积 (1)**: surface_area1 — 曲面面积计算
+13. **富比尼定理 (1)**: fubini1 — 累次积分等价性
+14. **斯托克斯定理 (1)**: stokes1 — 环量与旋度通量
+15. **高斯散度定理 (1)**: divergence1 — 通量与散度积分
+16. **弧长与曲线积分 (1)**: arc_length1 — 弧长近似与精确计算
+17. **质心与转动惯量 (2)**: mass_center1, moment_of_inertia1 — 质心计算、转动惯量
+18. **柱坐标系计算 (1)**: cylindrical1 — 柱坐标体积元素与积分 (NEW)
+
+### 功能特性
+- ✅ 33个交互式3D可视化模式
+- ✅ 实时参数调整（滑块 + +/-按钮）
+- ✅ KaTeX数学公式渲染
+- ✅ 数值计算（近似值、精确值、误差）
+- ✅ 截图导出（Camera按钮 + S快捷键 + Toast反馈）
+- ✅ 深色/浅色模式切换
+- ✅ 键盘快捷键（↑↓←→, R, T, Space, D, S, ?）
+- ✅ 自动导览模式（按T）
+- ✅ 进度追踪（已探索模式数）
+- ✅ 响应式设计（移动端侧边栏抽屉）
+- ✅ 彩色分区（18种颜色主题）
+- ✅ Toast通知系统
+- ✅ 全屏模式切换
+- ✅ 相机重置按钮
+- ✅ 侧边栏折叠/展开 + 搜索过滤 (NEW)
+- ✅ 信息面板关联模式导航
+- ✅ 控制面板进度条
+- ✅ 场景错误边界 (NEW)
+- ✅ 首次访问引导提示 (NEW)
+- ✅ 微动画效果（浮动、滑入、渐变等） (NEW)
+- ✅ 自定义滚动条样式 (NEW)
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ QA测试: 所有33个模式通过agent-browser测试
+2. ✅ 修复Bug: arc_length1崩溃 (approxl→approxL)
+3. ✅ 新增模式: moment_of_inertia1 (转动惯量)、cylindrical1 (柱坐标计算)
+4. ✅ 新增功能: 侧边栏搜索、场景错误边界、首次访问引导
+5. ✅ 样式增强: 微动画、自定义滚动条、信息面板完整分区颜色、页头/页脚动画细节
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **交互增强**: 点击3D对象显示详情tooltip，hover高亮效果
+2. **性能优化**: 使用InstancedMesh替代大量独立mesh（polar2、convergence2、triple1模式）
+3. **动画时间线**: 为每个概念添加逐步动画讲解（如step1→step4逐步播放）
+4. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局，触控友好的滑块
+5. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入，屏幕阅读器支持
+6. **更多数学模式**: 拉普拉斯变换、傅里叶级数、梯度场可视化
+7. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
+8. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer

@@ -47,6 +47,7 @@ const allModes: LabMode[] = [
   'surface_area1', 'fubini1',
   'stokes1', 'divergence1',
   'arc_length1', 'mass_center1',
+  'moment_of_inertia1', 'cylindrical1',
 ]
 
 function ThemeToggle() {
@@ -110,9 +111,26 @@ function HomeContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [infoExpanded, setInfoExpanded] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive } = useLabStore()
   const info = modeInfo[mode]
   const { toast } = useToast()
+
+  // Onboarding tooltip: show once on first visit
+  useEffect(() => {
+    const seen = localStorage.getItem('lab-onboarding-seen')
+    if (!seen) {
+      const timer = setTimeout(() => {
+        setShowOnboarding(true)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false)
+    localStorage.setItem('lab-onboarding-seen', 'true')
+  }, [])
 
   const currentIndex = allModes.indexOf(mode)
   const visitedCount = visitedModes.size
@@ -254,13 +272,18 @@ function HomeContent() {
           </Sheet>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="relative">
+            <div className="relative animate-[float_3s_ease-in-out_infinite]">
               <Box className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               <Sparkles className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-amber-500 animate-pulse" />
             </div>
-            <h1 className="text-xs sm:text-sm font-bold tracking-tight">
-              二重积分互动实验室
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-xs sm:text-sm font-bold tracking-tight leading-none">
+                二重积分互动实验室
+              </h1>
+              <span className="text-[7px] sm:text-[8px] text-muted-foreground/60 font-medium tracking-wider mt-0.5 hidden sm:block">
+                DOUBLE INTEGRAL INTERACTIVE LAB
+              </span>
+            </div>
           </div>
         </div>
 
@@ -296,8 +319,12 @@ function HomeContent() {
             <TooltipContent side="bottom" className="text-xs">{autoTourActive ? '停止导览 (T)' : '自动导览 (T)'}</TooltipContent>
           </Tooltip>
 
-          {/* Current mode badge */}
-          <Badge variant="outline" className="hidden sm:flex items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20">
+          {/* Current mode badge with transition */}
+          <Badge
+            key={mode}
+            variant="outline"
+            className="hidden sm:flex items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20 animate-[slide-down_0.3s_ease-out]"
+          >
             <span className="font-mono">{currentIndex + 1}/{allModes.length}</span>
             <span className="text-muted-foreground">·</span>
             <span className="truncate max-w-[80px]">{info.title}</span>
@@ -328,8 +355,11 @@ function HomeContent() {
           <ThemeToggle />
         </div>
 
-        {/* Gradient line below header */}
+        {/* Gradient line below header with animated shimmer */}
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 opacity-40" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
+          <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
+        </div>
       </header>
 
       {/* Main content */}
@@ -377,7 +407,7 @@ function HomeContent() {
                 )}
               </Button>
               <div className={cn(
-                "overflow-y-auto transition-all duration-300",
+                "overflow-y-auto transition-all duration-300 custom-scrollbar",
                 infoExpanded ? "max-h-[calc(50vh-100px)]" : "max-h-[60px]"
               )}>
                 <InfoPanel />
@@ -389,11 +419,16 @@ function HomeContent() {
 
       {/* Footer */}
       <footer className="relative flex items-center justify-between px-3 sm:px-5 py-1.5 bg-background/95 backdrop-blur shrink-0">
-        {/* Gradient top border */}
+        {/* Gradient top border with animation */}
         <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+        {/* Secondary decorative line */}
+        <div className="absolute top-[1.5px] left-1/4 right-1/4 h-[0.5px] bg-gradient-to-r from-transparent via-teal-400/30 to-transparent" />
 
         <div className="flex items-center gap-1.5">
-          <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          <div className="relative">
+            <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
           <span className="text-[9px] text-muted-foreground hidden sm:inline">
             二重积分全功能互动实验室 · 高等数学可视化教学工具
           </span>
@@ -402,9 +437,12 @@ function HomeContent() {
           </span>
         </div>
 
-        {/* Current section name */}
+        {/* Current section name with transition */}
         <div className="flex items-center gap-1.5 hidden md:flex">
-          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+          <span
+            key={info.section}
+            className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded transition-all duration-300 animate-[slide-down_0.3s_ease-out]"
+          >
             {info.section}
           </span>
         </div>
@@ -414,25 +452,25 @@ function HomeContent() {
             共 {totalModes} 个模式 · 已探索 {visitedCount} 个
           </span>
 
-          {/* Mode navigation arrows */}
+          {/* Mode navigation arrows with hover effects */}
           <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5"
+              className="h-5 w-5 transition-all hover:scale-110"
               onClick={goToPrevMode}
               disabled={currentIndex === 0}
             >
               <ChevronLeft className="h-3 w-3" />
               <span className="sr-only">上一个模式</span>
             </Button>
-            <span className="text-[9px] font-mono text-muted-foreground min-w-[24px] text-center">
+            <span className="text-[9px] font-mono text-muted-foreground min-w-[24px] text-center tabular-nums">
               {currentIndex + 1}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5"
+              className="h-5 w-5 transition-all hover:scale-110"
               onClick={goToNextMode}
               disabled={currentIndex === allModes.length - 1}
             >
@@ -443,11 +481,57 @@ function HomeContent() {
 
           <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
             <span>用</span>
-            <Heart className="h-2.5 w-2.5 text-red-400" />
+            <Heart className="h-2.5 w-2.5 text-red-400 animate-[bounce-subtle_2s_ease-in-out_infinite]" />
             <span>构建</span>
           </div>
         </div>
       </footer>
+
+      {/* Onboarding Tooltip */}
+      {showOnboarding && (
+        <div className="fixed z-50 animate-[onboarding-in_0.5s_ease-out_forwards]">
+          {/* Desktop: positioned near the sidebar */}
+          <div className="hidden md:block" style={{ top: '80px', left: '220px' }}>
+            <div className="relative">
+              {/* Arrow pointing left (toward sidebar) */}
+              <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
+              <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[260px]">
+                <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                  欢迎使用二重积分互动实验室！← 侧边栏选择可视化模式，滑块调整参数，拖拽旋转3D场景
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 h-6 text-[10px] border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800"
+                  onClick={dismissOnboarding}
+                >
+                  知道了
+                </Button>
+              </div>
+            </div>
+          </div>
+          {/* Mobile: positioned near the menu button */}
+          <div className="md:hidden" style={{ top: '56px', left: '40px' }}>
+            <div className="relative">
+              {/* Arrow pointing left (toward menu button) */}
+              <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
+              <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[220px]">
+                <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                  欢迎使用二重积分互动实验室！点击菜单按钮选择模式，滑块调整参数，拖拽旋转3D场景
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 h-6 text-[10px] border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800"
+                  onClick={dismissOnboarding}
+                >
+                  知道了
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Shortcuts Dialog */}
       <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

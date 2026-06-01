@@ -96,6 +96,62 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-red-50/50 via-muted/30 to-orange-50/50 dark:from-red-950/20 dark:via-muted/20 dark:to-orange-950/20',
     computedBorder: 'border-red-200/40 dark:border-red-800/30',
   },
+  '曲面面积与弧长': {
+    bg: 'bg-teal-100 dark:bg-teal-900/40',
+    text: 'text-teal-800 dark:text-teal-300',
+    border: 'border-0',
+    glow: 'shadow-teal-500/20',
+    computedBg: 'from-teal-50/50 via-muted/30 to-emerald-50/50 dark:from-teal-950/20 dark:via-muted/20 dark:to-emerald-950/20',
+    computedBorder: 'border-teal-200/40 dark:border-teal-800/30',
+  },
+  '富比尼定理与累次积分': {
+    bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/40',
+    text: 'text-fuchsia-800 dark:text-fuchsia-300',
+    border: 'border-0',
+    glow: 'shadow-fuchsia-500/20',
+    computedBg: 'from-fuchsia-50/50 via-muted/30 to-violet-50/50 dark:from-fuchsia-950/20 dark:via-muted/20 dark:to-violet-950/20',
+    computedBorder: 'border-fuchsia-200/40 dark:border-fuchsia-800/30',
+  },
+  '斯托克斯定理': {
+    bg: 'bg-violet-100 dark:bg-violet-900/40',
+    text: 'text-violet-800 dark:text-violet-300',
+    border: 'border-0',
+    glow: 'shadow-violet-500/20',
+    computedBg: 'from-violet-50/50 via-muted/30 to-purple-50/50 dark:from-violet-950/20 dark:via-muted/20 dark:to-purple-950/20',
+    computedBorder: 'border-violet-200/40 dark:border-violet-800/30',
+  },
+  '高斯散度定理': {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    text: 'text-orange-800 dark:text-orange-300',
+    border: 'border-0',
+    glow: 'shadow-orange-500/20',
+    computedBg: 'from-orange-50/50 via-muted/30 to-amber-50/50 dark:from-orange-950/20 dark:via-muted/20 dark:to-amber-950/20',
+    computedBorder: 'border-orange-200/40 dark:border-orange-800/30',
+  },
+  '弧长与曲线积分': {
+    bg: 'bg-pink-100 dark:bg-pink-900/40',
+    text: 'text-pink-800 dark:text-pink-300',
+    border: 'border-0',
+    glow: 'shadow-pink-500/20',
+    computedBg: 'from-pink-50/50 via-muted/30 to-rose-50/50 dark:from-pink-950/20 dark:via-muted/20 dark:to-rose-950/20',
+    computedBorder: 'border-pink-200/40 dark:border-pink-800/30',
+  },
+  '质心与转动惯量': {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    text: 'text-cyan-800 dark:text-cyan-300',
+    border: 'border-0',
+    glow: 'shadow-cyan-500/20',
+    computedBg: 'from-cyan-50/50 via-muted/30 to-teal-50/50 dark:from-cyan-950/20 dark:via-muted/20 dark:to-teal-950/20',
+    computedBorder: 'border-cyan-200/40 dark:border-cyan-800/30',
+  },
+  '柱坐标系计算': {
+    bg: 'bg-sky-100 dark:bg-sky-900/40',
+    text: 'text-sky-800 dark:text-sky-300',
+    border: 'border-0',
+    glow: 'shadow-sky-500/20',
+    computedBg: 'from-sky-50/50 via-muted/30 to-blue-50/50 dark:from-sky-950/20 dark:via-muted/20 dark:to-blue-950/20',
+    computedBorder: 'border-sky-200/40 dark:border-sky-800/30',
+  },
 }
 
 // Get the section color config, fallback to emerald
@@ -116,6 +172,13 @@ const sectionModes: Record<string, LabMode[]> = {
   '三重积分概念': ['triple1'],
   '变量代换': ['jacobian1'],
   '格林公式与线积分': ['green1'],
+  '曲面面积与弧长': ['surface_area1'],
+  '富比尼定理与累次积分': ['fubini1'],
+  '斯托克斯定理': ['stokes1'],
+  '高斯散度定理': ['divergence1'],
+  '弧长与曲线积分': ['arc_length1'],
+  '质心与转动惯量': ['mass_center1', 'moment_of_inertia1'],
+  '柱坐标系计算': ['cylindrical1'],
 }
 
 export function InfoPanel() {

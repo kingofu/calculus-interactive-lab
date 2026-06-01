@@ -28,6 +28,8 @@ import {
   arcLengthApprox,
   arcLengthExact,
   massCenterComputation,
+  momentOfInertia,
+  cylindricalVolume,
 } from '@/lib/math-computations'
 
 export interface ComputedValues {
@@ -369,6 +371,31 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: `ρ(x,y) = 1 + ${a.toFixed(1)}·(x²+y²)`,
           error: formatValue(Math.sqrt(cx * cx + cy * cy)),
           label: `质心 (x̄, ȳ) = (${cx.toFixed(3)}, ${cy.toFixed(3)})`,
+        }
+      }
+
+      case 'moment_of_inertia1': {
+        const a = paramValue
+        const { Ix, Iy, mass } = momentOfInertia(a)
+        return {
+          mainValue: formatValue(Ix),
+          approxValue: formatValue(Iy),
+          exactValue: `ρ = 1 + ${a.toFixed(1)}·r²`,
+          error: formatValue(Ix + Iy),
+          label: `Ix=${Ix.toFixed(3)}, Iy=${Iy.toFixed(3)}`,
+        }
+      }
+
+      case 'cylindrical1': {
+        const r = paramValue
+        const h = paramValue2
+        const volume = cylindricalVolume(r, h)
+        return {
+          mainValue: formatValue(volume),
+          approxValue: `π×${r.toFixed(1)}²×${h.toFixed(1)}`,
+          exactValue: `πr²h = ${formatValue(volume)}`,
+          error: '0',
+          label: `体积 V = πr²h = ${formatValue(volume)}`,
         }
       }
 

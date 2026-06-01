@@ -31,6 +31,8 @@ import {
   arcLengthApprox,
   arcLengthExact,
   massCenterComputation,
+  momentOfInertia,
+  cylindricalVolume,
 } from '@/lib/math-computations'
 
 // --- Common Axes ---
@@ -2481,7 +2483,7 @@ function ArcLengthScene() {
             分段数: {nInt}
           </div>
           <div className="text-emerald-600 dark:text-emerald-400">
-            近似弧长: {approxl.toFixed(4)}
+            近似弧长: {approxL.toFixed(4)}
           </div>
           <div className="text-muted-foreground">
             精确弧长: {exactL.toFixed(4)}
@@ -2615,6 +2617,469 @@ function MassCenterScene() {
           </div>
           <div className="text-muted-foreground">
             密度范围: [1, {(1 + a * 2).toFixed(2)}]
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Moment of Inertia Scene (moment_of_inertia1) ---
+function MomentOfInertiaScene() {
+  const { paramValue: a } = useLabStore()
+
+  // Compute moments of inertia
+  const { Ix, Iy } = useMemo(() => momentOfInertia(a), [a])
+
+  // Heat-mapped surface z = 2 - x² - y² with density ρ = 1 + a*(x²+y²)
+  const surfaceGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const normals: number[] = []
+    const res = 30
+    const range = 1
+    const dx = (2 * range) / res
+    const dy = (2 * range) / res
+    const cyan = new THREE.Color('#06b6d4')
+    const yellow = new THREE.Color('#eab308')
+    const red = new THREE.Color('#ef4444')
+
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -range + i * dx
+        const y = -range + j * dy
+        const z = 2 - x * x - y * y
+        vertices.push(x, z, y)
+        normals.push(0, 1, 0)
+        // Density-based color: low=cyan, mid=yellow, high=red
+        const rho = 1 + a * (x * x + y * y)
+        const maxRho = 1 + a * 2
+        const t = Math.min(1, (rho - 1) / Math.max(0.01, maxRho - 1))
+        const col = t < 0.5
+          ? cyan.clone().lerp(yellow, t * 2)
+          : yellow.clone().lerp(red, (t - 0.5) * 2)
+        colors.push(col.r, col.g, col.b)
+      }
+    }
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const idx = i * (res + 1) + j
+        indices.push(idx, idx + res + 1, idx + 1, idx + 1, idx + res + 1, idx + res + 2)
+      }
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Sample points for distance indicator lines
+  const samplePoints = useMemo(() => {
+    const pts: { pos: [number, number, number] }[] = []
+    const samples = 6
+    for (let i = 0; i < samples; i++) {
+      for (let j = 0; j < samples; j++) {
+        const x = -0.7 + (1.4 * i) / (samples - 1)
+        const y = -0.7 + (1.4 * j) / (samples - 1)
+        const z = 2 - x * x - y * y
+        pts.push({ pos: [x, z, y] })
+      }
+    }
+    return pts
+  }, [])
+
+  // Spinning indicator arrow references
+  const spinnerRef1a = useRef<THREE.Group>(null)
+  const spinnerRef1b = useRef<THREE.Group>(null)
+  const spinnerRef2a = useRef<THREE.Group>(null)
+  const spinnerRef2b = useRef<THREE.Group>(null)
+
+  useFrame((_, delta) => {
+    if (spinnerRef1a.current) spinnerRef1a.current.rotation.y += delta * 2
+    if (spinnerRef1b.current) spinnerRef1b.current.rotation.y += delta * 2
+    if (spinnerRef2a.current) spinnerRef2a.current.rotation.y += delta * 2
+    if (spinnerRef2b.current) spinnerRef2b.current.rotation.y += delta * 2
+  })
+
+  // Floor domain with density heat map
+  const floorGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const res = 20
+    const range = 1
+    const dx = (2 * range) / res
+    const dy = (2 * range) / res
+    const cyan = new THREE.Color('#06b6d4')
+    const yellow = new THREE.Color('#eab308')
+    const red = new THREE.Color('#ef4444')
+
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -range + i * dx
+        const y = -range + j * dy
+        vertices.push(x, 0.005, y)
+        const rho = 1 + a * (x * x + y * y)
+        const maxRho = 1 + a * 2
+        const t = Math.min(1, (rho - 1) / Math.max(0.01, maxRho - 1))
+        const col = t < 0.5
+          ? cyan.clone().lerp(yellow, t * 2)
+          : yellow.clone().lerp(red, (t - 0.5) * 2)
+        colors.push(col.r, col.g, col.b)
+      }
+    }
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const idx = i * (res + 1) + j
+        indices.push(idx, idx + res + 1, idx + 1, idx + 1, idx + res + 1, idx + res + 2)
+      }
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Heat-mapped surface */}
+      <mesh geometry={surfaceGeometry}>
+        <meshPhongMaterial vertexColors side={THREE.DoubleSide} transparent opacity={0.7} shininess={60} />
+      </mesh>
+
+      {/* Floor domain with density heat map */}
+      <mesh geometry={floorGeometry}>
+        <meshPhongMaterial vertexColors side={THREE.DoubleSide} transparent opacity={0.4} />
+      </mesh>
+
+      {/* X-axis rotation line (red) - for Ix */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([-2, 0, 0, 2, 0, 0]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={3} />
+      </line>
+
+      {/* Y-axis rotation line (blue) - for Iy */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([0, 0, -2, 0, 0, 2]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={3} />
+      </line>
+
+      {/* Distance indicator lines from sample points to x-axis */}
+      {samplePoints.map((pt, idx) => (
+        <group key={`dist-x-${idx}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([pt.pos[0], pt.pos[1], pt.pos[2], pt.pos[0], pt.pos[1], 0]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ef4444" opacity={0.3} transparent />
+          </line>
+        </group>
+      ))}
+
+      {/* Distance indicator lines from sample points to y-axis */}
+      {samplePoints.map((pt, idx) => (
+        <group key={`dist-y-${idx}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([pt.pos[0], pt.pos[1], pt.pos[2], 0, pt.pos[1], pt.pos[2]]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#3b82f6" opacity={0.3} transparent />
+          </line>
+        </group>
+      ))}
+
+      {/* Spinning indicator arrow around x-axis (for Ix) */}
+      <group ref={spinnerRef1a} position={[1.5, 0, 0]}>
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <coneGeometry args={[0.08, 0.3, 8]} />
+          <meshPhongMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.3} />
+        </mesh>
+      </group>
+      <group ref={spinnerRef1b} position={[-1.5, 0, 0]}>
+        <mesh rotation={[0, 0, -Math.PI / 2]}>
+          <coneGeometry args={[0.08, 0.3, 8]} />
+          <meshPhongMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.3} />
+        </mesh>
+      </group>
+
+      {/* Spinning indicator arrow around y-axis (for Iy) */}
+      <group ref={spinnerRef2a} position={[0, 0, 1.5]}>
+        <mesh>
+          <coneGeometry args={[0.08, 0.3, 8]} />
+          <meshPhongMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={0.3} />
+        </mesh>
+      </group>
+      <group ref={spinnerRef2b} position={[0, 0, -1.5]}>
+        <mesh rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.08, 0.3, 8]} />
+          <meshPhongMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={0.3} />
+        </mesh>
+      </group>
+
+      {/* Axis labels for rotation axes */}
+      <Text position={[2.3, 0.2, 0]} fontSize={0.25} color="#ef4444" anchorX="center" anchorY="middle">
+        Ix轴
+      </Text>
+      <Text position={[0, 0.2, 2.3]} fontSize={0.25} color="#3b82f6" anchorX="center" anchorY="middle">
+        Iy轴
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, 4, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-red-600 dark:text-red-400">
+            Ix = ∫∫y²ρ dσ = {Ix.toFixed(4)}
+          </div>
+          <div className="text-blue-600 dark:text-blue-400">
+            Iy = ∫∫x²ρ dσ = {Iy.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            密度范围: [1, {(1 + a * 2).toFixed(2)}]
+          </div>
+          <div className="text-cyan-600 dark:text-cyan-400">
+            ρ = 1 + {a.toFixed(1)}·r²
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Cylindrical Coordinates Scene (cylindrical1) ---
+function CylindricalCoordScene() {
+  const { paramValue: radius, paramValue2: height } = useLabStore()
+
+  // Semi-transparent cylinder
+  const cylinderGeom = useMemo(() => {
+    return new THREE.CylinderGeometry(radius, radius, height, 48, 1, false)
+  }, [radius, height])
+
+  // Concentric circles on bottom face
+  const concentricCircles = useMemo(() => {
+    const circles: Float32Array[] = []
+    const numCircles = Math.max(1, Math.floor(radius / 0.3))
+    const res = 64
+    for (let c = 1; c <= numCircles; c++) {
+      const r = (radius * c) / numCircles
+      const pts: number[] = []
+      for (let i = 0; i <= res; i++) {
+        const theta = (2 * Math.PI * i) / res
+        pts.push(r * Math.cos(theta), -height / 2 + 0.01, r * Math.sin(theta))
+      }
+      circles.push(new Float32Array(pts))
+    }
+    return circles
+  }, [radius, height])
+
+  // Radial grid lines from center on bottom face
+  const radialLines = useMemo(() => {
+    const lines: Float32Array[] = []
+    const numLines = 12
+    for (let i = 0; i < numLines; i++) {
+      const theta = (2 * Math.PI * i) / numLines
+      lines.push(new Float32Array([
+        0, -height / 2 + 0.01, 0,
+        radius * Math.cos(theta), -height / 2 + 0.01, radius * Math.sin(theta),
+      ]))
+    }
+    return lines
+  }, [radius, height])
+
+  // Height markers
+  const heightMarkers = useMemo(() => {
+    const markers: { y: number; label: string }[] = []
+    const step = height <= 2 ? 0.5 : 1
+    for (let h = 0; h <= height; h += step) {
+      markers.push({ y: -height / 2 + h, label: h.toFixed(1) })
+    }
+    return markers
+  }, [height])
+
+  // Wedge-shaped volume element
+  const wedgeGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const dr = 0.3
+    const dTheta = Math.PI / 8
+    const rInner = radius * 0.5
+    const rOuter = rInner + dr
+    const zBottom = -height / 2
+    const zTop = -height / 2 + height * 0.4
+    const thetaStart = Math.PI / 4
+
+    const vPts: number[] = []
+    const idxPts: number[] = []
+    const arcRes = 4
+
+    // Bottom face vertices
+    for (let k = 0; k <= arcRes; k++) {
+      const t = thetaStart + (k / arcRes) * dTheta
+      vPts.push(rInner * Math.cos(t), zBottom, rInner * Math.sin(t))
+    }
+    for (let k = 0; k <= arcRes; k++) {
+      const t = thetaStart + (k / arcRes) * dTheta
+      vPts.push(rOuter * Math.cos(t), zBottom, rOuter * Math.sin(t))
+    }
+    // Top face vertices
+    for (let k = 0; k <= arcRes; k++) {
+      const t = thetaStart + (k / arcRes) * dTheta
+      vPts.push(rInner * Math.cos(t), zTop, rInner * Math.sin(t))
+    }
+    for (let k = 0; k <= arcRes; k++) {
+      const t = thetaStart + (k / arcRes) * dTheta
+      vPts.push(rOuter * Math.cos(t), zTop, rOuter * Math.sin(t))
+    }
+
+    const s = arcRes + 1
+    // Bottom face
+    for (let k = 0; k < arcRes; k++) {
+      idxPts.push(k, k + 1, s + k, s + k, k + 1, s + k + 1)
+    }
+    // Top face
+    for (let k = 0; k < arcRes; k++) {
+      idxPts.push(2 * s + k + 1, 2 * s + k, 3 * s + k, 3 * s + k, 3 * s + k + 1, 2 * s + k + 1)
+    }
+    // Inner side
+    idxPts.push(0, 2 * s, 2 * s + 1, 0, 2 * s + 1, 1)
+    // Outer side
+    idxPts.push(s, s + 1, 3 * s + 1, s, 3 * s + 1, 3 * s)
+    // Left side
+    idxPts.push(0, s, 3 * s, 0, 3 * s, 2 * s)
+    // Right side
+    const li = arcRes
+    idxPts.push(li + 1, li + s + 1, 3 * s + li + 1, li + 1, 3 * s + li + 1, 2 * s + li + 1)
+
+    geom.setIndex(idxPts)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vPts, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [radius, height])
+
+  const volume = cylindricalVolume(radius, height)
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Semi-transparent cylinder */}
+      <mesh geometry={cylinderGeom} position={[0, 0, 0]}>
+        <meshPhongMaterial color="#06b6d4" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Cylinder wireframe */}
+      <mesh geometry={cylinderGeom} position={[0, 0, 0]}>
+        <meshBasicMaterial color="#06b6d4" wireframe transparent opacity={0.3} />
+      </mesh>
+
+      {/* Top cap */}
+      <mesh position={[0, height / 2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[radius, 48]} />
+        <meshPhongMaterial color="#06b6d4" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Bottom cap */}
+      <mesh position={[0, -height / 2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[radius, 48]} />
+        <meshPhongMaterial color="#06b6d4" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Concentric circles on bottom face */}
+      {concentricCircles.map((pts, idx) => (
+        <line key={`cc-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#06b6d4" opacity={0.4} transparent />
+        </line>
+      ))}
+
+      {/* Radial grid lines on bottom face */}
+      {radialLines.map((pts, idx) => (
+        <line key={`rl-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#06b6d4" opacity={0.3} transparent />
+        </line>
+      ))}
+
+      {/* Wedge-shaped volume element (highlighted) */}
+      <mesh geometry={wedgeGeometry}>
+        <meshPhongMaterial color="#f59e0b" transparent opacity={0.7} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh geometry={wedgeGeometry}>
+        <meshBasicMaterial color="#f59e0b" wireframe transparent opacity={0.5} />
+      </mesh>
+
+      {/* Coordinate axes with r, θ, z labels */}
+      <Text position={[radius + 0.5, -height / 2, 0]} fontSize={0.3} color="#ef4444" anchorX="center" anchorY="middle">
+        r
+      </Text>
+      <Text position={[0.5, -height / 2, radius + 0.5]} fontSize={0.3} color="#22c55e" anchorX="center" anchorY="middle">
+        θ
+      </Text>
+      <Text position={[0, height / 2 + 0.5, 0]} fontSize={0.3} color="#3b82f6" anchorX="center" anchorY="middle">
+        z
+      </Text>
+
+      {/* Height markers */}
+      {heightMarkers.map((marker, idx) => (
+        <group key={`hm-${idx}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([radius + 0.1, marker.y, 0, radius + 0.3, marker.y, 0]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#94a3b8" opacity={0.5} transparent />
+          </line>
+          <Text position={[radius + 0.5, marker.y, 0]} fontSize={0.15} color="#94a3b8" anchorX="center" anchorY="middle">
+            {marker.label}
+          </Text>
+        </group>
+      ))}
+
+      {/* dV label near wedge */}
+      <Text position={[radius * 0.5 + 0.2, -height / 2 + height * 0.2 + 0.3, 0]} fontSize={0.2} color="#f59e0b" anchorX="center" anchorY="middle">
+        dV=r·dr·dθ·dz
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, height / 2 + 2, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-cyan-600 dark:text-cyan-400">
+            V = πr²h = π×{radius.toFixed(1)}²×{height.toFixed(1)} = {volume.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            r ∈ [0, {radius.toFixed(1)}], θ ∈ [0, 2π], z ∈ [{(-height / 2).toFixed(1)}, {(height / 2).toFixed(1)}]
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            dV = r·dr·dθ·dz
           </div>
         </div>
       </Html>
@@ -2892,6 +3357,14 @@ export function SceneRenderer() {
 
       {mode === 'mass_center1' && (
         <MassCenterScene />
+      )}
+
+      {mode === 'moment_of_inertia1' && (
+        <MomentOfInertiaScene />
+      )}
+
+      {mode === 'cylindrical1' && (
+        <CylindricalCoordScene />
       )}
     </>
   )

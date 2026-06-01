@@ -3,6 +3,7 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
+import { SceneErrorBoundary } from './scene-error-boundary'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
@@ -36,6 +37,8 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'divergence1':
     case 'arc_length1':
     case 'mass_center1':
+    case 'moment_of_inertia1':
+    case 'cylindrical1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -92,8 +95,11 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'arc_length1') {
     return 'from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20'
   }
-  if (mode === 'mass_center1') {
+  if (mode === 'mass_center1' || mode === 'moment_of_inertia1') {
     return 'from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20'
+  }
+  if (mode === 'cylindrical1') {
+    return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
   }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
@@ -116,7 +122,8 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'stokes1') return 'bg-violet-500'
   if (mode === 'divergence1') return 'bg-orange-500'
   if (mode === 'arc_length1') return 'bg-pink-500'
-  if (mode === 'mass_center1') return 'bg-cyan-500'
+  if (mode === 'mass_center1' || mode === 'moment_of_inertia1') return 'bg-cyan-500'
+  if (mode === 'cylindrical1') return 'bg-sky-500'
   return 'bg-slate-500'
 }
 
@@ -169,7 +176,7 @@ export function Viewport() {
   const handleResetCamera = useCallback(() => {
     // Force re-creation of OrbitControls by bumping the key
     setSceneKey(prev => prev + 1)
-  }, [])
+  }, [setSceneKey])
 
   const handleFullscreen = useCallback(() => {
     if (!containerRef.current) return
@@ -253,28 +260,30 @@ export function Viewport() {
         </div>
       </div>
 
-      <Suspense fallback={<LoadingIndicator />}>
-        <Canvas
-          camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
-          gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
-          dpr={[1, 2]}
-        >
-          {/* Enhanced lighting */}
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
-          <directionalLight position={[-5, 10, -5]} intensity={0.3} color="#e0e7ff" />
-          <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
-          <SceneRenderer />
-          <OrbitControls
-            key={`orbit-${mode}-${sceneKey}`}
-            enableDamping
-            dampingFactor={0.1}
-            rotateSpeed={0.5}
-            minDistance={3}
-            maxDistance={25}
-          />
-        </Canvas>
-      </Suspense>
+      <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
+        <Suspense fallback={<LoadingIndicator />}>
+          <Canvas
+            camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
+            gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
+            dpr={[1, 2]}
+          >
+            {/* Enhanced lighting */}
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
+            <directionalLight position={[-5, 10, -5]} intensity={0.3} color="#e0e7ff" />
+            <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
+            <SceneRenderer />
+            <OrbitControls
+              key={`orbit-${mode}-${sceneKey}`}
+              enableDamping
+              dampingFactor={0.1}
+              rotateSpeed={0.5}
+              minDistance={3}
+              maxDistance={25}
+            />
+          </Canvas>
+        </Suspense>
+      </SceneErrorBoundary>
     </div>
   )
 }
