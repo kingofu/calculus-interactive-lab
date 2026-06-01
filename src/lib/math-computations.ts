@@ -286,3 +286,76 @@ export function formatValue(value: number, digits: number = 4): string {
   if (Math.abs(value) < 1e-10) return '0'
   return value.toFixed(digits)
 }
+
+// 曲面面积近似计算：∫∫_D √(1 + (∂f/∂x)² + (∂f/∂y)²) dA
+// f(x,y) = a*(x² + y²), ∂f/∂x = 2ax, ∂f/∂y = 2ay
+// √(1 + 4a²(x² + y²))
+export function surfaceAreaApprox(
+  a: number,
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+  n: number = 200
+): number {
+  const dx = (xMax - xMin) / n
+  const dy = (yMax - yMin) / n
+  let sum = 0
+  for (let i = 0; i < n; i++) {
+    const x = xMin + (i + 0.5) * dx
+    for (let j = 0; j < n; j++) {
+      const y = yMin + (j + 0.5) * dy
+      const gradMagSq = 4 * a * a * (x * x + y * y)
+      const integrand = Math.sqrt(1 + gradMagSq)
+      sum += integrand * dx * dy
+    }
+  }
+  return sum
+}
+
+// 富比尼定理数值验证：∫∫f dσ 用两种累次积分顺序计算
+// f(x,y) = (4 - x² - y²) / 2 over [-2,2]×[-2,2]
+export function fubiniDoubleIntegral(
+  n: number = 200
+): { dydx: number; dxdy: number; direct: number } {
+  const a = -2, b = 2, c = -2, d = 2
+  const func = (x: number, y: number) => (4 - x * x - y * y) / 2
+
+  // ∫_a^b [∫_c^d f(x,y) dy] dx (先y后x)
+  const dx = (b - a) / n
+  const dy = (d - c) / n
+  let dydx = 0
+  for (let i = 0; i < n; i++) {
+    const x = a + (i + 0.5) * dx
+    let innerSum = 0
+    for (let j = 0; j < n; j++) {
+      const y = c + (j + 0.5) * dy
+      innerSum += func(x, y) * dy
+    }
+    dydx += innerSum * dx
+  }
+
+  // ∫_c^d [∫_a^b f(x,y) dx] dy (先x后y)
+  let dxdy = 0
+  for (let j = 0; j < n; j++) {
+    const y = c + (j + 0.5) * dy
+    let innerSum = 0
+    for (let i = 0; i < n; i++) {
+      const x = a + (i + 0.5) * dx
+      innerSum += func(x, y) * dx
+    }
+    dxdy += innerSum * dy
+  }
+
+  // Direct 2D integral
+  let direct = 0
+  for (let i = 0; i < n; i++) {
+    const x = a + (i + 0.5) * dx
+    for (let j = 0; j < n; j++) {
+      const y = c + (j + 0.5) * dy
+      direct += func(x, y) * dx * dy
+    }
+  }
+
+  return { dydx, dxdy, direct }
+}

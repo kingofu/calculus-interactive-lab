@@ -23,6 +23,8 @@ import {
   tripleIntegralApprox,
   tripleIntegralExact,
   formatValue,
+  surfaceAreaApprox,
+  fubiniDoubleIntegral,
 } from '@/lib/math-computations'
 
 export interface ComputedValues {
@@ -282,6 +284,32 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: '∮ x dy',
           error: '0',
           label: '区域面积 (格林公式)',
+        }
+      }
+
+      case 'surface_area1': {
+        const a = paramValue
+        const surfaceArea = surfaceAreaApprox(a, -2, 2, -2, 2)
+        // Flat domain area for comparison
+        const flatArea = 4 * 4 // [-2,2]×[-2,2] = 16
+        const ratio = surfaceArea / flatArea
+        return {
+          mainValue: formatValue(surfaceArea),
+          approxValue: formatValue(surfaceArea),
+          exactValue: `∫∫√(1+4·${a.toFixed(1)}²·(x²+y²)) dA`,
+          error: formatValue(ratio),
+          label: `曲面面积 S (底面积比: ${ratio.toFixed(2)})`,
+        }
+      }
+
+      case 'fubini1': {
+        const values = fubiniDoubleIntegral(200)
+        return {
+          mainValue: formatValue(values.direct),
+          approxValue: formatValue(values.dydx),
+          exactValue: formatValue(values.dxdy),
+          error: formatValue(Math.abs(values.dydx - values.dxdy)),
+          label: '∫∫f dσ (两种顺序验证)',
         }
       }
 

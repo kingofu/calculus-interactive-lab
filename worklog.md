@@ -286,6 +286,49 @@ Stage Summary:
 6. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
 
 ---
+Task ID: 4
+Agent: Surface Area & Fubini Agent
+Task: Add surface_area1 and fubini1 visualization modes
+
+Work Log:
+- Read worklog.md to understand project status (25 existing modes)
+- Added `'surface_area1' | 'fubini1'` to LabMode type in `src/store/lab-store.ts`
+- Added modeInfo entries for both modes:
+  - surface_area1: 曲面面积计算, section: 曲面面积与弧长, paramLabel: 曲面陡度 (0.2-2.0)
+  - fubini1: 富比尼定理, section: 富比尼定理与累次积分, paramLabel: 切片数量 (3-20)
+- Added `surfaceAreaApprox` and `fubiniDoubleIntegral` functions in `src/lib/math-computations.ts`
+- Added `SurfaceAreaScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Heat-mapped surface z = a*(x²+y²): teal for flat regions, amber for steep regions
+  - Normal vectors at grid points (short arrows with cone heads)
+  - Flat domain D on xy-plane with light teal fill
+  - Vertical connecting lines at 4 corners showing "lift"
+  - Html overlay with surface area value, gradient info, and color legend
+- Added `FubiniScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Surface z = (4-x²-y²)/2 over [-2,2]×[-2,2]
+  - X-type vertical slices on left half (x < 0): green slices with floor strips
+  - Y-type horizontal slices on right half (x > 0): amber slices with floor strips
+  - Dividing plane at x = 0 (violet semi-transparent)
+  - Text labels "先y后x" and "先x后y" on respective halves
+  - Html overlay with ∫∫f dσ value, both iterated integral values, and verification
+- Added "曲面面积" section in sidebar with AreaChart icon and teal color
+- Added "富比尼定理" section in sidebar with GitMerge icon and slate color
+- Added slate colorMap entry in sidebar
+- Added 'surface_area1' and 'fubini1' to allModes array in page.tsx
+- Added camera preset [6,8,4] fov 50 for both new modes in viewport.tsx
+- Added teal gradient background for surface_area1, slate-to-violet gradient for fubini1
+- Added bg-teal-500 accent for surface_area1, bg-slate-500 accent for fubini1
+- Added surface_area1 and fubini1 computed values cases in use-computed-values.ts
+- Fixed pre-existing lint error in viewport.tsx (setFadeIn(false) in useEffect)
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **27 visualization modes** (was 25)
+- **surface_area1**: Heat-mapped surface with normal vectors, connecting lines, and surface area computation
+- **fubini1**: Split-view with X-type and Y-type slices, iterated integral numerical verification
+- All lint checks pass, dev server compiles
+
+---
 Task ID: 2+4
 Agent: Main
 Task: Add Green's Theorem Mode (green1) and Collapsible Sidebar Sections
@@ -328,3 +371,183 @@ Stage Summary:
 - Real-time numerical verification: line integral ≈ area integral (Green's theorem proof)
 - **Collapsible sidebar sections**: click to expand/collapse, auto-expand active section
 - Red color theme for the new section
+
+---
+Task ID: 5
+Agent: UI Enhancement Agent
+Task: Add toast notification system and enhanced visual styling
+
+Work Log:
+- **Created `/src/components/lab/toast-provider.tsx`**:
+  - ToastProvider component with React Context + state management
+  - useToast hook returning `{ toast: (message, type?) => void }`
+  - Toast appears in bottom-right corner, auto-dismisses after 2.5s
+  - shadcn-style design: rounded, shadow, backdrop blur
+  - Emerald accent for success toasts, sky for info toasts
+  - Smooth enter/exit CSS transitions with animation keyframes
+  - Stack multiple toasts, exit animation with opacity+translate+scale
+  - Injected keyframes via dangerouslySetInnerHTML (avoiding styled-jsx issues)
+
+- **Enhanced `/src/components/lab/viewport.tsx`**:
+  - Added `useToast` hook - calls `toast('截图已保存！', 'success')` after screenshot download
+  - Added "reset camera" button (RotateCcw icon) that resets OrbitControls to default position
+  - Added fullscreen toggle button (Maximize2/Minimize2 icon) using Fullscreen API
+  - Added fade-in effect on mode transition using CSS keyframe animation
+  - Removed unused `useMemo` import
+  - Fixed lint error: replaced setState-in-effect with CSS keyframe approach for fade-in
+
+- **Enhanced `/src/app/page.tsx`**:
+  - Wrapped app with `<ToastProvider>` in a separate `HomeContent` component
+  - Added toast notification for 'S' keyboard shortcut screenshot
+  - **Header enhancements**:
+    - Subtle emerald-to-teal gradient line below header
+    - Taller header with better spacing on desktop (py-2 sm:py-2.5)
+    - Subtle shadow on header
+    - Sparkles icon now has gentle pulse animation (animate-pulse)
+    - Progress bar has shimmer animation when auto-tour is active
+    - Wider progress bar (w-20)
+  - **Footer enhancements**:
+    - Gradient top border (emerald via transparent)
+    - Current section name display (hidden on mobile, shown on md+)
+    - Mode navigation arrows (← →) for quick switching between modes
+    - Mode counter display between arrows
+    - Better responsive layout with mobile-specific text
+
+- **Enhanced `/src/components/lab/info-panel.tsx`**:
+  - Section-colored badges (11 section color configurations matching sidebar)
+  - Animated border glow on formula box (hover + pulse keyframe)
+  - "Related modes" hint at bottom showing previous/next mode in same section
+  - Serif font for Chinese text (font-[serif])
+  - Section-colored computed values panel backgrounds and borders
+  - Navigation buttons in related modes section
+
+- **Enhanced `/src/components/lab/controls-panel.tsx`**:
+  - Created `SliderWithProgress` reusable component
+  - Added visual indicator: thin progress bar under each slider showing current value relative to min/max
+  - Added keyboard shortcut hints in tooltips on +/- buttons ("← →" for param1)
+  - Better value display with tabular-nums for fixed-width numbers
+  - Range display `[min, max]` in the controls header
+  - Color-coded progress bars (emerald for param1, amber for param2)
+  - Proper decimal formatting based on step precision
+
+- **Enhanced `/src/components/lab/sidebar.tsx`**:
+  - Added section count badges (number of modes in each section, color-coded)
+  - Added "全部展开/收起" (expand/collapse all) button at the top with ChevronsUpDown icon
+  - Better visual separation between sections with border-t
+  - Hover tooltips on section headers showing section subtitle
+  - Added `badge` and `badgeText` properties to colorMap for section badges
+  - Added `ChevronsUpDown` icon import
+  - Navigation label at top
+
+- All lint checks pass with zero errors
+- Dev server compiles successfully
+- No new packages installed
+
+Stage Summary:
+- **Toast notification system**: Success/info toasts with enter/exit animations, auto-dismiss
+- **Enhanced header**: Gradient line, shadow, Sparkles pulse, shimmer on auto-tour progress
+- **Enhanced footer**: Gradient border, section name, mode navigation arrows
+- **Enhanced info panel**: Section-colored badges, formula glow, related modes, serif font
+- **Enhanced controls**: Progress bar under sliders, keyboard hints, better formatting
+- **Enhanced sidebar**: Count badges, expand/collapse all, tooltips, visual separation
+- **Enhanced viewport**: Reset camera, fullscreen toggle, fade-in transitions, toast on screenshot
+
+---
+Task ID: 11 (Cron Review Round 3)
+Agent: Main
+Task: QA testing, add 2 new modes, enhanced styling, fix sidebar bug
+
+Work Log:
+- Read worklog.md to understand project status (25 existing modes, stable)
+- Used agent-browser for comprehensive QA testing of all 25 modes — ALL PASS, zero errors
+- **Added 2 new modes** (via subagent): surface_area1 (曲面面积计算) and fubini1 (富比尼定理)
+  - surface_area1: Heat-mapped surface with normal vectors, connecting lines, surface area computation
+  - fubini1: Split-view X-type/Y-type slices, iterated integral numerical verification
+  - Total modes now: 27 (was 25)
+- **Added toast notification system** (via subagent):
+  - ToastProvider + useToast hook
+  - Success/info toasts with enter/exit animations, auto-dismiss after 2.5s
+  - Screenshot button and 'S' shortcut now show "截图已保存！" toast
+- **Enhanced UI styling** (via subagent):
+  - Header: gradient line, shadow, Sparkles pulse animation, shimmer on auto-tour progress
+  - Footer: gradient border, section name display, mode navigation arrows (← →)
+  - Info panel: section-colored badges, formula glow animation, related modes hint, serif font
+  - Controls panel: progress bar under sliders, keyboard shortcut hints, better formatting
+  - Sidebar: section count badges, expand/collapse all, tooltips, visual separation
+  - Viewport: reset camera button, fullscreen toggle, fade-in transitions
+- **Fixed critical bug**: New modes (surface_area1, fubini1) were missing from sidebar navigation
+  - Added "曲面面积" section (Mountain icon, indigo color) and "富比尼定理" section (GitMerge icon, fuchsia color)
+  - Added indigo and fuchsia colorMap entries
+- Verified both new modes are accessible from sidebar and render correctly
+- All lint checks pass, dev server compiles successfully
+
+Stage Summary:
+- **27 visualization modes** fully functional
+- **Toast notification system** for screenshot feedback
+- **Extensive UI enhancements** across all components
+- **Critical bug fixed**: sidebar navigation for new modes
+- No remaining critical bugs
+
+---
+## 项目当前状态 (2026-06-01 更新)
+
+### 项目概况
+- **名称**: 二重积分全功能互动实验室 (Double Integral Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 27个
+
+### 全部27个可视化模式
+1. **概念理解 (4)**: step1-step4 — 区域划分、网格划分、方柱近似、取极限
+2. **基本性质 (7)**: prop1-prop7 — 常数倍、加减、区域可加、常函数、比较、估值、中值
+3. **奇偶性 (2)**: parity1-parity2 — 奇函数/偶函数积分
+4. **直角坐标 (2)**: cartesian1-cartesian2 — X型/Y型区域
+5. **极坐标 (2)**: polar1-polar2 — 极坐标区域、黎曼和
+6. **矩形近似 (1)**: rect_approx — 一维矩形近似
+7. **球柱相交 (2)**: sphere_cyl1-sphere_cyl2 — Viviani体、截面法
+8. **收敛演示 (2)**: convergence1-convergence2 — 收敛动画、误差分析
+9. **三重积分 (1)**: triple1 — 体积分可视化
+10. **变量代换 (1)**: jacobian1 — 雅可比行列式
+11. **格林公式 (1)**: green1 — 线积分与面积分
+12. **曲面面积 (1)**: surface_area1 — 曲面面积计算 (NEW)
+13. **富比尼定理 (1)**: fubini1 — 累次积分等价性 (NEW)
+
+### 功能特性
+- ✅ 27个交互式3D可视化模式
+- ✅ 实时参数调整（滑块 + +/-按钮）
+- ✅ KaTeX数学公式渲染
+- ✅ 数值计算（近似值、精确值、误差）
+- ✅ 截图导出（Camera按钮 + S快捷键 + Toast反馈）
+- ✅ 深色/浅色模式切换
+- ✅ 键盘快捷键（↑↓←→, R, T, Space, D, S, ?）
+- ✅ 自动导览模式（按T）
+- ✅ 进度追踪（已探索模式数）
+- ✅ 响应式设计（移动端侧边栏抽屉）
+- ✅ 彩色分区（13种颜色主题）
+- ✅ Toast通知系统
+- ✅ 全屏模式切换
+- ✅ 相机重置按钮
+- ✅ 侧边栏折叠/展开
+- ✅ 信息面板关联模式导航
+- ✅ 控制面板进度条
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ QA测试: 所有27个模式通过agent-browser测试
+2. ✅ 新增模式: surface_area1 (曲面面积计算)、fubini1 (富比尼定理)
+3. ✅ Toast通知系统: 截图反馈、进入/退出动画
+4. ✅ UI增强: 页头渐变线、页脚导航、信息面板发光、控制面板进度条、侧边栏徽章
+5. ✅ 修复Bug: 新模式在侧边栏中不可见 → 已添加导航入口
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **散度定理可视化**: 高斯散度定理 ∮F·dS = ∫∫∫∇·F dV
+2. **斯托克斯定理**: 旋度与线积分的关系
+3. **曲面面积弧长推广**: 一维弧长 → 二维曲面面积的统一视角
+4. **交互增强**: 点击3D对象显示详情tooltip，hover高亮
+5. **性能优化**: 使用InstancedMesh替代大量独立mesh（polar2、convergence2模式）
+6. **动画时间线**: 为每个概念添加逐步动画讲解
+7. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
+8. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入

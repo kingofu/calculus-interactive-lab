@@ -3,11 +3,12 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
-import { Suspense, useMemo, useCallback, useRef, useState, useEffect } from 'react'
+import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
-import { Loader2, Move3d, Camera, RotateCcw } from 'lucide-react'
+import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useToast } from './toast-provider'
 
 // Camera presets for different modes
 function getCameraForMode(mode: string): { position: [number, number, number]; fov: number } {
@@ -29,6 +30,8 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
       return { position: [6, 5, 6], fov: 45 }
     case 'jacobian1':
     case 'green1':
+    case 'surface_area1':
+    case 'fubini1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -70,6 +73,12 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'green1') {
     return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
   }
+  if (mode === 'surface_area1') {
+    return 'from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20'
+  }
+  if (mode === 'fubini1') {
+    return 'from-slate-50 to-violet-50 dark:from-slate-900/50 dark:to-violet-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -86,6 +95,8 @@ function getModeAccentColor(mode: string): string {
   if (mode.startsWith('triple')) return 'bg-purple-500'
   if (mode === 'jacobian1') return 'bg-lime-500'
   if (mode === 'green1') return 'bg-red-500'
+  if (mode === 'surface_area1') return 'bg-teal-500'
+  if (mode === 'fubini1') return 'bg-slate-500'
   return 'bg-slate-500'
 }
 
@@ -107,9 +118,18 @@ export function Viewport() {
   const bgClass = getBackgroundForMode(mode)
   const accentColor = getModeAccentColor(mode)
   const containerRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [sceneKey, setSceneKey] = useState(0)
 
-  // Transition key - changes trigger CSS animation
-  const transitionKey = mode
+  // Fullscreen change listener
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
 
   const handleScreenshot = useCallback(() => {
     const canvas = containerRef.current?.querySelector('canvas')
@@ -120,17 +140,36 @@ export function Viewport() {
       link.download = `double-integral-${mode}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
+      toast('截图已保存！', 'success')
     } catch (e) {
       console.warn('Screenshot failed:', e)
     }
-  }, [mode])
+  }, [mode, toast])
 
+  const handleResetCamera = useCallback(() => {
+    // Force re-creation of OrbitControls by bumping the key
+    setSceneKey(prev => prev + 1)
+  }, [])
 
+  const handleFullscreen = useCallback(() => {
+    if (!containerRef.current) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      containerRef.current.requestFullscreen()
+    }
+  }, [])
 
   return (
-    <div ref={containerRef} className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-500`}>
+    <div
+      ref={containerRef}
+      className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-500 ${isFullscreen ? 'rounded-none' : ''}`}
+    >
+      {/* Fade-in overlay for mode transition */}
+      <div key={`fade-${mode}`} className="absolute inset-0 z-[5] pointer-events-none bg-background/20 animate-[fade-in_0.5s_ease-out_forwards]" />
+
       {/* Transition shimmer overlay */}
-      <div key={transitionKey} className="absolute inset-0 z-20 pointer-events-none animate-[shimmer_0.6s_ease-out]" />
+      <div key={`shimmer-${mode}`} className="absolute inset-0 z-[6] pointer-events-none animate-[shimmer_0.6s_ease-out]" />
 
       {/* Mode indicator overlay */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 pointer-events-none">
@@ -140,8 +179,36 @@ export function Viewport() {
         </span>
       </div>
 
-      {/* Screenshot button */}
+      {/* Top-right buttons */}
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 bg-background/40 backdrop-blur-sm hover:bg-background/70"
+              onClick={handleResetCamera}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span className="sr-only">重置视角</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">重置视角</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 bg-background/40 backdrop-blur-sm hover:bg-background/70"
+              onClick={handleFullscreen}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              <span className="sr-only">{isFullscreen ? '退出全屏' : '全屏'}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">{isFullscreen ? '退出全屏' : '全屏'}</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -166,8 +233,6 @@ export function Viewport() {
         </div>
       </div>
 
-
-
       <Suspense fallback={<LoadingIndicator />}>
         <Canvas
           camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
@@ -181,7 +246,7 @@ export function Viewport() {
           <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
           <SceneRenderer />
           <OrbitControls
-            key={`orbit-${mode}`}
+            key={`orbit-${mode}-${sceneKey}`}
             enableDamping
             dampingFactor={0.1}
             rotateSpeed={0.5}

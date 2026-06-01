@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/lab/sidebar'
 import { Viewport } from '@/components/lab/viewport'
 import { ControlsPanel } from '@/components/lab/controls-panel'
 import { InfoPanel } from '@/components/lab/info-panel'
+import { ToastProvider, useToast } from '@/components/lab/toast-provider'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +25,8 @@ import {
   Pause,
   GraduationCap,
   Heart,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -41,6 +44,7 @@ const allModes: LabMode[] = [
   'triple1',
   'jacobian1',
   'green1',
+  'surface_area1', 'fubini1',
 ]
 
 function ThemeToggle() {
@@ -100,12 +104,13 @@ function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void
   )
 }
 
-export default function Home() {
+function HomeContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [infoExpanded, setInfoExpanded] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive } = useLabStore()
   const info = modeInfo[mode]
+  const { toast } = useToast()
 
   const currentIndex = allModes.indexOf(mode)
   const visitedCount = visitedModes.size
@@ -195,6 +200,7 @@ export default function Home() {
             link.download = `double-integral-${mode}-${Date.now()}.png`
             link.href = dataUrl
             link.click()
+            toast('截图已保存！', 'success')
           } catch {}
         }
         break
@@ -204,7 +210,7 @@ export default function Home() {
         break
       }
     }
-  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2])
+  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2, toast])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -216,176 +222,243 @@ export default function Home() {
     if (info.paramDefault2 !== undefined) setParamValue2(info.paramDefault2)
   }
 
+  // Mode navigation helpers
+  const goToPrevMode = () => {
+    const prev = Math.max(0, currentIndex - 1)
+    setMode(allModes[prev])
+  }
+  const goToNextMode = () => {
+    const next = Math.min(allModes.length - 1, currentIndex + 1)
+    setMode(allModes[next])
+  }
+
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="h-screen flex flex-col bg-background overflow-hidden">
-        {/* Header */}
-        <header className="flex items-center justify-between px-3 sm:px-4 py-1.5 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile menu */}
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden">
-                  <Menu className="h-4 w-4" />
-                  <span className="sr-only">打开菜单</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <SheetTitle className="px-4 pt-4 text-sm font-semibold">导航菜单</SheetTitle>
-                <Sidebar onModeSelect={() => setSidebarOpen(false)} />
-              </SheetContent>
-            </Sheet>
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Header */}
+      <header className="relative flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile menu */}
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden">
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">打开菜单</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              <SheetTitle className="px-4 pt-4 text-sm font-semibold">导航菜单</SheetTitle>
+              <Sidebar onModeSelect={() => setSidebarOpen(false)} />
+            </SheetContent>
+          </Sheet>
 
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="relative">
-                <Box className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <Sparkles className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-amber-500" />
-              </div>
-              <h1 className="text-xs sm:text-sm font-bold tracking-tight">
-                二重积分互动实验室
-              </h1>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="relative">
+              <Box className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <Sparkles className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-amber-500 animate-pulse" />
             </div>
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight">
+              二重积分互动实验室
+            </h1>
           </div>
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Progress indicator */}
-            <div className="hidden sm:flex items-center gap-1.5">
-              <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <span className="text-[9px] text-muted-foreground font-mono">{visitedCount}/{totalModes}</span>
-            </div>
-
-            {/* Auto tour button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("h-7 w-7", autoTourActive && "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30")}
-                  onClick={() => setAutoTourActive(!autoTourActive)}
-                >
-                  {autoTourActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                  <span className="sr-only">{autoTourActive ? '停止导览' : '自动导览'}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">{autoTourActive ? '停止导览 (T)' : '自动导览 (T)'}</TooltipContent>
-            </Tooltip>
-
-            {/* Current mode badge */}
-            <Badge variant="outline" className="hidden sm:flex items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20">
-              <span className="font-mono">{currentIndex + 1}/{allModes.length}</span>
-              <span className="text-muted-foreground">·</span>
-              <span className="truncate max-w-[80px]">{info.title}</span>
-            </Badge>
-
-            {/* Reset button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleReset}>
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span className="sr-only">重置参数</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">重置参数 (R)</TooltipContent>
-            </Tooltip>
-
-            {/* Keyboard shortcuts */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShortcutsOpen(true)}>
-                  <Keyboard className="h-3.5 w-3.5" />
-                  <span className="sr-only">快捷键</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">快捷键 (?)</TooltipContent>
-            </Tooltip>
-
-            <ThemeToggle />
-          </div>
-        </header>
-
-        {/* Main content */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Desktop sidebar */}
-          <aside className="hidden md:flex w-52 lg:w-56 border-r flex-col shrink-0">
-            <Sidebar />
-          </aside>
-
-          {/* Right content */}
-          <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-            {/* 3D Viewport - takes most space with minimum height */}
-            <div className="flex-1 min-h-[240px] p-1.5 sm:p-2">
-              <Viewport />
-            </div>
-
-            {/* Bottom panels - collapsible with scroll */}
-            <div className={cn(
-              "border-t transition-all duration-300 ease-in-out bg-background/80 backdrop-blur-sm",
-              infoExpanded ? "max-h-[50vh]" : "max-h-[180px]"
-            )}>
-              {/* Controls always visible */}
-              <ControlsPanel />
-
-              {/* Expandable info panel */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full h-6 rounded-none text-[10px] text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 border-y border-dashed"
-                  onClick={() => setInfoExpanded(!infoExpanded)}
-                >
-                  {infoExpanded ? (
-                    <>
-                      <ChevronDown className="h-3 w-3" />
-                      收起详情
-                      <ChevronDown className="h-3 w-3" />
-                    </>
-                  ) : (
-                    <>
-                      <ChevronUp className="h-3 w-3" />
-                      展开详情
-                      <ChevronUp className="h-3 w-3" />
-                    </>
-                  )}
-                </Button>
-                <div className={cn(
-                  "overflow-y-auto transition-all duration-300",
-                  infoExpanded ? "max-h-[calc(50vh-100px)]" : "max-h-[60px]"
-                )}>
-                  <InfoPanel />
-                </div>
-              </div>
-            </div>
-          </main>
         </div>
 
-        {/* Footer */}
-        <footer className="flex items-center justify-between px-3 sm:px-4 py-1 border-t bg-background/95 backdrop-blur shrink-0">
-          <div className="flex items-center gap-1.5">
-            <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-[9px] text-muted-foreground">
-              二重积分全功能互动实验室 · 高等数学可视化教学工具
-            </span>
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Progress indicator */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden relative">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+              {/* Shimmer animation when auto-tour is active */}
+              {autoTourActive && (
+                <div className="absolute inset-0 animate-[shimmer-progress_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              )}
+            </div>
+            <span className="text-[9px] text-muted-foreground font-mono">{visitedCount}/{totalModes}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] text-muted-foreground hidden sm:inline">
-              共 {totalModes} 个可视化模式 · 已探索 {visitedCount} 个
-            </span>
-            <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
-              <span>用</span>
-              <Heart className="h-2.5 w-2.5 text-red-400" />
-              <span>构建</span>
+
+          {/* Auto tour button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-7 w-7", autoTourActive && "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30")}
+                onClick={() => setAutoTourActive(!autoTourActive)}
+              >
+                {autoTourActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                <span className="sr-only">{autoTourActive ? '停止导览' : '自动导览'}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">{autoTourActive ? '停止导览 (T)' : '自动导览 (T)'}</TooltipContent>
+          </Tooltip>
+
+          {/* Current mode badge */}
+          <Badge variant="outline" className="hidden sm:flex items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20">
+            <span className="font-mono">{currentIndex + 1}/{allModes.length}</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="truncate max-w-[80px]">{info.title}</span>
+          </Badge>
+
+          {/* Reset button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleReset}>
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="sr-only">重置参数</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">重置参数 (R)</TooltipContent>
+          </Tooltip>
+
+          {/* Keyboard shortcuts */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShortcutsOpen(true)}>
+                <Keyboard className="h-3.5 w-3.5" />
+                <span className="sr-only">快捷键</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">快捷键 (?)</TooltipContent>
+          </Tooltip>
+
+          <ThemeToggle />
+        </div>
+
+        {/* Gradient line below header */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 opacity-40" />
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Desktop sidebar */}
+        <aside className="hidden md:flex w-52 lg:w-56 border-r flex-col shrink-0">
+          <Sidebar />
+        </aside>
+
+        {/* Right content */}
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* 3D Viewport - takes most space with minimum height */}
+          <div className="flex-1 min-h-[240px] p-1.5 sm:p-2">
+            <Viewport />
+          </div>
+
+          {/* Bottom panels - collapsible with scroll */}
+          <div className={cn(
+            "border-t transition-all duration-300 ease-in-out bg-background/80 backdrop-blur-sm",
+            infoExpanded ? "max-h-[50vh]" : "max-h-[180px]"
+          )}>
+            {/* Controls always visible */}
+            <ControlsPanel />
+
+            {/* Expandable info panel */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-6 rounded-none text-[10px] text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 border-y border-dashed"
+                onClick={() => setInfoExpanded(!infoExpanded)}
+              >
+                {infoExpanded ? (
+                  <>
+                    <ChevronDown className="h-3 w-3" />
+                    收起详情
+                    <ChevronDown className="h-3 w-3" />
+                  </>
+                ) : (
+                  <>
+                    <ChevronUp className="h-3 w-3" />
+                    展开详情
+                    <ChevronUp className="h-3 w-3" />
+                  </>
+                )}
+              </Button>
+              <div className={cn(
+                "overflow-y-auto transition-all duration-300",
+                infoExpanded ? "max-h-[calc(50vh-100px)]" : "max-h-[60px]"
+              )}>
+                <InfoPanel />
+              </div>
             </div>
           </div>
-        </footer>
-
-        {/* Shortcuts Dialog */}
-        <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+        </main>
       </div>
+
+      {/* Footer */}
+      <footer className="relative flex items-center justify-between px-3 sm:px-5 py-1.5 bg-background/95 backdrop-blur shrink-0">
+        {/* Gradient top border */}
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+
+        <div className="flex items-center gap-1.5">
+          <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-[9px] text-muted-foreground hidden sm:inline">
+            二重积分全功能互动实验室 · 高等数学可视化教学工具
+          </span>
+          <span className="text-[9px] text-muted-foreground sm:hidden">
+            二重积分实验室
+          </span>
+        </div>
+
+        {/* Current section name */}
+        <div className="flex items-center gap-1.5 hidden md:flex">
+          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+            {info.section}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] text-muted-foreground hidden sm:inline">
+            共 {totalModes} 个模式 · 已探索 {visitedCount} 个
+          </span>
+
+          {/* Mode navigation arrows */}
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={goToPrevMode}
+              disabled={currentIndex === 0}
+            >
+              <ChevronLeft className="h-3 w-3" />
+              <span className="sr-only">上一个模式</span>
+            </Button>
+            <span className="text-[9px] font-mono text-muted-foreground min-w-[24px] text-center">
+              {currentIndex + 1}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={goToNextMode}
+              disabled={currentIndex === allModes.length - 1}
+            >
+              <ChevronRight className="h-3 w-3" />
+              <span className="sr-only">下一个模式</span>
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <span>用</span>
+            <Heart className="h-2.5 w-2.5 text-red-400" />
+            <span>构建</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Shortcuts Dialog */}
+      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+    </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <TooltipProvider delayDuration={300}>
+      <ToastProvider>
+        <HomeContent />
+      </ToastProvider>
     </TooltipProvider>
   )
 }

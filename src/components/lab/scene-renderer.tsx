@@ -26,6 +26,8 @@ import {
   formatValue,
   generateConvergenceData,
   generateErrorData,
+  surfaceAreaApprox,
+  fubiniDoubleIntegral,
 } from '@/lib/math-computations'
 
 // --- Common Axes ---
@@ -1984,6 +1986,411 @@ function GreenScene() {
   )
 }
 
+// --- Surface Area (surface_area1) ---
+function SurfaceAreaScene() {
+  const { paramValue: a } = useLabStore()
+  
+  // Surface z = a*(x² + y²) with heat-map coloring based on gradient magnitude
+  const surfaceGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const normals: number[] = []
+    const res = 50
+    const [xMin, xMax] = [-2, 2]
+    const [yMin, yMax] = [-2, 2]
+    const dx = (xMax - xMin) / res
+    const dy = (yMax - yMin) / res
+    const tealCol = new THREE.Color('#14b8a6')
+    const amberCol = new THREE.Color('#f59e0b')
+
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = xMin + i * dx
+        const y = yMin + j * dy
+        const z = a * (x * x + y * y)
+        vertices.push(x, z, y)
+        normals.push(0, 1, 0)
+        // Heat map: gradient magnitude determines color
+        const gradMag = Math.sqrt(4 * a * a * (x * x + y * y))
+        const t = Math.min(1, gradMag / (4 * a + 0.01)) // normalize
+        const col = tealCol.clone().lerp(amberCol, t)
+        colors.push(col.r, col.g, col.b)
+      }
+    }
+
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const ai = i * (res + 1) + j
+        const b2 = ai + 1
+        const c = (i + 1) * (res + 1) + j
+        const d = c + 1
+        indices.push(ai, c, b2, b2, c, d)
+      }
+    }
+
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Normal vectors at grid points
+  const normalArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number] }[] = []
+    const step = 1.0
+    for (let x = -2; x <= 2; x += step) {
+      for (let y = -2; y <= 2; y += step) {
+        const z = a * (x * x + y * y)
+        // Normal to z = a(x²+y²): (-∂f/∂x, 1, -∂f/∂y) = (-2ax, 1, -2ay)
+        const nx = -2 * a * x
+        const nz = -2 * a * y
+        const ny = 1
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz)
+        const scale = 0.3 / Math.max(0.01, len)
+        arrows.push({
+          pos: [x, z, y],
+          dir: [nx * scale, ny * scale, nz * scale],
+        })
+      }
+    }
+    return arrows
+  }, [a])
+
+  // Connecting lines at corners (showing the "lift" from flat domain to surface)
+  const connectingLines = useMemo(() => {
+    const corners = [[-2, -2], [-2, 2], [2, -2], [2, 2]] as const
+    return corners.map(([x, y]) => {
+      const zBottom = 0
+      const zTop = a * (x * x + y * y)
+      return new Float32Array([x, zBottom, y, x, zTop, y])
+    })
+  }, [a])
+
+  // Numerical surface area
+  const surfaceArea = useMemo(() => {
+    return surfaceAreaApprox(a, -2, 2, -2, 2)
+  }, [a])
+
+  // Gradient at center for display
+  const gradAtOrigin = useMemo(() => {
+    return { fx: 0, fy: 0, sqrtVal: 1 }
+  }, [])
+
+  // Gradient at (1,1) for display
+  const gradAtSample = useMemo(() => {
+    const fx = 2 * a * 1
+    const fy = 2 * a * 1
+    const sqrtVal = Math.sqrt(1 + fx * fx + fy * fy)
+    return { fx, fy, sqrtVal }
+  }, [a])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Heat-mapped surface */}
+      <mesh geometry={surfaceGeometry}>
+        <meshPhongMaterial
+          vertexColors
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.8}
+          shininess={60}
+        />
+      </mesh>
+
+      {/* Normal vectors */}
+      {normalArrows.map((arrow, idx) => (
+        <group key={idx} position={arrow.pos}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([0, 0, 0, arrow.dir[0], arrow.dir[1], arrow.dir[2]]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#f97316" linewidth={2} />
+          </line>
+          {/* Small cone for arrow head */}
+          <mesh position={[arrow.dir[0] * 0.85, arrow.dir[1] * 0.85, arrow.dir[2] * 0.85]}>
+            <coneGeometry args={[0.04, 0.1, 4]} />
+            <meshPhongMaterial color="#f97316" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Flat domain D on xy-plane */}
+      <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4, 4]} />
+        <meshPhongMaterial color="#99f6e4" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
+      <RegionOutline size={2} color="#14b8a6" />
+
+      {/* Connecting lines at corners */}
+      {connectingLines.map((line, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[line, 3]} count={2} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#f97316" opacity={0.6} transparent linewidth={2} />
+        </line>
+      ))}
+
+      <Axes length={4} />
+      <AxisLabels length={4} />
+      <XYGrid size={4} divisions={8} color="#888888" />
+
+      {/* Info overlay */}
+      <Html position={[0, 6, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
+          <div className="text-teal-600 dark:text-teal-400 font-bold">
+            S = ∫∫√(1+fx²+fy²) dσ ≈ {surfaceArea.toFixed(4)}
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            f(x,y) = {a.toFixed(1)}·(x²+y²)
+          </div>
+          <div className="text-muted-foreground">
+            fx = 2ax, fy = 2ay
+          </div>
+          <div className="text-muted-foreground">
+            √(1+fx²+fy²) 在 (1,1): √(1+{gradAtSample.fx.toFixed(2)}²+{gradAtSample.fy.toFixed(2)}²) = {gradAtSample.sqrtVal.toFixed(4)}
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-[10px]">
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-teal-500" />平坦区域</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber-500" />陡峭区域</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-orange-500" />法向量</span>
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Fubini's Theorem (fubini1) ---
+function FubiniScene() {
+  const { paramValue: nSlices } = useLabStore()
+  const nInt = Math.max(3, Math.round(nSlices))
+
+  // Surface z = (4 - x² - y²) / 2
+  const funcFubini = (x: number, y: number) => (4 - x * x - y * y) / 2
+
+  // X-type slices (left half, x < 0): vertical green slices
+  const xSlices = useMemo(() => {
+    const slices: { x: number; w: number; h: number; color: string }[] = []
+    const dx = 2 / nInt // from -2 to 0
+    for (let i = 0; i < nInt; i++) {
+      const x = -2 + (i + 0.5) * dx
+      // Average height across y ∈ [-2, 2]
+      let avgH = 0
+      const ny = 20
+      for (let j = 0; j < ny; j++) {
+        const y = -2 + (j + 0.5) * (4 / ny)
+        avgH += Math.max(0, funcFubini(x, y))
+      }
+      avgH /= ny
+      slices.push({
+        x,
+        w: dx * 0.85,
+        h: Math.max(0, avgH),
+        color: i % 2 === 0 ? '#10b981' : '#34d399',
+      })
+    }
+    return slices
+  }, [nInt])
+
+  // Y-type slices (right half, x > 0): horizontal amber slices
+  const ySlices = useMemo(() => {
+    const slices: { y: number; d: number; h: number; color: string }[] = []
+    const dy = 4 / nInt // from -2 to 2
+    for (let j = 0; j < nInt; j++) {
+      const y = -2 + (j + 0.5) * dy
+      // Average height across x ∈ [0, 2]
+      let avgH = 0
+      const nx = 20
+      for (let i = 0; i < nx; i++) {
+        const x = 0 + (i + 0.5) * (2 / nx)
+        avgH += Math.max(0, funcFubini(x, y))
+      }
+      avgH /= nx
+      slices.push({
+        y,
+        d: dy * 0.85,
+        h: Math.max(0, avgH),
+        color: j % 2 === 0 ? '#f59e0b' : '#fbbf24',
+      })
+    }
+    return slices
+  }, [nInt])
+
+  // Numerical values
+  const integralValues = useMemo(() => {
+    return fubiniDoubleIntegral(200)
+  }, [])
+
+  // X-type slice floor strips (green)
+  const xFloorStrips = useMemo(() => {
+    const strips: { vertices: Float32Array; indices: Uint16Array; color: string }[] = []
+    const dx = 2 / nInt
+    for (let i = 0; i < nInt; i++) {
+      const xMin = -2 + i * dx
+      const xMax = -2 + (i + 1) * dx
+      strips.push({
+        vertices: new Float32Array([
+          xMin, 0.005, -2,
+          xMax, 0.005, -2,
+          xMax, 0.005, 2,
+          xMin, 0.005, 2,
+        ]),
+        indices: new Uint16Array([0, 1, 2, 0, 2, 3]),
+        color: i % 2 === 0 ? '#10b981' : '#34d399',
+      })
+    }
+    return strips
+  }, [nInt])
+
+  // Y-type slice floor strips (amber)
+  const yFloorStrips = useMemo(() => {
+    const strips: { vertices: Float32Array; indices: Uint16Array; color: string }[] = []
+    const dy = 4 / nInt
+    for (let j = 0; j < nInt; j++) {
+      const yMin = -2 + j * dy
+      const yMax = -2 + (j + 1) * dy
+      strips.push({
+        vertices: new Float32Array([
+          0, 0.005, yMin,
+          2, 0.005, yMin,
+          2, 0.005, yMax,
+          0, 0.005, yMax,
+        ]),
+        indices: new Uint16Array([0, 1, 2, 0, 2, 3]),
+        color: j % 2 === 0 ? '#f59e0b' : '#fbbf24',
+      })
+    }
+    return strips
+  }, [nInt])
+
+  return (
+    <AutoRotate speed={0.002}>
+      <Axes length={4} />
+      <AxisLabels length={4} />
+      <XYGrid size={4} divisions={8} color="#888888" />
+
+      {/* Surface */}
+      <Surface
+        func={funcFubini}
+        xRange={[-2, 2]}
+        yRange={[-2, 2]}
+        color="#8b5cf6"
+        opacity={0.35}
+        resolution={40}
+      />
+
+      {/* Dividing plane at x=0 */}
+      <mesh position={[0, 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[4, 4]} />
+        <meshPhongMaterial color="#6366f1" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Dividing line on floor */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([0, 0.01, -2, 0, 0.01, 2]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#6366f1" linewidth={2} />
+      </line>
+
+      {/* X-type floor strips (left half) */}
+      {xFloorStrips.map((strip, idx) => (
+        <mesh key={`xf-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[strip.vertices, 3]} count={4} />
+            <bufferAttribute attach="index" args={[strip.indices, 1]} count={6} />
+          </bufferGeometry>
+          <meshPhongMaterial color={strip.color} transparent opacity={0.3} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Y-type floor strips (right half) */}
+      {yFloorStrips.map((strip, idx) => (
+        <mesh key={`yf-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[strip.vertices, 3]} count={4} />
+            <bufferAttribute attach="index" args={[strip.indices, 1]} count={6} />
+          </bufferGeometry>
+          <meshPhongMaterial color={strip.color} transparent opacity={0.3} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* X-type vertical slice bars (left half) */}
+      {xSlices.map((slice, idx) => (
+        <mesh key={`xs-${idx}`} position={[slice.x, slice.h / 2, 0]}>
+          <boxGeometry args={[slice.w, slice.h, 3.8]} />
+          <meshPhongMaterial color={slice.color} transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Y-type horizontal slice bars (right half) */}
+      {ySlices.map((slice, idx) => (
+        <mesh key={`ys-${idx}`} position={[1, slice.h / 2, slice.y]}>
+          <boxGeometry args={[1.8, slice.h, slice.d]} />
+          <meshPhongMaterial color={slice.color} transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Region outline */}
+      <RegionOutline size={2} color="#6366f1" />
+
+      {/* Labels */}
+      <Text
+        position={[-1, 4.5, 0]}
+        fontSize={0.25}
+        color="#10b981"
+        anchorX="center"
+        anchorY="middle"
+      >
+        先y后x
+      </Text>
+      <Text
+        position={[1, 4.5, 0]}
+        fontSize={0.25}
+        color="#f59e0b"
+        anchorX="center"
+        anchorY="middle"
+      >
+        先x后y
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, 7, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
+          <div className="text-violet-600 dark:text-violet-400 font-bold">
+            ∫∫f dσ = {integralValues.direct.toFixed(4)}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400">
+            ∫[∫f dy]dx = {integralValues.dydx.toFixed(4)} (先y后x)
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            ∫[∫f dx]dy = {integralValues.dxdy.toFixed(4)} (先x后y)
+          </div>
+          <div className="text-muted-foreground text-[10px]">
+            验证: 两种顺序结果相同 ✓ (差: {Math.abs(integralValues.dydx - integralValues.dxdy).toFixed(6)})
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-[10px]">
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-emerald-500" />X型切片 (先y后x)</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber-500" />Y型切片 (先x后y)</span>
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 // ============= MAIN SCENE RENDERER =============
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
@@ -2231,6 +2638,14 @@ export function SceneRenderer() {
 
       {mode === 'green1' && (
         <GreenScene />
+      )}
+
+      {mode === 'surface_area1' && (
+        <SurfaceAreaScene />
+      )}
+
+      {mode === 'fubini1' && (
+        <FubiniScene />
       )}
     </>
   )

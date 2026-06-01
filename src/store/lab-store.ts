@@ -12,6 +12,7 @@ export type LabMode =
   | 'triple1'
   | 'jacobian1'
   | 'green1'
+  | 'surface_area1' | 'fubini1'
 
 interface LabState {
   mode: LabMode
@@ -268,5 +269,21 @@ export const modeInfo: Record<LabMode, {
     description: '格林公式将沿闭曲线 C 的线积分与 C 所围区域 D 上的二重积分联系起来。图中展示闭曲线 C（红色箭头表示逆时针方向），区域 D（绿色填充），以及向量场 (P,Q) 沿边界曲线的流动。拖动参数改变曲线形状，观察线积分与面积分的等价关系。',
     paramLabel: '区域变形',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  surface_area1: {
+    title: '曲面面积计算',
+    section: '曲面面积与弧长',
+    math: 'S = \\iint_D \\sqrt{1 + \\left(\\frac{\\partial f}{\\partial x}\\right)^2 + \\left(\\frac{\\partial f}{\\partial y}\\right)^2}\\,d\\sigma',
+    description: '曲面 z=f(x,y) 的面积可通过公式 S=∫∫√(1+fx²+fy²) dσ 计算。图中展示曲面及其法向量，面积元素 dS=√(1+fx²+fy²)·dxdy 的几何意义是：在曲面上，每个微小面积元素是底面上对应面积元素的 √(1+fx²+fy²) 倍。调整参数观察不同曲面的面积变化。',
+    paramLabel: '曲面陡度',
+    paramMin: 0.2, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  fubini1: {
+    title: '富比尼定理',
+    section: '富比尼定理与累次积分',
+    math: '\\iint_D f(x,y)\\,d\\sigma = \\int_a^b \\left[\\int_{\\phi_1(x)}^{\\phi_2(x)} f(x,y)\\,dy\\right]dx = \\int_c^d \\left[\\int_{\\psi_1(y)}^{\\psi_2(y)} f(x,y)\\,dx\\right]dy',
+    description: '富比尼定理说明，在一定条件下，二重积分可以化为两次单积分（累次积分）。可以先对 y 积分再对 x 积分，也可以先对 x 积分再对 y 积分，两种顺序的结果相同。图中同时展示两种积分顺序的切片方式。',
+    paramLabel: '切片数量',
+    paramMin: 3, paramMax: 20, paramStep: 1, paramDefault: 8,
   },
 }
