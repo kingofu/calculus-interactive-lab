@@ -27,6 +27,7 @@ import {
   Heart,
   ChevronLeft,
   ChevronRight,
+  Star,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -48,6 +49,7 @@ const allModes: LabMode[] = [
   'stokes1', 'divergence1',
   'arc_length1', 'mass_center1',
   'moment_of_inertia1', 'cylindrical1',
+  'gradient1', 'spherical1', 'laplace1',
 ]
 
 function ThemeToggle() {
@@ -91,6 +93,7 @@ function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void
             ['← / →', '调整参数值'],
             ['R', '重置参数 / 停止导览'],
             ['T', '开始/停止自动导览'],
+            ['F', '收藏/取消收藏当前模式'],
             ['Space', '展开/收起详情面板'],
             ['D', '切换深色/浅色模式'],
             ['S', '截图保存3D视图'],
@@ -112,7 +115,7 @@ function HomeContent() {
   const [infoExpanded, setInfoExpanded] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive } = useLabStore()
+  const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive, favorites, toggleFavorite } = useLabStore()
   const info = modeInfo[mode]
   const { toast } = useToast()
 
@@ -225,12 +228,17 @@ function HomeContent() {
         }
         break
       }
+      case 'f':
+      case 'F': {
+        toggleFavorite(mode)
+        break
+      }
       case '?': {
         setShortcutsOpen(prev => !prev)
         break
       }
     }
-  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2, toast])
+  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2, toast, favorites, toggleFavorite])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -328,6 +336,9 @@ function HomeContent() {
             <span className="font-mono">{currentIndex + 1}/{allModes.length}</span>
             <span className="text-muted-foreground">·</span>
             <span className="truncate max-w-[80px]">{info.title}</span>
+            {favorites.has(mode) && (
+              <Star className="h-2.5 w-2.5 text-amber-500 fill-amber-500 ml-0.5" />
+            )}
           </Badge>
 
           {/* Reset button */}
@@ -360,6 +371,9 @@ function HomeContent() {
         <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
           <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
         </div>
+        {/* Subtle corner glow */}
+        <div className="absolute bottom-0 left-0 w-16 h-2 bg-gradient-to-r from-emerald-500/20 to-transparent" />
+        <div className="absolute bottom-0 right-0 w-16 h-2 bg-gradient-to-l from-teal-500/20 to-transparent" />
       </header>
 
       {/* Main content */}

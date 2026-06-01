@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
 import { SceneErrorBoundary } from './scene-error-boundary'
+import { SceneTooltip } from './scene-tooltip'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
@@ -39,6 +40,9 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'mass_center1':
     case 'moment_of_inertia1':
     case 'cylindrical1':
+    case 'gradient1':
+    case 'spherical1':
+    case 'laplace1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -101,6 +105,15 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'cylindrical1') {
     return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
   }
+  if (mode === 'gradient1') {
+    return 'from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/20'
+  }
+  if (mode === 'spherical1') {
+    return 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20'
+  }
+  if (mode === 'laplace1') {
+    return 'from-slate-50 to-zinc-50 dark:from-slate-900/50 dark:to-zinc-900/30'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -124,6 +137,9 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'arc_length1') return 'bg-pink-500'
   if (mode === 'mass_center1' || mode === 'moment_of_inertia1') return 'bg-cyan-500'
   if (mode === 'cylindrical1') return 'bg-sky-500'
+  if (mode === 'gradient1') return 'bg-yellow-500'
+  if (mode === 'spherical1') return 'bg-green-500'
+  if (mode === 'laplace1') return 'bg-slate-500'
   return 'bg-slate-500'
 }
 
@@ -192,11 +208,19 @@ export function Viewport() {
       ref={containerRef}
       className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-500 ${isFullscreen ? 'rounded-none' : ''}`}
     >
-      {/* Fade-in overlay for mode transition */}
-      <div key={`fade-${mode}`} className="absolute inset-0 z-[5] pointer-events-none bg-background/20 animate-[fade-in_0.5s_ease-out_forwards]" />
+      {/* Mode transition animation overlay */}
+      <div key={`transition-${mode}`} className="absolute inset-0 z-[5] pointer-events-none animate-[mode-switch_0.4s_ease-out_forwards]" />
 
       {/* Transition shimmer overlay */}
-      <div key={`shimmer-${mode}`} className="absolute inset-0 z-[6] pointer-events-none animate-[shimmer_0.6s_ease-out]" />
+      <div key={`shimmer-${mode}`} className="absolute inset-0 z-[6] pointer-events-none animate-[shimmer_0.8s_ease-out]" />
+
+      {/* Gradient corner accents */}
+      <div className="absolute top-0 left-0 w-24 h-24 pointer-events-none z-[4]">
+        <div className={cn("w-full h-full rounded-tl-lg opacity-20", `bg-gradient-to-br ${bgClass}`)} />
+      </div>
+      <div className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none z-[4]">
+        <div className={cn("w-full h-full rounded-br-lg opacity-10", `bg-gradient-to-tl ${bgClass}`)} />
+      </div>
 
       {/* Mode indicator overlay */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 pointer-events-none">
@@ -284,6 +308,9 @@ export function Viewport() {
           </Canvas>
         </Suspense>
       </SceneErrorBoundary>
+
+      {/* Interactive hover tooltip overlay */}
+      <SceneTooltip />
     </div>
   )
 }

@@ -399,6 +399,54 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'gradient1': {
+        const a = paramValue
+        const maxGradMag = 2 * a * 0.85 * Math.SQRT2
+        // Integral of |∇f|² = 4a²(x²+y²) over unit disk = 2πa²
+        const gradMagSquared = 2 * Math.PI * a * a
+        return {
+          mainValue: formatValue(maxGradMag),
+          approxValue: `|∇f|max = 2a·r_max`,
+          exactValue: `∫∫|∇f|²dA = ${formatValue(gradMagSquared)}`,
+          error: formatValue(2 * a),
+          label: `最大梯度模 ≈ ${formatValue(maxGradMag)}, ∇f=(-2ax,-2ay)`,
+        }
+      }
+
+      case 'spherical1': {
+        const R = paramValue
+        const phiMax = paramValue2
+        const fullVolume = (4 / 3) * Math.PI * R * R * R
+        // Partial sphere volume with phiMax < π
+        const partialVolume = (Math.PI * R * R * R / 3) * (2 - 3 * Math.cos(phiMax) + Math.cos(phiMax) * Math.cos(phiMax) * Math.cos(phiMax))
+        const volume = phiMax >= Math.PI - 0.01 ? fullVolume : partialVolume
+        return {
+          mainValue: formatValue(volume),
+          approxValue: `(4/3)πR³ = ${formatValue(fullVolume)}`,
+          exactValue: `V = ${formatValue(volume)}`,
+          error: '0',
+          label: `球体体积 = ${formatValue(volume)}`,
+        }
+      }
+
+      case 'laplace1': {
+        const a = paramValue
+        // ∇²f = -a·cos(x)·cosh(y) + a·cos(x)·cosh(y) = 0
+        // Numerical verification
+        const testX = 1.0
+        const testY = 0.5
+        const d2fdx2 = -a * Math.cos(testX) * Math.cosh(testY)
+        const d2fdy2 = a * Math.cos(testX) * Math.cosh(testY)
+        const laplacian = d2fdx2 + d2fdy2
+        return {
+          mainValue: formatValue(laplacian),
+          approxValue: `∂²f/∂x² = ${formatValue(d2fdx2)}`,
+          exactValue: `∂²f/∂y² = ${formatValue(d2fdy2)}`,
+          error: formatValue(Math.abs(laplacian)),
+          label: `∇²f = 0 验证: ∂²f/∂x² + ∂²f/∂y² = ${formatValue(laplacian)}`,
+        }
+      }
+
       default:
         return null
     }

@@ -757,3 +757,302 @@ Stage Summary:
 6. **更多数学模式**: 拉普拉斯变换、傅里叶级数、梯度场可视化
 7. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
 8. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer
+
+---
+Task ID: 13 (Cron Review Round 5)
+Agent: Main
+Task: QA testing, add 3 new modes, hover/tooltip interaction, favorites feature, sidebar progress, styling enhancements
+
+Work Log:
+- Read worklog.md to understand project status (33 existing modes, stable)
+- Used agent-browser for comprehensive QA testing of all 33 modes — ALL PASS, zero errors
+- No bugs found during testing
+- **Added 3 new visualization modes** (via subagent):
+  - **gradient1 (梯度场可视化)**: Heat-mapped paraboloid surface + 8×8 gradient arrows + contour circles + Html overlay with ∇f formula
+  - **spherical1 (球坐标计算)**: Semi-transparent sphere + coordinate axis arrows + wedge volume element dV=r²sinφ dr dθ dφ + great circle arcs + dual parameters
+  - **laplace1 (拉普拉斯算子与调和函数)**: Surface z=a·cos(x)·cosh(y) colored green (harmonic) + indicator spheres + floor contour lines + ∇²f=0 verification
+- **Added interactive 3D hover/tooltip system** (via subagent):
+  - Created SceneTooltip component (HTML overlay, fade transitions, emerald accent, viewport-clamped)
+  - Created HoverableMesh/HoverableBar components (R3F pointer events, 3D→2D projection, hover scale/color)
+  - Added tooltip data to Zustand store (tooltip state, showTooltip/hideTooltip actions)
+  - Integrated hover tooltips into 5 scenes: step3, rect_approx, convergence1, polar2, triple1
+- **Added favorites feature** (via subagent):
+  - Favorites persisted in localStorage (`lab-favorites` key)
+  - "收藏" section at top of sidebar with gold/amber theme (appears only when favorites exist)
+  - Star toggle button on each mode button (amber when favorited, gray when not, tooltip, scale animation)
+  - Star indicator in header Badge when current mode is favorited
+  - Keyboard shortcut 'F' toggles favorite for current mode
+- **Added sidebar section progress indicators** (via subagent):
+  - 2px thin progress bar below each section title
+  - Width proportional to visited/total modes
+  - Count badge shows "visited/total" format (e.g., "3/7")
+  - Green checkmark (✓) when all modes in section are visited
+- **Enhanced styling** (direct):
+  - Added 7 new CSS keyframe animations: star-pop, progress-fill, mode-switch, ripple, gradient-shift, orbit-spin
+  - Enhanced viewport: mode-switch transition animation, gradient corner accents, improved shimmer effect
+  - Enhanced controls panel: subtle background gradient, hover/active scale animations on +/- buttons, reset button micro-interactions
+  - Enhanced info panel: mode-switch animation on mode change
+  - Enhanced header: subtle corner glows on gradient line
+- Total modes now: 36 (was 33)
+- All lint checks pass, dev server compiles successfully
+- QA verified: all 36 modes render correctly, favorites work, tooltips work, progress indicators work
+
+Stage Summary:
+- **36 visualization modes** (was 33)
+- **Interactive 3D hover/tooltip** on 5 bar/voxel scenes
+- **Favorites feature** with localStorage persistence, star toggle, and dedicated sidebar section
+- **Sidebar section progress** with progress bars and completion checkmarks
+- **Enhanced styling**: 7 new CSS animations, viewport corner accents, controls panel gradients, micro-interactions on buttons
+- No critical bugs, all lint checks pass
+
+---
+## 项目当前状态 (2026-06-01 更新 - 第五轮)
+
+### 项目概况
+- **名称**: 二重积分全功能互动实验室 (Double Integral Interactive Lab)
+- **框架**: Next.js 16 + App Router + TypeScript
+- **3D渲染**: React Three Fiber + drei + Three.js
+- **状态管理**: Zustand
+- **数学渲染**: KaTeX
+- **UI组件**: shadcn/ui + Tailwind CSS 4
+- **主题**: next-themes (light/dark)
+- **可视化模式**: 36个
+
+### 全部36个可视化模式
+1. **概念理解 (4)**: step1-step4 — 区域划分、网格划分、方柱近似、取极限
+2. **基本性质 (7)**: prop1-prop7 — 常数倍、加减、区域可加、常函数、比较、估值、中值
+3. **奇偶性 (2)**: parity1-parity2 — 奇函数/偶函数积分
+4. **直角坐标 (2)**: cartesian1-cartesian2 — X型/Y型区域
+5. **极坐标 (2)**: polar1-polar2 — 极坐标区域、黎曼和
+6. **矩形近似 (1)**: rect_approx — 一维矩形近似
+7. **球柱相交 (2)**: sphere_cyl1-sphere_cyl2 — Viviani体、截面法
+8. **收敛演示 (2)**: convergence1-convergence2 — 收敛动画、误差分析
+9. **三重积分 (1)**: triple1 — 体积分可视化
+10. **变量代换 (1)**: jacobian1 — 雅可比行列式
+11. **格林公式 (1)**: green1 — 线积分与面积分
+12. **曲面面积 (1)**: surface_area1 — 曲面面积计算
+13. **富比尼定理 (1)**: fubini1 — 累次积分等价性
+14. **斯托克斯定理 (1)**: stokes1 — 环量与旋度通量
+15. **高斯散度定理 (1)**: divergence1 — 通量与散度积分
+16. **弧长与曲线积分 (1)**: arc_length1 — 弧长近似与精确计算
+17. **质心与转动惯量 (2)**: mass_center1, moment_of_inertia1 — 质心计算、转动惯量
+18. **柱坐标系 (1)**: cylindrical1 — 柱坐标体积元素与积分
+19. **梯度场与方向导数 (1)**: gradient1 — 梯度向量场与方向导数 (NEW)
+20. **球坐标系计算 (1)**: spherical1 — 球坐标体积元素与积分 (NEW)
+21. **拉普拉斯方程 (1)**: laplace1 — 调和函数与拉普拉斯算子 (NEW)
+
+### 功能特性
+- ✅ 36个交互式3D可视化模式
+- ✅ 实时参数调整（滑块 + +/-按钮）
+- ✅ KaTeX数学公式渲染
+- ✅ 数值计算（近似值、精确值、误差）
+- ✅ 截图导出（Camera按钮 + S快捷键 + Toast反馈）
+- ✅ 深色/浅色模式切换
+- ✅ 键盘快捷键（↑↓←→, R, T, Space, D, S, F, ?）
+- ✅ 自动导览模式（按T）
+- ✅ 进度追踪（已探索模式数）
+- ✅ 响应式设计（移动端侧边栏抽屉）
+- ✅ 彩色分区（21种颜色主题）
+- ✅ Toast通知系统
+- ✅ 全屏模式切换
+- ✅ 相机重置按钮
+- ✅ 侧边栏折叠/展开 + 搜索过滤
+- ✅ 信息面板关联模式导航
+- ✅ 控制面板进度条
+- ✅ 场景错误边界
+- ✅ 首次访问引导提示
+- ✅ 微动画效果（浮动、滑入、渐变等）
+- ✅ 自定义滚动条样式
+- ✅ 3D悬停提示框 (5个场景) (NEW)
+- ✅ 收藏夹功能 (localStorage持久化) (NEW)
+- ✅ 侧边栏分区进度条 (NEW)
+- ✅ 模式切换过渡动画 (NEW)
+
+### 当前目标/已完成的修改/验证结果
+1. ✅ QA测试: 所有36个模式通过agent-browser测试
+2. ✅ 新增模式: gradient1 (梯度场)、spherical1 (球坐标)、laplace1 (拉普拉斯)
+3. ✅ 3D悬停提示: step3, rect_approx, convergence1, polar2, triple1
+4. ✅ 收藏夹功能: 星标切换、收藏侧边栏、F快捷键
+5. ✅ 侧边栏进度: 分区进度条、已访问/总数显示、完成✓标记
+6. ✅ 样式增强: 7个新CSS动画、视口渐变角、控制面板微交互、模式切换动画
+
+### 未解决问题或风险，建议下一阶段优先事项
+1. **傅里叶级数可视化**: 展示傅里叶级数逼近函数的过程
+2. **向量场可视化**: 二维向量场的线积分可视化
+3. **交互增强**: 扩展hover/tooltip到更多场景（目前仅5个）
+4. **性能优化**: 使用InstancedMesh替代大量独立mesh（polar2、convergence2、triple1模式）
+5. **动画时间线**: 为每个概念添加逐步动画讲解（如step1→step4逐步播放）
+6. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
+7. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
+8. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
+9. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer
+
+---
+Task ID: 2-a
+Agent: New Modes Agent
+Task: Add 3 new visualization modes (gradient1, spherical1, laplace1)
+
+Work Log:
+- Read worklog.md to understand project status (33 existing modes)
+- Added `'gradient1' | 'spherical1' | 'laplace1'` to LabMode type in `src/store/lab-store.ts`
+- Added modeInfo entries for all 3 modes:
+  - gradient1: 梯度场可视化, section: 梯度场与方向导数, paramLabel: 曲面陡度 (0.3-2.0, default 1.0)
+  - spherical1: 球坐标计算, section: 球坐标系计算, paramLabel: 球体半径 (0.5-2.5), paramLabel2: 极角范围 (0.3-3.14)
+  - laplace1: 拉普拉斯算子与调和函数, section: 拉普拉斯方程, paramLabel: 振幅系数 (0.3-2.0, default 1.0)
+- Added `GradientScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Heat-mapped surface z = a*(1 - x² - y²) over unit disk (blue at bottom, red at top)
+  - 8x8 gradient arrows on xy-plane showing ∇f = (-2ax, -2ay), colored by magnitude (green=short, red=long)
+  - 5 contour lines on the floor (circles due to radial symmetry)
+  - Html overlay with ∇f formula, max gradient magnitude, directional derivative info
+  - AutoRotate for dynamic viewing
+- Added `SphericalScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Semi-transparent sphere with wireframe
+  - Three colored coordinate axis arrows with r, θ, φ labels
+  - Amber wedge-shaped volume element showing dV = r²sinφ dr dθ dφ (computed via spherical-to-Cartesian conversion)
+  - Concentric circle grid on equatorial plane
+  - Two great circle arcs showing θ (amber) and φ (purple) angles
+  - Html overlay with volume = (4/3)πR³, r/θ/φ ranges, dV formula, Jacobian factor
+  - AutoRotate for dynamic viewing
+- Added `LaplaceScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Surface z = a*cos(x)*cosh(y) over [-2,2]×[-1,1] colored by ∇²f value (green for harmonic, where Δf = 0)
+  - Small indicator spheres on surface showing local Laplacian value (green=0)
+  - Floor plane with contour lines of f (green for positive, blue for negative levels)
+  - Html overlay with ∇²f = 0 verification, harmonic function properties, value range
+  - AutoRotate for dynamic viewing
+- Added 3 new sections in sidebar with Navigation/Globe/Waves icons and yellow/green/slate colors
+- Added yellow, green, slate colorMap entries in sidebar
+- Added 'gradient1', 'spherical1', 'laplace1' to allModes array in page.tsx
+- Added camera preset [6,8,4] fov 50 for all 3 new modes in viewport.tsx
+- Added gradient backgrounds: yellow-to-amber for gradient1, green-to-emerald for spherical1, slate-to-zinc for laplace1
+- Added accent colors: bg-yellow-500 for gradient1, bg-green-500 for spherical1, bg-slate-500 for laplace1
+- Added computed values cases in use-computed-values.ts:
+  - gradient1: max gradient magnitude, ∫∫|∇f|²dA
+  - spherical1: full/partial sphere volume with phiMax parameter
+  - laplace1: numerical ∇²f = 0 verification with second partial derivatives
+- Added section color configs to info-panel.tsx for all 3 new sections
+- Added section modes mappings to info-panel.tsx
+- Updated scene-error-boundary.tsx with new modes
+- Fixed pre-existing lint error in scene-tooltip.tsx (setState in effect → CSS-only animation)
+- Lint passes with zero errors
+- Dev server compiles and runs successfully
+
+Stage Summary:
+- **36 visualization modes** (was 33)
+- **gradient1**: Paraboloid surface with heat-map, gradient vector field arrows, contour lines, ∇f formula overlay
+- **spherical1**: Sphere with wireframe, coordinate axes, wedge volume element dV=r²sinφ, θ/φ arcs, Jacobian factor display
+- **laplace1**: Harmonic surface z=a·cos(x)·cosh(y), ∇²f=0 verification, indicator patches, contour lines
+- 3 new sidebar sections with Navigation/Globe/Waves icons
+- 3 new color themes (yellow, green, slate)
+- All lint checks pass, dev server compiles
+
+---
+Task ID: 2-b
+Agent: Interactive Tooltip Agent
+Task: Add interactive 3D hover/tooltip system with raycasting
+
+Work Log:
+- Read worklog.md to understand project status (36 existing modes)
+- Added `TooltipData` interface and tooltip state to `src/store/lab-store.ts`:
+  - `tooltip: TooltipData | null` state with `showTooltip` and `hideTooltip` actions
+  - Tooltip cleared on mode change
+- Created `src/components/lab/scene-tooltip.tsx`:
+  - `SceneTooltip` component: HTML overlay positioned absolutely over the canvas
+  - Reads tooltip state from Zustand store, renders with smooth fade-in/fade-out transitions
+  - Dark mode compatible, emerald accent border on left, backdrop blur, rounded, shadow
+  - Uses `pointer-events: none` to avoid interfering with 3D interactions
+  - Content rendered via dangerouslySetInnerHTML for rich HTML tooltip content
+  - Viewport-clamped positioning so tooltip stays visible
+- Created `src/components/lab/hoverable-mesh.tsx`:
+  - `HoverableMesh` wrapper component for any mesh group with tooltip support
+  - `HoverableBar` convenience component for single box meshes with hover
+  - Both use R3F onPointerOver/onPointerOut events for raycasting
+  - Scale-up effect (1.05-1.08x) and color shift on hover
+  - 3D→2D projection using useThree camera and gl.domElement
+- Modified `src/components/lab/scene-renderer.tsx`:
+  - Added tooltip helper functions: `getPointerPos`, `showBarTooltip`, `hideBarTooltip`
+  - Added `ThreeEvent` import from @react-three/fiber for typed pointer events
+  - Modified `RiemannBars` with `tooltipMode` prop (step3 | convergence1 | none):
+    - Step3 mode: Shows bar index, f(ξ,η), Δσ, and contribution
+    - Convergence1 mode: Shows n, Sₙ, exact value, and error
+    - Hovered bar highlights with #34d399 color and 1.06x scale
+  - Modified `RectApproxBars` with hover tooltips:
+    - Shows rectangle index, f(x), Δx, and contribution
+    - Hovered bar highlights with #34d399 color and 1.06x scale
+  - Modified `PolarRiemannScene` with hover tooltips on wedges:
+    - Shows wedge index, f(r,θ), r/θ values, r·Δr·Δθ, and contribution
+    - Hovered wedge highlights with #34d399 color and 0.85 opacity
+  - Modified `ConvergenceScene` to pass tooltipMode="convergence1" to RiemannBars
+  - Modified `TripleIntegralScene` with hover tooltips on voxels:
+    - Shows voxel index, f(x,y,z), ΔV, and contribution
+    - Hovered voxel highlights with #c084fc color and 1.08x scale
+  - Updated step3 SceneRenderer case to pass tooltipMode="step3" to RiemannBars
+- Modified `src/components/lab/viewport.tsx`:
+  - Added `SceneTooltip` import and rendered after SceneErrorBoundary
+  - Tooltip overlay positioned over the canvas container
+- Lint passes with zero errors
+- Dev server compiles and runs successfully
+
+Stage Summary:
+- **5 scenes with interactive hover tooltips**: step3, rect_approx, convergence1, polar2, triple1
+- Tooltip shows mode-specific mathematical information (function values, area elements, contributions)
+- Hover effects: scale-up + color shift + opacity change
+- Smooth fade-in/fade-out transitions on tooltip
+- Dark mode compatible, emerald accent design
+- Tooltip position follows cursor from R3F pointer events
+- No interference with existing OrbitControls interactions
+
+
+---
+Task ID: 3
+Agent: Favorites & Progress Agent
+Task: Add favorites feature and sidebar section progress indicators
+
+Work Log:
+- Modified `/src/store/lab-store.ts`:
+  - Added `loadFavorites()` and `saveFavorites()` helper functions (SSR-safe with try/catch)
+  - Added `favorites: Set<LabMode>` to LabState interface
+  - Added `toggleFavorite: (mode: LabMode) => void` action
+  - Added `hydrateFavorites: () => void` action (loads from localStorage key `lab-favorites` on client mount)
+  - Favorites initialized as empty Set (avoids hydration mismatch), hydrated in useEffect
+  - toggleFavorite saves to localStorage on every change
+- Modified `/src/components/lab/sidebar.tsx`:
+  - Added `Star` and `Check` icon imports from lucide-react
+  - Added `useMemo` import
+  - Added `favorites`, `toggleFavorite`, `hydrateFavorites` from useLabStore
+  - Added `favoritesCollapsed` state for collapsible favorites section
+  - Added useEffect to hydrate favorites from localStorage on mount
+  - Added lookup maps: `modeToSectionColor`, `modeToIcon`, `modeToLabel` (useMemo)
+  - Added `favoriteModes` computed list ordered by section order (useMemo)
+  - **Favorites section**: Gold/amber color scheme with Star icon, collapsible, shows only when favorites exist
+  - Each favorited mode shows with section-colored active state and star toggle button
+  - **Star toggle on each mode button**: Small Star icon (h-3 w-3) on right side
+    - Amber + filled when favorited, gray + semi-transparent when not
+    - Hover tooltip "收藏" / "取消收藏"
+    - `active:scale-75` scale animation on click
+    - Click on star does NOT switch mode (stopPropagation)
+  - **Section progress indicators**:
+    - Thin 2px progress bar below each section title
+    - Width proportional to visited/total modes in section
+    - Color matches section color when active
+    - Count badge now shows "visited/total" (e.g., "3/7") instead of just count
+    - Green checkmark (✓) shown when all modes in section are visited
+  - Mode buttons now have `pr-7` padding to accommodate star button
+  - Replaced subtitle text with progress bar in section header
+- Modified `/src/app/page.tsx`:
+  - Added `Star` icon import from lucide-react
+  - Added `favorites` and `toggleFavorite` from useLabStore
+  - Added 'F' keyboard shortcut case in handleKeyDown to toggle favorite for current mode
+  - Added `favorites` and `toggleFavorite` to useCallback dependencies
+  - Added star indicator in header Badge: small amber star (h-2.5 w-2.5, fill-amber-500) shown when current mode is favorited
+  - Added `['F', '收藏/取消收藏当前模式']` entry to ShortcutsDialog shortcuts array
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **Favorites feature**: Users can bookmark modes via star buttons in sidebar, keyboard shortcut F, or favorites section. Persisted in localStorage (key: `lab-favorites`), survives page refresh.
+- **Favorites section in sidebar**: Gold/amber themed, collapsible, shows favorited modes with section-colored active states, star toggle buttons.
+- **Star toggle on mode buttons**: Small star icon on each mode button, amber+filled when favorited, gray when not, tooltip on hover, scale animation on click.
+- **Header star indicator**: Amber star shown in mode badge when current mode is favorited.
+- **Keyboard shortcut F**: Toggles favorite for current mode, listed in shortcuts dialog.
+- **Section progress indicators**: Thin 2px progress bar per section, visited/total count in badge, green checkmark when all visited.
+- All lint checks pass, dev server compiles

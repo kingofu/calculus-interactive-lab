@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useLabStore, type LabMode, modeInfo } from '@/store/lab-store'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
@@ -47,6 +47,11 @@ import {
   Cylinder,
   Search,
   X,
+  Navigation,
+  Globe,
+  Waves,
+  Star,
+  Check,
 } from 'lucide-react'
 
 const sections = [
@@ -227,6 +232,33 @@ const sections = [
       { mode: 'cylindrical1' as LabMode, label: '柱坐标计算', icon: Cylinder },
     ],
   },
+  {
+    title: '梯度场与方向导数',
+    subtitle: '梯度向量场与方向导数',
+    icon: Navigation,
+    color: 'yellow',
+    modes: [
+      { mode: 'gradient1' as LabMode, label: '梯度场可视化', icon: Navigation },
+    ],
+  },
+  {
+    title: '球坐标系计算',
+    subtitle: '球坐标体积元素与积分',
+    icon: Globe,
+    color: 'green',
+    modes: [
+      { mode: 'spherical1' as LabMode, label: '球坐标计算', icon: Globe },
+    ],
+  },
+  {
+    title: '拉普拉斯方程',
+    subtitle: '调和函数与拉普拉斯算子',
+    icon: Waves,
+    color: 'slate',
+    modes: [
+      { mode: 'laplace1' as LabMode, label: '拉普拉斯算子', icon: Waves },
+    ],
+  },
 ]
 
 // Color map for section accent
@@ -343,6 +375,30 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     badge: 'bg-pink-200/60 dark:bg-pink-800/40',
     badgeText: 'text-pink-700 dark:text-pink-300',
   },
+  yellow: {
+    activeBg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    activeText: 'text-yellow-800 dark:text-yellow-300',
+    border: 'before:bg-yellow-500',
+    dot: 'bg-yellow-500',
+    badge: 'bg-yellow-200/60 dark:bg-yellow-800/40',
+    badgeText: 'text-yellow-700 dark:text-yellow-300',
+  },
+  green: {
+    activeBg: 'bg-green-100 dark:bg-green-900/40',
+    activeText: 'text-green-800 dark:text-green-300',
+    border: 'before:bg-green-500',
+    dot: 'bg-green-500',
+    badge: 'bg-green-200/60 dark:bg-green-800/40',
+    badgeText: 'text-green-700 dark:text-green-300',
+  },
+  slate: {
+    activeBg: 'bg-slate-100 dark:bg-slate-900/40',
+    activeText: 'text-slate-800 dark:text-slate-300',
+    border: 'before:bg-slate-500',
+    dot: 'bg-slate-500',
+    badge: 'bg-slate-200/60 dark:bg-slate-800/40',
+    badgeText: 'text-slate-700 dark:text-slate-300',
+  },
 }
 
 interface SidebarProps {
@@ -351,12 +407,18 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
-  const { mode, setMode } = useLabStore()
+  const { mode, setMode, visitedModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [favoritesCollapsed, setFavoritesCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Hydrate favorites from localStorage on mount
+  useEffect(() => {
+    hydrateFavorites()
+  }, [hydrateFavorites])
 
   // Debounce search input by 200ms
   useEffect(() => {
@@ -378,6 +440,52 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     : sections
 
   const hasNoResults = debouncedQuery.length > 0 && filteredSections.length === 0
+
+  // Build a map from mode to section color for favorites
+  const modeToSectionColor = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const section of sections) {
+      for (const m of section.modes) {
+        map[m.mode] = section.color
+      }
+    }
+    return map
+  }, [])
+
+  // Build a map from mode to icon component for favorites
+  const modeToIcon = useMemo(() => {
+    const map: Record<string, typeof Star> = {}
+    for (const section of sections) {
+      for (const m of section.modes) {
+        map[m.mode] = m.icon
+      }
+    }
+    return map
+  }, [])
+
+  // Build a map from mode to label for favorites
+  const modeToLabel = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const section of sections) {
+      for (const m of section.modes) {
+        map[m.mode] = m.label
+      }
+    }
+    return map
+  }, [])
+
+  // Favorites list (ordered by sections order)
+  const favoriteModes = useMemo(() => {
+    const ordered: LabMode[] = []
+    for (const section of sections) {
+      for (const m of section.modes) {
+        if (favorites.has(m.mode)) {
+          ordered.push(m.mode)
+        }
+      }
+    }
+    return ordered
+  }, [favorites])
 
   // Auto-scroll to active mode when it changes
   useEffect(() => {
@@ -464,6 +572,85 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           )}
         </div>
 
+        {/* Favorites section */}
+        {favoriteModes.length > 0 && (
+          <div className="mb-1 pt-1 border-t border-border/30">
+            <button
+              type="button"
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              onClick={() => setFavoritesCollapsed(prev => !prev)}
+            >
+              <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500" />
+              <div className="flex-1 min-w-0 text-left">
+                <h3 className="text-[10px] font-semibold leading-none text-amber-700 dark:text-amber-300">
+                  收藏
+                </h3>
+              </div>
+              <span className="text-[8px] font-mono px-1 py-0 rounded-full shrink-0 bg-amber-200/60 dark:bg-amber-800/40 text-amber-700 dark:text-amber-300">
+                {favoriteModes.length}
+              </span>
+              {favoritesCollapsed ? (
+                <ChevronRight className="h-3 w-3 shrink-0 text-amber-500/50" />
+              ) : (
+                <ChevronDown className="h-3 w-3 shrink-0 text-amber-500/50" />
+              )}
+            </button>
+            <div className={cn(
+              "overflow-hidden transition-all duration-200 ease-in-out",
+              favoritesCollapsed ? "max-h-0 opacity-0" : "max-h-96 opacity-100"
+            )}>
+              <div className="space-y-0.5 mt-0.5">
+                {favoriteModes.map(favMode => {
+                  const isActive = mode === favMode
+                  const FavIcon = modeToIcon[favMode]
+                  const sectionColor = modeToSectionColor[favMode] || 'emerald'
+                  const colors = colorMap[sectionColor] || colorMap.emerald
+                  return (
+                    <div key={favMode} className="relative">
+                      <Button
+                        ref={isActive ? activeRef : undefined}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          'w-full justify-start gap-2 text-xs h-7 px-2 pr-7 transition-all relative group',
+                          isActive
+                            ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        )}
+                        onClick={() => {
+                          setMode(favMode)
+                          onModeSelect?.()
+                        }}
+                      >
+                        {FavIcon && <FavIcon className={cn(
+                          "h-3.5 w-3.5 shrink-0 transition-colors",
+                          isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
+                        )} />}
+                        <span className="truncate">{modeToLabel[favMode]}</span>
+                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-4 w-4 flex items-center justify-center rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all active:scale-75"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleFavorite(favMode)
+                            }}
+                          >
+                            <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs">取消收藏</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {hasNoResults && (
           <div className="text-center py-3 text-[10px] text-muted-foreground/60">
             无匹配结果
@@ -476,6 +663,8 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           const sectionActive = isSectionActive(section)
           const expanded = isSectionExpanded(section)
           const modeCount = section.modes.length
+          const visitedInSection = section.modes.filter(m => visitedModes.has(m.mode)).length
+          const allVisited = visitedInSection === modeCount
 
           return (
             <div key={section.title} className={cn(
@@ -501,21 +690,23 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                       )}>
                         {section.title}
                       </h3>
-                      <p className={cn(
-                        "text-[8px] leading-none mt-0.5 truncate",
-                        sectionActive ? 'opacity-70' : 'text-muted-foreground/50'
-                      )}>
-                        {section.subtitle}
-                      </p>
+                      {/* Progress bar below section title */}
+                      <div className="mt-1 w-full h-[2px] bg-muted/50 rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all duration-500", sectionActive ? colors.dot : 'bg-muted-foreground/30')}
+                          style={{ width: `${modeCount > 0 ? (visitedInSection / modeCount) * 100 : 0}%` }}
+                        />
+                      </div>
                     </div>
-                    {/* Section count badge */}
+                    {/* Section count badge: visited/total */}
                     <span className={cn(
-                      "text-[8px] font-mono px-1 py-0 rounded-full shrink-0",
+                      "text-[8px] font-mono px-1 py-0 rounded-full shrink-0 flex items-center gap-0.5",
                       sectionActive
                         ? cn(colors.badge, colors.badgeText)
                         : 'bg-muted/50 text-muted-foreground/50'
                     )}>
-                      {modeCount}
+                      {allVisited && <Check className="h-2 w-2 text-emerald-500" />}
+                      {visitedInSection}/{modeCount}
                     </span>
                     {expanded ? (
                       <ChevronDown className={cn("h-3 w-3 shrink-0", sectionActive ? '' : 'text-muted-foreground/50')} />
@@ -540,29 +731,57 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                 <div className="space-y-0.5 mt-0.5">
                   {section.modes.map(({ mode: m, label, icon: Icon }) => {
                     const isActive = mode === m
+                    const isFavorited = favorites.has(m)
                     return (
-                      <Button
-                        key={m}
-                        ref={isActive ? activeRef : undefined}
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          'w-full justify-start gap-2 text-xs h-7 px-2 transition-all relative group',
-                          isActive
-                            ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                        )}
-                        onClick={() => {
-                          setMode(m)
-                          onModeSelect?.()
-                        }}
-                      >
-                        <Icon className={cn(
-                          "h-3.5 w-3.5 shrink-0 transition-colors",
-                          isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
-                        )} />
-                        <span className="truncate">{label}</span>
-                      </Button>
+                      <div key={m} className="relative">
+                        <Button
+                          ref={isActive ? activeRef : undefined}
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            'w-full justify-start gap-2 text-xs h-7 px-2 pr-7 transition-all relative group',
+                            isActive
+                              ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                          )}
+                          onClick={() => {
+                            setMode(m)
+                            onModeSelect?.()
+                          }}
+                        >
+                          <Icon className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-colors",
+                            isActive ? '' : 'text-muted-foreground/60 group-hover:text-foreground'
+                          )} />
+                          <span className="truncate">{label}</span>
+                        </Button>
+                        {/* Star toggle button */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className={cn(
+                                "absolute right-1.5 top-1/2 -translate-y-1/2 h-4 w-4 flex items-center justify-center rounded-full transition-all active:scale-75",
+                                isFavorited
+                                  ? 'text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40'
+                                  : 'text-muted-foreground/20 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleFavorite(m)
+                              }}
+                            >
+                              <Star className={cn(
+                                "h-3 w-3 transition-all",
+                                isFavorited && 'fill-amber-500'
+                              )} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="text-xs">
+                            {isFavorited ? '取消收藏' : '收藏'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     )
                   })}
                 </div>

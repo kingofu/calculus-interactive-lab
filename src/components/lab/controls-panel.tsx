@@ -43,7 +43,7 @@ function SliderWithProgress({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0"
+              className="h-5 w-5 shrink-0 transition-all hover:scale-110 active:scale-90 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
               onClick={decrementFn}
             >
               <Minus className="h-2.5 w-2.5" />
@@ -78,7 +78,7 @@ function SliderWithProgress({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 shrink-0"
+              className="h-5 w-5 shrink-0 transition-all hover:scale-110 active:scale-90 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
               onClick={incrementFn}
             >
               <Plus className="h-2.5 w-2.5" />
@@ -126,56 +126,60 @@ export function ControlsPanel() {
   const formatRange = (min: number, max: number) => `[${min}, ${max}]`
 
   return (
-    <div className="px-3 sm:px-4 py-1.5 space-y-1.5">
-      <div className="flex items-center gap-1 mb-1">
-        <SlidersHorizontal className="h-3 w-3 text-muted-foreground" />
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">参数控制</span>
-        <span className="text-[9px] text-muted-foreground/50 font-mono">
-          {formatRange(info.paramMin, info.paramMax)}
-        </span>
-        <div className="flex-1" />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1"
-              onClick={handleReset}
-            >
-              <RotateCcw className="h-2.5 w-2.5" />
-              重置
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">重置为默认值 (R)</TooltipContent>
-        </Tooltip>
-      </div>
+    <div className="px-3 sm:px-4 py-1.5 space-y-1.5 relative">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/30 via-transparent to-teal-50/30 dark:from-emerald-950/10 dark:via-transparent dark:to-teal-950/10 pointer-events-none" />
+      <div className="relative space-y-1.5">
+        <div className="flex items-center gap-1 mb-1">
+          <SlidersHorizontal className="h-3 w-3 text-muted-foreground" />
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">参数控制</span>
+          <span className="text-[9px] text-muted-foreground/50 font-mono">
+            {formatRange(info.paramMin, info.paramMax)}
+          </span>
+          <div className="flex-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1 transition-all hover:scale-105 active:scale-95"
+                onClick={handleReset}
+              >
+                <RotateCcw className="h-2.5 w-2.5" />
+                重置
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">重置为默认值 (R)</TooltipContent>
+          </Tooltip>
+        </div>
 
-      <SliderWithProgress
-        value={paramValue}
-        min={info.paramMin}
-        max={info.paramMax}
-        step={info.paramStep}
-        onValueChange={([v]) => setParamValue(v)}
-        label={info.paramLabel}
-        colorClass="bg-emerald-500"
-        incrementFn={() => handleParamIncrement(1)}
-        decrementFn={() => handleParamIncrement(-1)}
-        keyboardHint="← →"
-      />
-
-      {info.paramLabel2 && (
         <SliderWithProgress
-          value={paramValue2}
-          min={info.paramMin2 ?? 0}
-          max={info.paramMax2 ?? 5}
-          step={info.paramStep2 ?? 0.1}
-          onValueChange={([v]) => setParamValue2(v)}
-          label={info.paramLabel2}
-          colorClass="bg-amber-500"
-          incrementFn={() => handleParam2Increment(1)}
-          decrementFn={() => handleParam2Increment(-1)}
+          value={paramValue}
+          min={info.paramMin}
+          max={info.paramMax}
+          step={info.paramStep}
+          onValueChange={([v]) => setParamValue(v)}
+          label={info.paramLabel}
+          colorClass="bg-emerald-500"
+          incrementFn={() => handleParamIncrement(1)}
+          decrementFn={() => handleParamIncrement(-1)}
+          keyboardHint="← →"
         />
-      )}
+
+        {info.paramLabel2 && (
+          <SliderWithProgress
+            value={paramValue2}
+            min={info.paramMin2 ?? 0}
+            max={info.paramMax2 ?? 5}
+            step={info.paramStep2 ?? 0.1}
+            onValueChange={([v]) => setParamValue2(v)}
+            label={info.paramLabel2}
+            colorClass="bg-amber-500"
+            incrementFn={() => handleParam2Increment(1)}
+            decrementFn={() => handleParam2Increment(-1)}
+          />
+        )}
+      </div>
     </div>
   )
 }

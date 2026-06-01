@@ -152,6 +152,30 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-sky-50/50 via-muted/30 to-blue-50/50 dark:from-sky-950/20 dark:via-muted/20 dark:to-blue-950/20',
     computedBorder: 'border-sky-200/40 dark:border-sky-800/30',
   },
+  '梯度场与方向导数': {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    text: 'text-yellow-800 dark:text-yellow-300',
+    border: 'border-0',
+    glow: 'shadow-yellow-500/20',
+    computedBg: 'from-yellow-50/50 via-muted/30 to-amber-50/50 dark:from-yellow-950/20 dark:via-muted/20 dark:to-amber-950/20',
+    computedBorder: 'border-yellow-200/40 dark:border-yellow-800/30',
+  },
+  '球坐标系计算': {
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    text: 'text-green-800 dark:text-green-300',
+    border: 'border-0',
+    glow: 'shadow-green-500/20',
+    computedBg: 'from-green-50/50 via-muted/30 to-emerald-50/50 dark:from-green-950/20 dark:via-muted/20 dark:to-emerald-950/20',
+    computedBorder: 'border-green-200/40 dark:border-green-800/30',
+  },
+  '拉普拉斯方程': {
+    bg: 'bg-slate-100 dark:bg-slate-900/40',
+    text: 'text-slate-800 dark:text-slate-300',
+    border: 'border-0',
+    glow: 'shadow-slate-500/20',
+    computedBg: 'from-slate-50/50 via-muted/30 to-zinc-50/50 dark:from-slate-950/20 dark:via-muted/20 dark:to-zinc-950/20',
+    computedBorder: 'border-slate-200/40 dark:border-slate-800/30',
+  },
 }
 
 // Get the section color config, fallback to emerald
@@ -179,6 +203,9 @@ const sectionModes: Record<string, LabMode[]> = {
   '弧长与曲线积分': ['arc_length1'],
   '质心与转动惯量': ['mass_center1', 'moment_of_inertia1'],
   '柱坐标系计算': ['cylindrical1'],
+  '梯度场与方向导数': ['gradient1'],
+  '球坐标系计算': ['spherical1'],
+  '拉普拉斯方程': ['laplace1'],
 }
 
 export function InfoPanel() {
@@ -194,7 +221,7 @@ export function InfoPanel() {
   const nextMode = currentIdx < sameSectionModes.length - 1 ? sameSectionModes[currentIdx + 1] : null
 
   return (
-    <div className="p-3 space-y-2.5 font-[serif]">
+    <div className="p-3 space-y-2.5 font-[serif] animate-[mode-switch_0.4s_ease-out]">
       {/* Title row with section-colored badge and mode title */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 gap-1 shadow-sm", colors.bg, colors.text, colors.border)}>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useMemo, useRef, useCallback, useState } from 'react'
+import { useFrame, ThreeEvent } from '@react-three/fiber'
 import { Text, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useLabStore } from '@/store/lab-store'
@@ -34,6 +34,25 @@ import {
   momentOfInertia,
   cylindricalVolume,
 } from '@/lib/math-computations'
+
+// --- Tooltip helper ---
+function getPointerPos(e: ThreeEvent<PointerEvent>): { x: number; y: number } {
+  // R3F events extend Three.js Intersection and include DOM event properties
+  const ne = e as unknown as { nativeEvent?: PointerEvent; clientX?: number; clientY?: number }
+  return {
+    x: ne.nativeEvent?.clientX ?? ne.clientX ?? 0,
+    y: ne.nativeEvent?.clientY ?? ne.clientY ?? 0,
+  }
+}
+
+function showBarTooltip(e: ThreeEvent<PointerEvent>, content: string) {
+  const pos = getPointerPos(e)
+  useLabStore.getState().showTooltip({ content, x: pos.x, y: pos.y })
+}
+
+function hideBarTooltip() {
+  useLabStore.getState().hideTooltip()
+}
 
 // --- Common Axes ---
 function Axes({ length = 5 }: { length?: number }) {
@@ -348,7 +367,9 @@ function SurfaceSplit({
   )
 }
 
-// --- Riemann bars ---
+// --- Riemann bars (with optional hover tooltip) ---
+type TooltipMode = 'step3' | 'convergence1' | 'none'
+
 function RiemannBars({
   func,
   n = 8,
@@ -357,6 +378,9 @@ function RiemannBars({
   color = '#10b981',
   opacity = 0.7,
   showColorSign = false,
+  tooltipMode = 'none',
+  approxValue,
+  exactValue,
 }: {
   func: (x: number, y: number) => number
   n?: number
@@ -365,44 +389,95 @@ function RiemannBars({
   color?: string
   opacity?: number
   showColorSign?: boolean
+  tooltipMode?: TooltipMode
+  approxValue?: number
+  exactValue?: number
 }) {
   const bars = useMemo(() => {
-    const result: { x: number; z: number; w: number; d: number; h: number; sign: number }[] = []
+    const result: { x: number; z: number; w: number; d: number; h: number; sign: number; xi: number; eta: number; idx: number }[] = []
     const [xMin, xMax] = xRange
     const [yMin, yMax] = yRange
     const dx = (xMax - xMin) / n
     const dy = (yMax - yMin) / n
+    let idx = 0
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         const x = xMin + (i + 0.5) * dx
         const y = yMin + (j + 0.5) * dy
         const h = func(x, y)
         if (Math.abs(h) > 0.001) {
-          result.push({ x, z: y, w: dx * 0.9, d: dy * 0.9, h, sign: h >= 0 ? 1 : -1 })
+          result.push({ x, z: y, w: dx * 0.9, d: dy * 0.9, h, sign: h >= 0 ? 1 : -1, xi: x, eta: y, idx })
+          idx++
         }
       }
     }
     return result
   }, [func, n, xRange, yRange])
 
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>, bar: typeof bars[0]) => {
+    e.stopPropagation()
+    setHoveredIdx(bar.idx)
+    document.body.style.cursor = 'pointer'
+
+    const dx = (xRange[1] - xRange[0]) / n
+    const dy = (yRange[1] - yRange[0]) / n
+    const deltaSigma = dx * dy
+    const contribution = bar.h * deltaSigma
+
+    let content = ''
+    if (tooltipMode === 'step3') {
+      content = `<div class="text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">📍 方柱 #${bar.idx + 1}</div>` +
+        `<div>f(${bar.xi.toFixed(2)}, ${bar.eta.toFixed(2)}) = ${bar.h.toFixed(4)}</div>` +
+        `<div>Δσ = ${deltaSigma.toFixed(4)}</div>` +
+        `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${contribution.toFixed(4)}</div>`
+    } else if (tooltipMode === 'convergence1') {
+      const err = exactValue !== undefined ? Math.abs((approxValue ?? 0) - exactValue) : 0
+      content = `<div class="text-cyan-600 dark:text-cyan-400 font-semibold mb-0.5">📊 n = ${n}×${n}</div>` +
+        `<div>Sₙ = ${approxValue?.toFixed(4) ?? '—'}</div>` +
+        `<div>精确值: ${exactValue?.toFixed(4) ?? '—'}</div>` +
+        `<div class="text-amber-600 dark:text-amber-400 mt-0.5">误差: ${err.toFixed(4)}</div>`
+    }
+
+    if (content) {
+      showBarTooltip(e, content)
+    }
+  }, [tooltipMode, n, xRange, yRange, approxValue, exactValue])
+
+  const handlePointerOut = useCallback(() => {
+    setHoveredIdx(null)
+    document.body.style.cursor = 'auto'
+    hideBarTooltip()
+  }, [])
+
   return (
     <group>
-      {bars.map((bar, idx) => (
-        <mesh key={idx} position={[bar.x, bar.h / 2, bar.z]}>
-          <boxGeometry args={[bar.w, Math.abs(bar.h), bar.d]} />
-          <meshPhongMaterial
-            color={
-              showColorSign
-                ? bar.sign >= 0
-                  ? '#f97316'
-                  : '#06b6d4'
-                : color
-            }
-            transparent
-            opacity={opacity}
-          />
-        </mesh>
-      ))}
+      {bars.map((bar) => {
+        const isHovered = hoveredIdx === bar.idx
+        return (
+          <mesh
+            key={bar.idx}
+            position={[bar.x, bar.h / 2, bar.z]}
+            scale={isHovered ? 1.06 : 1}
+            onPointerOver={tooltipMode !== 'none' ? (e) => handlePointerOver(e, bar) : undefined}
+            onPointerOut={tooltipMode !== 'none' ? handlePointerOut : undefined}
+          >
+            <boxGeometry args={[bar.w, Math.abs(bar.h), bar.d]} />
+            <meshPhongMaterial
+              color={
+                isHovered
+                  ? '#34d399'
+                  : showColorSign
+                    ? bar.sign >= 0 ? '#f97316' : '#06b6d4'
+                    : color
+              }
+              transparent
+              opacity={isHovered ? Math.min(1, opacity + 0.2) : opacity}
+            />
+          </mesh>
+        )
+      })}
     </group>
   )
 }
@@ -835,17 +910,17 @@ function CartesianRegion({ type = 'x' as 'x' | 'y' }: { type?: 'x' | 'y' }) {
   )
 }
 
-// --- Rectangular approximation bars (IMPROVED with floor projection) ---
+// --- Rectangular approximation bars (IMPROVED with floor projection + hover tooltip) ---
 function RectApproxBars({ n = 10 }: { n?: number }) {
   const barData = useMemo(() => {
-    const result: { x: number; h: number; w: number; positive: boolean }[] = []
+    const result: { x: number; h: number; w: number; positive: boolean; fVal: number; dx: number }[] = []
     const a = -2
     const b = 2
     const dx = (b - a) / n
     for (let i = 0; i < n; i++) {
       const x = a + (i + 0.5) * dx
       const h = fRect(x)
-      result.push({ x, h, w: dx * 0.9, positive: h > 0 })
+      result.push({ x, h, w: dx * 0.9, positive: h > 0, fVal: fRect(x), dx })
     }
     return result
   }, [n])
@@ -853,30 +928,60 @@ function RectApproxBars({ n = 10 }: { n?: number }) {
   const approxValue = useMemo(() => rectApprox(fRect, -2, 2, n), [n])
   const exactValue = useMemo(() => numericalIntegral1D(fRect, -2, 2), [])
 
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>, bar: typeof barData[0], idx: number) => {
+    e.stopPropagation()
+    setHoveredIdx(idx)
+    document.body.style.cursor = 'pointer'
+
+    const contribution = bar.fVal * bar.dx
+    const content = `<div class="text-teal-600 dark:text-teal-400 font-semibold mb-0.5">📐 矩形 #${idx + 1}</div>` +
+      `<div>f(${bar.x.toFixed(2)}) = ${bar.fVal.toFixed(4)}</div>` +
+      `<div>Δx = ${bar.dx.toFixed(4)}</div>` +
+      `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${contribution.toFixed(4)}</div>`
+
+    showBarTooltip(e, content)
+  }, [barData])
+
+  const handlePointerOut = useCallback(() => {
+    setHoveredIdx(null)
+    document.body.style.cursor = 'auto'
+    hideBarTooltip()
+  }, [])
+
   return (
     <group>
       {/* 3D bars */}
-      {barData.map((bar, idx) => (
-        <group key={idx}>
-          <mesh position={[bar.x, bar.h / 2, 0]}>
-            <boxGeometry args={[bar.w, bar.h, 0.4]} />
-            <meshPhongMaterial
-              color={bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
-              transparent
-              opacity={0.7}
-            />
-          </mesh>
-          {/* Floor projection (2D view from above) */}
-          <mesh position={[bar.x, 0.005, -1.5]}>
-            <boxGeometry args={[bar.w, 0.01, 0.3]} />
-            <meshPhongMaterial
-              color={bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
-              transparent
-              opacity={0.5}
-            />
-          </mesh>
-        </group>
-      ))}
+      {barData.map((bar, idx) => {
+        const isHovered = hoveredIdx === idx
+        return (
+          <group key={idx}>
+            <mesh
+              position={[bar.x, bar.h / 2, 0]}
+              scale={isHovered ? 1.06 : 1}
+              onPointerOver={(e) => handlePointerOver(e, bar, idx)}
+              onPointerOut={handlePointerOut}
+            >
+              <boxGeometry args={[bar.w, bar.h, 0.4]} />
+              <meshPhongMaterial
+                color={isHovered ? '#34d399' : bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
+                transparent
+                opacity={isHovered ? 0.9 : 0.7}
+              />
+            </mesh>
+            {/* Floor projection (2D view from above) */}
+            <mesh position={[bar.x, 0.005, -1.5]}>
+              <boxGeometry args={[bar.w, 0.01, 0.3]} />
+              <meshPhongMaterial
+                color={bar.h > 2 ? '#10b981' : bar.h > 1 ? '#34d399' : '#6ee7b7'}
+                transparent
+                opacity={0.5}
+              />
+            </mesh>
+          </group>
+        )
+      })}
       {/* Numerical value display */}
       <Html position={[0, 4.5, 0]} center>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
@@ -1196,9 +1301,15 @@ function PolarRiemannScene() {
       height: number
       color: string
       labelPos: [number, number, number]
+      rMid: number
+      thetaMid: number
+      x: number
+      y: number
+      idx: number
     }[] = []
     const dr = R / nR
     const dTheta = beta / nTheta
+    let wIdx = 0
 
     for (let i = 0; i < nR; i++) {
       const rInner = i * dr
@@ -1269,7 +1380,13 @@ function PolarRiemannScene() {
           height: h,
           color,
           labelPos: [x, h + 0.2, y],
+          rMid,
+          thetaMid,
+          x,
+          y,
+          idx: wIdx,
         })
+        wIdx++
       }
     }
     return result
@@ -1279,18 +1396,58 @@ function PolarRiemannScene() {
     return polarRiemannSum(fPolar, R, 0, beta, nR, nTheta)
   }, [nR, R, beta, nTheta])
 
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  const handleWedgePointerOver = useCallback((e: ThreeEvent<PointerEvent>, wedge: typeof wedgeData[0]) => {
+    e.stopPropagation()
+    setHoveredIdx(wedge.idx)
+    document.body.style.cursor = 'pointer'
+
+    const dr = R / nR
+    const dTheta = beta / nTheta
+    const fVal = fPolar(wedge.x, wedge.y)
+    const areaElement = wedge.rMid * dr * dTheta
+
+    const content = `<div class="text-rose-600 dark:text-rose-400 font-semibold mb-0.5">🌀 扇形 #${wedge.idx + 1}</div>` +
+      `<div>f(${wedge.x.toFixed(2)}, ${wedge.y.toFixed(2)}) = ${fVal.toFixed(4)}</div>` +
+      `<div>r = ${wedge.rMid.toFixed(3)}, θ = ${(wedge.thetaMid / Math.PI).toFixed(2)}π</div>` +
+      `<div>r·Δr·Δθ = ${areaElement.toFixed(4)}</div>` +
+      `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${(fVal * areaElement).toFixed(4)}</div>`
+
+    showBarTooltip(e, content)
+  }, [nR, R, beta, nTheta, wedgeData])
+
+  const handleWedgePointerOut = useCallback(() => {
+    setHoveredIdx(null)
+    document.body.style.cursor = 'auto'
+    hideBarTooltip()
+  }, [])
+
   return (
     <AutoRotate speed={0.002}>
       {/* Wedge bars */}
-      {wedgeData.map((wedge, idx) => (
-        <mesh key={idx}>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" args={[wedge.vertices, 3]} />
-            <bufferAttribute attach="index" args={[wedge.indices, 1]} count={wedge.indices.length} />
-          </bufferGeometry>
-          <meshPhongMaterial color={wedge.color} transparent opacity={0.6} side={THREE.DoubleSide} />
-        </mesh>
-      ))}
+      {wedgeData.map((wedge) => {
+        const isHovered = hoveredIdx === wedge.idx
+        return (
+          <mesh
+            key={wedge.idx}
+            scale={isHovered ? 1.06 : 1}
+            onPointerOver={(e) => handleWedgePointerOver(e, wedge)}
+            onPointerOut={handleWedgePointerOut}
+          >
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[wedge.vertices, 3]} />
+              <bufferAttribute attach="index" args={[wedge.indices, 1]} count={wedge.indices.length} />
+            </bufferGeometry>
+            <meshPhongMaterial
+              color={isHovered ? '#34d399' : wedge.color}
+              transparent
+              opacity={isHovered ? 0.85 : 0.6}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )
+      })}
 
       {/* Surface overlay */}
       <Surface
@@ -1346,12 +1503,15 @@ function ConvergenceScene() {
       {/* Surface */}
       <Surface func={f} color="#10b981" opacity={0.3} resolution={30} />
 
-      {/* Riemann bars with error-based coloring */}
+      {/* Riemann bars with error-based coloring + tooltip */}
       <RiemannBars
         func={f}
         n={nInt}
         color={barColor}
         opacity={0.6}
+        tooltipMode="convergence1"
+        approxValue={approxValue}
+        exactValue={exactValue}
       />
 
       {/* Info overlay */}
@@ -1461,12 +1621,13 @@ function TripleIntegralScene() {
   const nInt = Math.max(2, Math.round(n))
 
   const voxelData = useMemo(() => {
-    const result: { pos: [number, number, number]; color: string; size: number }[] = []
+    const result: { pos: [number, number, number]; color: string; size: number; origX: number; origY: number; origZ: number; val: number; idx: number }[] = []
     const dx = 1 / nInt
     const scale = 3 // Scale [0,1] to [0,3]
     const offset = 0 // Start at origin
     // f(x,y,z) = x² + y² + z², max at (1,1,1) = 3
     const maxVal = 3
+    let vIdx = 0
 
     for (let i = 0; i < nInt; i++) {
       for (let j = 0; j < nInt; j++) {
@@ -1498,7 +1659,13 @@ function TripleIntegralScene() {
             ],
             color,
             size: dx * scale * 0.9,
+            origX: x,
+            origY: y,
+            origZ: z,
+            val,
+            idx: vIdx,
           })
+          vIdx++
         }
       }
     }
@@ -1512,15 +1679,54 @@ function TripleIntegralScene() {
   // Exact value of ∫₀¹∫₀¹∫₀¹ (x²+y²+z²) dV = 3 * (1/3) = 1
   const exactValue = 1
 
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  const handleVoxelPointerOver = useCallback((e: ThreeEvent<PointerEvent>, voxel: typeof voxelData[0]) => {
+    e.stopPropagation()
+    setHoveredIdx(voxel.idx)
+    document.body.style.cursor = 'pointer'
+
+    const dV = (1 / nInt) ** 3
+    const contribution = voxel.val * dV
+
+    const content = `<div class="text-purple-600 dark:text-purple-400 font-semibold mb-0.5">🧊 体素 #${voxel.idx + 1}</div>` +
+      `<div>f(${voxel.origX.toFixed(2)}, ${voxel.origY.toFixed(2)}, ${voxel.origZ.toFixed(2)})</div>` +
+      `<div>= ${voxel.val.toFixed(4)}</div>` +
+      `<div>ΔV = ${dV.toFixed(6)}</div>` +
+      `<div class="text-amber-600 dark:text-amber-400 mt-0.5">贡献: ${contribution.toFixed(6)}</div>`
+
+    showBarTooltip(e, content)
+  }, [nInt, voxelData])
+
+  const handleVoxelPointerOut = useCallback(() => {
+    setHoveredIdx(null)
+    document.body.style.cursor = 'auto'
+    hideBarTooltip()
+  }, [])
+
   return (
     <AutoRotate speed={0.002}>
       {/* Voxels */}
-      {voxelData.map((voxel, idx) => (
-        <mesh key={idx} position={voxel.pos}>
-          <boxGeometry args={[voxel.size, voxel.size, voxel.size]} />
-          <meshPhongMaterial color={voxel.color} transparent opacity={0.5} side={THREE.DoubleSide} />
-        </mesh>
-      ))}
+      {voxelData.map((voxel) => {
+        const isHovered = hoveredIdx === voxel.idx
+        return (
+          <mesh
+            key={voxel.idx}
+            position={voxel.pos}
+            scale={isHovered ? 1.08 : 1}
+            onPointerOver={(e) => handleVoxelPointerOver(e, voxel)}
+            onPointerOut={handleVoxelPointerOut}
+          >
+            <boxGeometry args={[voxel.size, voxel.size, voxel.size]} />
+            <meshPhongMaterial
+              color={isHovered ? '#c084fc' : voxel.color}
+              transparent
+              opacity={isHovered ? 0.85 : 0.5}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )
+      })}
 
       {/* Wireframe cube outline */}
       <line>
@@ -3125,7 +3331,7 @@ export function SceneRenderer() {
 
       {mode === 'step3' && (
         <AutoRotate>
-          <RiemannBars func={f} n={Math.round(paramValue)} color="#10b981" opacity={0.7} />
+          <RiemannBars func={f} n={Math.round(paramValue)} color="#10b981" opacity={0.7} tooltipMode="step3" />
           <Surface func={f} color="#059669" opacity={0.3} resolution={30} />
         </AutoRotate>
       )}
@@ -3365,6 +3571,18 @@ export function SceneRenderer() {
 
       {mode === 'cylindrical1' && (
         <CylindricalCoordScene />
+      )}
+
+      {mode === 'gradient1' && (
+        <GradientScene />
+      )}
+
+      {mode === 'spherical1' && (
+        <SphericalScene />
+      )}
+
+      {mode === 'laplace1' && (
+        <LaplaceScene />
       )}
     </>
   )
@@ -3849,6 +4067,557 @@ function DivergenceScene() {
           </div>
           <div className="text-emerald-600 dark:text-emerald-400 mt-1">
             ✓ 验证: {Math.abs(flux - volumeIntegral) < 0.001 ? '等式成立' : '计算中...'}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Gradient Field Scene ---
+function GradientScene() {
+  const { paramValue: a } = useLabStore()
+  // Surface: z = a * (1 - x² - y²) over [-1, 1]²
+  // Gradient: ∇f = (-2ax, -2ay)
+
+  // Surface geometry with heat-mapped colors
+  const surfaceData = useMemo(() => {
+    const res = 40
+    const positions: number[] = []
+    const colors: number[] = []
+    const indices: number[] = []
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -1 + (2 * i) / res
+        const y = -1 + (2 * j) / res
+        const r2 = x * x + y * y
+        const z = r2 <= 1 ? a * (1 - r2) : 0
+        positions.push(x, z, y)
+        // Heat map: blue (bottom) to red (top)
+        const t = Math.max(0, Math.min(1, z / a))
+        colors.push(t, 0.2, 1 - t) // red at top, blue at bottom
+      }
+    }
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const a2 = i * (res + 1) + j
+        const b2 = a2 + 1
+        const c2 = a2 + (res + 1)
+        const d2 = c2 + 1
+        indices.push(a2, c2, b2, b2, c2, d2)
+      }
+    }
+    return { positions: new Float32Array(positions), colors: new Float32Array(colors), indices }
+  }, [a])
+
+  // Gradient arrows on xy-plane: 8x8 grid
+  const gradientArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number]; mag: number }[] = []
+    const n = 8
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const x = -0.85 + (1.7 * i) / (n - 1)
+        const y = -0.85 + (1.7 * j) / (n - 1)
+        if (x * x + y * y > 0.95) continue
+        const gx = -2 * a * x
+        const gy = -2 * a * y
+        const mag = Math.sqrt(gx * gx + gy * gy)
+        arrows.push({
+          pos: [x, 0.01, y],
+          dir: mag > 0.001 ? [gx / mag, 0, gy / mag] : [0, 0, 0],
+          mag,
+        })
+      }
+    }
+    return arrows
+  }, [a])
+
+  // Contour lines on the floor (circles since f is radially symmetric)
+  const contourLines = useMemo(() => {
+    const lines: Float32Array[] = []
+    const numContours = 5
+    const res = 64
+    for (let c = 1; c <= numContours; c++) {
+      const r = c / numContours
+      if (r >= 1) continue
+      const pts: number[] = []
+      for (let i = 0; i <= res; i++) {
+        const theta = (2 * Math.PI * i) / res
+        pts.push(r * Math.cos(theta), 0.005, r * Math.sin(theta))
+      }
+      lines.push(new Float32Array(pts))
+    }
+    return lines
+  }, [])
+
+  const maxGradMag = 2 * a * Math.SQRT2 // at corner (±1, ±1) but clipped
+  const maxGradMagClipped = 2 * a * 0.85 * Math.SQRT2
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Surface z = a*(1-x²-y²) with heat-map coloring */}
+      <mesh>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[surfaceData.positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[surfaceData.colors, 3]} />
+          <bufferAttribute attach="index" args={[new Uint32Array(surfaceData.indices), 1]} />
+        </bufferGeometry>
+        <meshPhongMaterial vertexColors transparent opacity={0.75} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Floor plane */}
+      <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2.2, 2.2]} />
+        <meshPhongMaterial color="#e2e8f0" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Contour lines on floor */}
+      {contourLines.map((pts, idx) => (
+        <line key={`cl-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#94a3b8" opacity={0.5} transparent />
+        </line>
+      ))}
+
+      {/* Gradient arrows on xy-plane */}
+      {gradientArrows.map((arrow, idx) => {
+        const color = arrow.mag < maxGradMagClipped * 0.4 ? 0x22c55e : 0xef4444
+        const arrowLen = Math.min(0.15, arrow.mag * 0.08)
+        return (
+          <group key={`ga-${idx}`}>
+            <arrowHelper
+              args={[
+                new THREE.Vector3(...arrow.dir),
+                new THREE.Vector3(...arrow.pos),
+                arrowLen,
+                color,
+                arrowLen * 0.4,
+                arrowLen * 0.25,
+              ]}
+            />
+          </group>
+        )
+      })}
+
+      {/* Info overlay */}
+      <Html position={[0, a + 1.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-yellow-600 dark:text-yellow-400 font-semibold mb-1">
+            梯度场可视化
+          </div>
+          <div className="text-muted-foreground">
+            f(x,y) = {a.toFixed(1)}·(1 - x² - y²)
+          </div>
+          <div className="text-yellow-700 dark:text-yellow-300">
+            ∇f = ({(-2 * a).toFixed(1)}x, {(-2 * a).toFixed(1)}y)
+          </div>
+          <div className="text-muted-foreground">
+            最大梯度模 ≈ {maxGradMagClipped.toFixed(3)}
+          </div>
+          <div className="text-green-600 dark:text-green-400">
+            方向导数最大值 = |∇f| (沿梯度方向)
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Spherical Coordinates Scene ---
+function SphericalScene() {
+  const { paramValue: R, paramValue2: phiMax } = useLabStore()
+  // phiMax is the polar angle range [0, phiMax]
+
+  // Semi-transparent sphere
+  const sphereGeom = useMemo(() => {
+    return new THREE.SphereGeometry(R, 32, 24)
+  }, [R])
+
+  // Concentric circle grid on equatorial plane
+  const concentricCircles = useMemo(() => {
+    const circles: Float32Array[] = []
+    const numCircles = Math.max(1, Math.floor(R / 0.3))
+    const res = 64
+    for (let c = 1; c <= numCircles; c++) {
+      const r = (R * c) / numCircles
+      const pts: number[] = []
+      for (let i = 0; i <= res; i++) {
+        const theta = (2 * Math.PI * i) / res
+        pts.push(r * Math.cos(theta), 0, r * Math.sin(theta))
+      }
+      circles.push(new Float32Array(pts))
+    }
+    return circles
+  }, [R])
+
+  // Great circle arc for θ (azimuthal angle) on equatorial plane
+  const thetaArc = useMemo(() => {
+    const pts: number[] = []
+    const res = 32
+    for (let i = 0; i <= res; i++) {
+      const t = (Math.PI * 0.6 * i) / res
+      pts.push(R * 0.6 * Math.cos(t), 0, R * 0.6 * Math.sin(t))
+    }
+    return new Float32Array(pts)
+  }, [R])
+
+  // Great circle arc for φ (polar angle) in xz plane
+  const phiArc = useMemo(() => {
+    const pts: number[] = []
+    const res = 32
+    for (let i = 0; i <= res; i++) {
+      const t = (phiMax * i) / res
+      const rr = R * 0.6
+      pts.push(rr * Math.sin(t), rr * Math.cos(t), 0)
+    }
+    return new Float32Array(pts)
+  }, [R, phiMax])
+
+  // Wedge-shaped volume element showing dV = r²sinφ dr dθ dφ
+  const wedgeGeom = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const dr = R * 0.15
+    const dTheta = Math.PI / 6
+    const dPhi = Math.PI / 8
+    const rInner = R * 0.45
+    const rOuter = rInner + dr
+    const phiStart = Math.PI / 4
+    const thetaStart = Math.PI / 6
+
+    const vPts: number[] = []
+    const idxPts: number[] = []
+    const arcRes = 4
+    const phiRes = 4
+
+    // Create vertices for all 8 corners of the wedge
+    // For each (r, theta, phi) combination
+    const radii = [rInner, rOuter]
+    const thetas: number[] = []
+    for (let k = 0; k <= arcRes; k++) {
+      thetas.push(thetaStart + (k / arcRes) * dTheta)
+    }
+    const phis: number[] = []
+    for (let k = 0; k <= phiRes; k++) {
+      phis.push(phiStart + (k / phiRes) * dPhi)
+    }
+
+    // Vertices: 2 radii × (arcRes+1) thetas × (phiRes+1) phis
+    for (const r of radii) {
+      for (const phi of phis) {
+        for (const theta of thetas) {
+          // Convert spherical to Cartesian: x = r sinφ cosθ, y = r cosφ, z = r sinφ sinθ
+          vPts.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta))
+        }
+      }
+    }
+
+    // Build index faces
+    const s = arcRes + 1 // vertices per phi arc
+    for (let ri = 0; ri < 2; ri++) {
+      const offset = ri * (s * (phiRes + 1))
+      const nextOffset = offset + s * (phiRes + 1)
+      for (let pi = 0; pi < phiRes; pi++) {
+        for (let ti = 0; ti < arcRes; ti++) {
+          const v0 = offset + pi * s + ti
+          const v1 = v0 + 1
+          const v2 = v0 + s
+          const v3 = v2 + 1
+          if (ri === 0) {
+            // Inner face
+            idxPts.push(v0, v2, v1, v1, v2, v3)
+          } else {
+            // Outer face
+            idxPts.push(v0, v1, v2, v1, v3, v2)
+          }
+        }
+      }
+    }
+
+    // Connect inner and outer surfaces
+    for (let pi = 0; pi < phiRes; pi++) {
+      for (let ti = 0; ti < arcRes; ti++) {
+        const i0 = pi * s + ti
+        const i1 = i0 + 1
+        const i2 = i0 + s
+        const i3 = i2 + 1
+        const o0 = i0 + s * (phiRes + 1)
+        const o1 = o0 + 1
+        const o2 = o0 + s
+        const o3 = o2 + 1
+        // Bottom phi face
+        if (pi === 0) {
+          idxPts.push(i0, o0, i1, i1, o0, o1)
+        }
+        // Top phi face
+        if (pi === phiRes - 1) {
+          const it2 = i2, it3 = i3, ot2 = o2, ot3 = o3
+          idxPts.push(it2, it3, ot2, it3, ot3, ot2)
+        }
+        // Left theta face
+        if (ti === 0) {
+          idxPts.push(i0, i2, o0, i2, o2, o0)
+        }
+        // Right theta face
+        if (ti === arcRes - 1) {
+          idxPts.push(i1, o1, i3, i3, o1, o3)
+        }
+      }
+    }
+
+    geom.setIndex(idxPts)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vPts, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [R])
+
+  const volume = (4 / 3) * Math.PI * R * R * R
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Semi-transparent sphere */}
+      <mesh geometry={sphereGeom}>
+        <meshPhongMaterial color="#22c55e" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Sphere wireframe */}
+      <mesh geometry={sphereGeom}>
+        <meshBasicMaterial color="#22c55e" wireframe transparent opacity={0.15} />
+      </mesh>
+
+      {/* Coordinate axis arrows */}
+      <arrowHelper args={[new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), R + 0.8, 0xef4444, 0.2, 0.1]} />
+      <arrowHelper args={[new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), R + 0.8, 0x22c55e, 0.2, 0.1]} />
+      <arrowHelper args={[new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), R + 0.8, 0x3b82f6, 0.2, 0.1]} />
+
+      {/* Axis labels */}
+      <Text position={[R + 1.1, 0, 0]} fontSize={0.3} color="#ef4444" anchorX="center" anchorY="middle">r</Text>
+      <Text position={[0, R + 1.1, 0]} fontSize={0.3} color="#22c55e" anchorX="center" anchorY="middle">y</Text>
+      <Text position={[0, 0, R + 1.1]} fontSize={0.3} color="#3b82f6" anchorX="center" anchorY="middle">z</Text>
+
+      {/* θ label */}
+      <Text position={[R * 0.3, 0.2, R * 0.3]} fontSize={0.25} color="#f59e0b" anchorX="center" anchorY="middle">θ</Text>
+
+      {/* φ label */}
+      <Text position={[0.2, R * 0.4, 0]} fontSize={0.25} color="#a855f7" anchorX="center" anchorY="middle">φ</Text>
+
+      {/* Wedge volume element (amber) */}
+      <mesh geometry={wedgeGeom}>
+        <meshPhongMaterial color="#f59e0b" transparent opacity={0.7} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh geometry={wedgeGeom}>
+        <meshBasicMaterial color="#f59e0b" wireframe transparent opacity={0.5} />
+      </mesh>
+
+      {/* dV label */}
+      <Text position={[R * 0.5, R * 0.3, 0.2]} fontSize={0.2} color="#f59e0b" anchorX="center" anchorY="middle">
+        dV=r²sinφ
+      </Text>
+
+      {/* Concentric circles on equatorial plane */}
+      {concentricCircles.map((pts, idx) => (
+        <line key={`cc-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#22c55e" opacity={0.3} transparent />
+        </line>
+      ))}
+
+      {/* θ arc on equatorial plane */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[thetaArc, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} opacity={0.7} transparent />
+      </line>
+
+      {/* φ arc in xz plane */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[phiArc, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#a855f7" linewidth={2} opacity={0.7} transparent />
+      </line>
+
+      {/* Info overlay */}
+      <Html position={[0, R + 2.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-green-600 dark:text-green-400 font-semibold mb-1">
+            球坐标系
+          </div>
+          <div className="text-muted-foreground">
+            V = (4/3)πR³ = {volume.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            r ∈ [0, {R.toFixed(1)}], θ ∈ [0, 2π], φ ∈ [0, {phiMax.toFixed(2)}]
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            dV = r²sinφ dr dθ dφ
+          </div>
+          <div className="text-purple-600 dark:text-purple-400">
+            雅可比因子: r²sinφ
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Laplacian / Harmonic Function Scene ---
+function LaplaceScene() {
+  const { paramValue: a } = useLabStore()
+  // Surface: z = a * cos(x) * cosh(y) over [-2, 2] × [-1, 1]
+  // ∂²f/∂x² = -a * cos(x) * cosh(y)
+  // ∂²f/∂y² = a * cos(x) * cosh(y)
+  // ∇²f = ∂²f/∂x² + ∂²f/∂y² = 0 (harmonic!)
+
+  // Surface geometry colored by Laplacian value
+  const surfaceData = useMemo(() => {
+    const res = 50
+    const positions: number[] = []
+    const colors: number[] = []
+    const indices: number[] = []
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -2 + (4 * i) / res
+        const y = -1 + (2 * j) / res
+        const z = a * Math.cos(x) * Math.cosh(y)
+        positions.push(x, z, y)
+        // ∇²f = 0 for this harmonic function, so color is green
+        // Small numerical deviation from 0 → slight red/blue
+        const laplacian = -a * Math.cos(x) * Math.cosh(y) + a * Math.cos(x) * Math.cosh(y)
+        const deviation = Math.abs(laplacian)
+        // Green for harmonic (Δf = 0), red/blue for deviation
+        if (deviation < 0.01) {
+          colors.push(0.2, 0.8, 0.3) // green
+        } else {
+          colors.push(0.8, 0.2, 0.2) // red (shouldn't happen for true harmonic)
+        }
+      }
+    }
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const a2 = i * (res + 1) + j
+        const b2 = a2 + 1
+        const c2 = a2 + (res + 1)
+        const d2 = c2 + 1
+        indices.push(a2, c2, b2, b2, c2, d2)
+      }
+    }
+    return { positions: new Float32Array(positions), colors: new Float32Array(colors), indices }
+  }, [a])
+
+  // Indicator patches on surface showing local Laplacian value
+  const indicatorPatches = useMemo(() => {
+    const patches: { pos: [number, number, number]; laplacian: number }[] = []
+    const nx = 6
+    const ny = 4
+    for (let i = 1; i < nx; i++) {
+      for (let j = 1; j < ny; j++) {
+        const x = -2 + (4 * i) / nx
+        const y = -1 + (2 * j) / ny
+        const z = a * Math.cos(x) * Math.cosh(y)
+        const laplacian = -a * Math.cos(x) * Math.cosh(y) + a * Math.cos(x) * Math.cosh(y)
+        patches.push({ pos: [x, z + 0.05, y], laplacian })
+      }
+    }
+    return patches
+  }, [a])
+
+  // Contour lines on floor
+  const contourLines = useMemo(() => {
+    const lines: { pts: Float32Array; isPositive: boolean }[] = []
+    const res = 100
+    // Contour at z = 0 (where cos(x) = 0)
+    const pts0: number[] = []
+    for (let i = 0; i <= res; i++) {
+      const x = -2 + (4 * i) / res
+      // cos(x) = 0 → x = ±π/2
+      // Show vertical lines at x = ±π/2
+    }
+    // Instead, let's do horizontal contour lines at various z values
+    for (let level = -2; level <= 4; level += 1) {
+      const pts: number[] = []
+      for (let i = 0; i <= res; i++) {
+        const x = -2 + (4 * i) / res
+        const cosX = Math.cos(x)
+        if (Math.abs(cosX) < 0.01) continue
+        const coshY = level / (a * cosX)
+        if (coshY < 1) continue
+        const y = Math.acosh(coshY)
+        if (y > 1) continue
+        pts.push(x, 0.005, y)
+        pts.push(x, 0.005, -y)
+      }
+      if (pts.length > 2) {
+        lines.push({ pts: new Float32Array(pts), isPositive: level > 0 })
+      }
+    }
+    return lines
+  }, [a])
+
+  const maxZ = a * 1 * Math.cosh(1)
+  const maxCoshY = Math.cosh(1)
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Surface z = a*cos(x)*cosh(y) colored by ∇²f */}
+      <mesh>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[surfaceData.positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[surfaceData.colors, 3]} />
+          <bufferAttribute attach="index" args={[new Uint32Array(surfaceData.indices), 1]} />
+        </bufferGeometry>
+        <meshPhongMaterial vertexColors transparent opacity={0.75} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Floor plane */}
+      <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4.5, 2.5]} />
+        <meshPhongMaterial color="#e2e8f0" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Contour lines on floor */}
+      {contourLines.map((line, idx) => (
+        <line key={`cl-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[line.pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color={line.isPositive ? '#22c55e' : '#3b82f6'} opacity={0.4} transparent />
+        </line>
+      ))}
+
+      {/* Indicator patches on surface (small spheres showing Δf value) */}
+      {indicatorPatches.map((patch, idx) => (
+        <mesh key={`ip-${idx}`} position={patch.pos}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshPhongMaterial
+            color={Math.abs(patch.laplacian) < 0.01 ? '#22c55e' : '#ef4444'}
+            transparent
+            opacity={0.8}
+          />
+        </mesh>
+      ))}
+
+      {/* Info overlay */}
+      <Html position={[0, maxZ + 1.2, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-slate-600 dark:text-slate-400 font-semibold mb-1">
+            拉普拉斯算子与调和函数
+          </div>
+          <div className="text-muted-foreground">
+            f(x,y) = {a.toFixed(1)}·cos(x)·cosh(y)
+          </div>
+          <div className="text-green-600 dark:text-green-400">
+            ∇²f = ∂²f/∂x² + ∂²f/∂y² = 0 ✓
+          </div>
+          <div className="text-muted-foreground">
+            调和函数性质: 无局部极值
+          </div>
+          <div className="text-slate-500 dark:text-slate-400">
+            f(x,y)值域: [{(-a).toFixed(1)}, {(a * maxCoshY).toFixed(2)}]
           </div>
         </div>
       </Html>

@@ -16,17 +16,51 @@ export type LabMode =
   | 'stokes1' | 'divergence1'
   | 'arc_length1' | 'mass_center1'
   | 'moment_of_inertia1' | 'cylindrical1'
+  | 'gradient1' | 'spherical1' | 'laplace1'
+
+export interface TooltipData {
+  content: string
+  x: number
+  y: number
+}
+
+// Load favorites from localStorage (SSR-safe)
+function loadFavorites(): Set<LabMode> {
+  if (typeof window === 'undefined') return new Set<LabMode>()
+  try {
+    const raw = localStorage.getItem('lab-favorites')
+    if (raw) {
+      const arr = JSON.parse(raw) as LabMode[]
+      return new Set(arr)
+    }
+  } catch { /* ignore */ }
+  return new Set<LabMode>()
+}
+
+// Save favorites to localStorage (SSR-safe)
+function saveFavorites(favorites: Set<LabMode>) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem('lab-favorites', JSON.stringify([...favorites]))
+  } catch { /* ignore */ }
+}
 
 interface LabState {
   mode: LabMode
   paramValue: number
   paramValue2: number
   visitedModes: Set<LabMode>
+  favorites: Set<LabMode>
   autoTourActive: boolean
+  tooltip: TooltipData | null
   setMode: (mode: LabMode) => void
   setParamValue: (value: number) => void
   setParamValue2: (value: number) => void
   setAutoTourActive: (active: boolean) => void
+  toggleFavorite: (mode: LabMode) => void
+  hydrateFavorites: () => void
+  showTooltip: (data: TooltipData) => void
+  hideTooltip: () => void
 }
 
 export const useLabStore = create<LabState>((set) => ({
@@ -34,7 +68,9 @@ export const useLabStore = create<LabState>((set) => ({
   paramValue: 2,
   paramValue2: 2,
   visitedModes: new Set<LabMode>(['step1']),
+  favorites: new Set<LabMode>(),
   autoTourActive: false,
+  tooltip: null,
   setMode: (mode) => {
     const info = modeInfo[mode]
     set((state) => ({
@@ -42,11 +78,32 @@ export const useLabStore = create<LabState>((set) => ({
       paramValue: info.paramDefault,
       paramValue2: info.paramDefault2 ?? info.paramDefault,
       visitedModes: new Set([...state.visitedModes, mode]),
+      tooltip: null,
     }))
   },
   setParamValue: (paramValue) => set({ paramValue }),
   setParamValue2: (paramValue2) => set({ paramValue2 }),
   setAutoTourActive: (autoTourActive) => set({ autoTourActive }),
+  toggleFavorite: (mode) => {
+    set((state) => {
+      const next = new Set(state.favorites)
+      if (next.has(mode)) {
+        next.delete(mode)
+      } else {
+        next.add(mode)
+      }
+      saveFavorites(next)
+      return { favorites: next }
+    })
+  },
+  hydrateFavorites: () => {
+    const loaded = loadFavorites()
+    if (loaded.size > 0) {
+      set({ favorites: loaded })
+    }
+  },
+  showTooltip: (data) => set({ tooltip: data }),
+  hideTooltip: () => set({ tooltip: null }),
 }))
 
 export const modeInfo: Record<LabMode, {
@@ -338,5 +395,31 @@ export const modeInfo: Record<LabMode, {
     paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
     paramLabel2: '圆柱高度',
     paramMin2: 1, paramMax2: 4, paramStep2: 0.5, paramDefault2: 3,
+  },
+  gradient1: {
+    title: '梯度场可视化',
+    section: '梯度场与方向导数',
+    math: '\\nabla f = \\left(\\frac{\\partial f}{\\partial x},\\frac{\\partial f}{\\partial y}\\right)',
+    description: '梯度∇f指向函数值增长最快的方向。图中展示曲面z=f(x,y)及其在xy平面上的梯度向量场。每个箭头的方向表示最速上升方向，长度表示方向导数的最大值。调整参数观察不同曲面的梯度场变化。',
+    paramLabel: '曲面陡度',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  spherical1: {
+    title: '球坐标计算',
+    section: '球坐标系计算',
+    math: '\\int\\int\\int f(r,\\theta,\\phi)\\,r^2\\sin\\phi\\,dr\\,d\\theta\\,d\\phi',
+    description: '球坐标系下，体积元素dV=r²sinφ dr dθ dφ，其中r为径向距离，θ为方位角，φ为极角。多出的因子r²sinφ来自坐标变换的雅可比行列式。调整参数观察球体区域变化。',
+    paramLabel: '球体半径',
+    paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
+    paramLabel2: '极角范围',
+    paramMin2: 0.3, paramMax2: 3.14, paramStep2: 0.1, paramDefault2: 3.14,
+  },
+  laplace1: {
+    title: '拉普拉斯算子与调和函数',
+    section: '拉普拉斯方程',
+    math: '\\Delta f = \\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2} = 0',
+    description: '调和函数满足拉普拉斯方程Δf=0，即函数在某点的值等于其邻域的平均值。图中展示调和函数z=cos(x)·cosh(y)的曲面及其拉普拉斯算子的值。在调和函数上Δf=0，曲面的平均曲率性质体现为"没有局部极值"的特点。调整参数观察不同调和函数。',
+    paramLabel: '振幅系数',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
   },
 }
