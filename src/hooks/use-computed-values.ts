@@ -9,6 +9,8 @@ import {
   fEven,
   fCartesian,
   fRect,
+  fPolar,
+  fTriple,
   riemannSum2D,
   numericalIntegral2D,
   rectApprox,
@@ -16,6 +18,10 @@ import {
   sphereCylinderVolume,
   integralTriangularX,
   integralTriangularY,
+  polarRiemannSum,
+  polarNumericalIntegral,
+  tripleIntegralApprox,
+  tripleIntegralExact,
   formatValue,
 } from '@/lib/math-computations'
 
@@ -168,6 +174,79 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: `${c.toFixed(1)} × ${area}`,
           error: '0',
           label: 'c × S_D',
+        }
+      }
+
+      case 'polar1': {
+        // Polar integral
+        const R = paramValue
+        const beta = paramValue2
+        const approx = polarRiemannSum(fPolar, R, 0, beta, 20, 20)
+        const exact = polarNumericalIntegral(fPolar, R, 0, beta)
+        return {
+          mainValue: formatValue(approx),
+          approxValue: formatValue(approx),
+          exactValue: formatValue(exact),
+          error: formatValue(Math.abs(approx - exact)),
+          label: '极坐标积分值',
+        }
+      }
+
+      case 'polar2': {
+        // Polar Riemann sum
+        const nR = Math.round(paramValue)
+        const R = 2
+        const beta = Math.PI * 2
+        const approx = polarRiemannSum(fPolar, R, 0, beta, nR, nR * 2)
+        const exact = polarNumericalIntegral(fPolar, R, 0, beta)
+        return {
+          mainValue: formatValue(approx),
+          approxValue: formatValue(approx),
+          exactValue: formatValue(exact),
+          error: formatValue(Math.abs(approx - exact)),
+          label: '极坐标黎曼和 vs 精确值',
+        }
+      }
+
+      case 'convergence1': {
+        // Current convergence point
+        const n = Math.round(paramValue)
+        const exact = numericalIntegral2D(f, -3, 3, -3, 3)
+        const approx = riemannSum2D(f, 3, 3, n)
+        return {
+          mainValue: formatValue(approx),
+          approxValue: formatValue(approx),
+          exactValue: formatValue(exact),
+          error: formatValue(Math.abs(approx - exact)),
+          label: `n=${n} 时收敛情况`,
+        }
+      }
+
+      case 'convergence2': {
+        // Error analysis summary
+        const maxN = Math.round(paramValue)
+        const exact = numericalIntegral2D(f, -3, 3, -3, 3)
+        const approx = riemannSum2D(f, 3, 3, maxN)
+        return {
+          mainValue: formatValue(Math.abs(approx - exact)),
+          approxValue: formatValue(Math.abs(approx - exact)),
+          exactValue: `O(1/${maxN}²)`,
+          error: formatValue(Math.abs(approx - exact)),
+          label: `n=${maxN} 时中点法误差`,
+        }
+      }
+
+      case 'triple1': {
+        // Triple integral approximation
+        const n = Math.round(paramValue)
+        const approx = tripleIntegralApprox(fTriple, [0, 1], [0, 1], [0, 1], n)
+        const exact = tripleIntegralExact(fTriple, [0, 1], [0, 1], [0, 1])
+        return {
+          mainValue: formatValue(approx),
+          approxValue: formatValue(approx),
+          exactValue: formatValue(exact),
+          error: formatValue(Math.abs(approx - exact)),
+          label: '三重积分近似值',
         }
       }
 

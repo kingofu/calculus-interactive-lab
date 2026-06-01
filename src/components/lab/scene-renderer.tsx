@@ -19,6 +19,13 @@ import {
   numericalIntegral1D,
   integralTriangularX,
   integralTriangularY,
+  fPolar,
+  fTriple,
+  polarRiemannSum,
+  tripleIntegralApprox,
+  formatValue,
+  generateConvergenceData,
+  generateErrorData,
 } from '@/lib/math-computations'
 
 // --- Common Axes ---
@@ -1034,6 +1041,530 @@ function ParityRiemannBars({
   )
 }
 
+// --- Polar coordinate region (polar1) ---
+function PolarRegionScene() {
+  const { paramValue: R, paramValue2: beta } = useLabStore()
+
+  // Concentric circles
+  const concentricCircles = useMemo(() => {
+    const circles: Float32Array[] = []
+    const maxR = Math.ceil(R)
+    const res = 64
+    for (let r = 1; r <= maxR; r++) {
+      const pts: number[] = []
+      for (let i = 0; i <= res; i++) {
+        const theta = (2 * Math.PI * i) / res
+        pts.push(r * Math.cos(theta), 0.005, r * Math.sin(theta))
+      }
+      circles.push(new Float32Array(pts))
+    }
+    return circles
+  }, [R])
+
+  // Radial lines
+  const radialLines = useMemo(() => {
+    const lines: Float32Array[] = []
+    const angleStep = Math.PI / 6
+    const numLines = Math.max(1, Math.floor(beta / angleStep))
+    for (let i = 0; i <= numLines; i++) {
+      const theta = (i / numLines) * beta
+      lines.push(new Float32Array([0, 0.005, 0, R * Math.cos(theta), 0.005, R * Math.sin(theta)]))
+    }
+    return lines
+  }, [R, beta])
+
+  // Filled sector region (pie slice from 0 to beta, radius R)
+  const sectorGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const res = 48
+    // Center vertex
+    vertices.push(0, 0.01, 0)
+    for (let i = 0; i <= res; i++) {
+      const theta = (i / res) * beta
+      vertices.push(R * Math.cos(theta), 0.01, R * Math.sin(theta))
+    }
+    for (let i = 0; i < res; i++) {
+      indices.push(0, i + 1, i + 2)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [R, beta])
+
+  // Boundary arc
+  const boundaryArc = useMemo(() => {
+    const pts: number[] = []
+    const res = 64
+    // Arc from 0 to beta
+    for (let i = 0; i <= res; i++) {
+      const theta = (i / res) * beta
+      pts.push(R * Math.cos(theta), 0.02, R * Math.sin(theta))
+    }
+    // Line back to origin
+    pts.push(0, 0.02, 0)
+    // Line along theta=0 back to R
+    pts.push(R, 0.02, 0)
+    return new Float32Array(pts)
+  }, [R, beta])
+
+  // Approximate integral value
+  const approxValue = useMemo(() => {
+    return polarRiemannSum(fPolar, R, 0, beta, 50, 50)
+  }, [R, beta])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Concentric circles */}
+      {concentricCircles.map((pts, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#10b981" opacity={0.4} transparent />
+        </line>
+      ))}
+
+      {/* Radial lines */}
+      {radialLines.map((pts, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#10b981" opacity={0.3} transparent />
+        </line>
+      ))}
+
+      {/* Filled sector */}
+      <mesh geometry={sectorGeometry}>
+        <meshPhongMaterial color="#10b981" transparent opacity={0.25} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Boundary arc */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[boundaryArc, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+
+      {/* Surface z = f(r cosθ, r sinθ) over the polar region */}
+      <Surface
+        func={fPolar}
+        xRange={[-R, R]}
+        yRange={[-R, R]}
+        color="#10b981"
+        opacity={0.5}
+        resolution={30}
+      />
+
+      {/* Info label */}
+      <Html position={[0, 4, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-emerald-600 dark:text-emerald-400">
+            R = {R.toFixed(1)}, β = {(beta / Math.PI).toFixed(2)}π
+          </div>
+          <div className="text-muted-foreground">
+            ∫∫f·r dr dθ ≈ {formatValue(approxValue)}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Polar Riemann Sum (polar2) ---
+function PolarRiemannScene() {
+  const { paramValue: nR } = useLabStore()
+  const R = 2
+  const beta = 2 * Math.PI
+  const nTheta = Math.max(4, Math.round(nR * 2))
+
+  const wedgeData = useMemo(() => {
+    const result: {
+      vertices: Float32Array
+      indices: Uint16Array
+      height: number
+      color: string
+      labelPos: [number, number, number]
+    }[] = []
+    const dr = R / nR
+    const dTheta = beta / nTheta
+
+    for (let i = 0; i < nR; i++) {
+      const rInner = i * dr
+      const rOuter = (i + 1) * dr
+      const rMid = (i + 0.5) * dr
+
+      for (let j = 0; j < nTheta; j++) {
+        const thetaMin = j * dTheta
+        const thetaMid = thetaMin + dTheta / 2
+        const thetaMax = thetaMin + dTheta
+
+        const x = rMid * Math.cos(thetaMid)
+        const y = rMid * Math.sin(thetaMid)
+        const h = fPolar(x, y) * rMid // Jacobian factor r
+
+        if (h < 0.01) continue
+
+        // Build wedge vertices (4 corners on the floor + 4 corners on top)
+        const arcRes = 4
+        const vPts: number[] = []
+        const idxPts: number[] = []
+
+        // Inner arc (bottom)
+        for (let k = 0; k <= arcRes; k++) {
+          const t = thetaMin + (k / arcRes) * dTheta
+          vPts.push(rInner * Math.cos(t), 0, rInner * Math.sin(t))
+        }
+        // Outer arc (bottom)
+        for (let k = 0; k <= arcRes; k++) {
+          const t = thetaMin + (k / arcRes) * dTheta
+          vPts.push(rOuter * Math.cos(t), 0, rOuter * Math.sin(t))
+        }
+        // Inner arc (top)
+        for (let k = 0; k <= arcRes; k++) {
+          const t = thetaMin + (k / arcRes) * dTheta
+          vPts.push(rInner * Math.cos(t), h, rInner * Math.sin(t))
+        }
+        // Outer arc (top)
+        for (let k = 0; k <= arcRes; k++) {
+          const t = thetaMin + (k / arcRes) * dTheta
+          vPts.push(rOuter * Math.cos(t), h, rOuter * Math.sin(t))
+        }
+
+        const s = arcRes + 1
+        // Bottom face
+        for (let k = 0; k < arcRes; k++) {
+          idxPts.push(k, k + 1, s + k, s + k, k + 1, s + k + 1)
+        }
+        // Top face
+        for (let k = 0; k < arcRes; k++) {
+          idxPts.push(2 * s + k + 1, 2 * s + k, 3 * s + k, 3 * s + k, 3 * s + k + 1, 2 * s + k + 1)
+        }
+        // Inner side
+        idxPts.push(0, 2 * s, 2 * s + 1, 0, 2 * s + 1, 1)
+        // Outer side
+        idxPts.push(s, s + 1, 3 * s + 1, s, 3 * s + 1, 3 * s)
+        // Left side
+        idxPts.push(0, s, 3 * s, 0, 3 * s, 2 * s)
+        // Right side
+        const li = arcRes
+        idxPts.push(li + 1, li + s + 1, 3 * s + li + 1, li + 1, 3 * s + li + 1, 2 * s + li + 1)
+
+        const color = (i + j) % 2 === 0 ? '#10b981' : '#14b8a6'
+
+        result.push({
+          vertices: new Float32Array(vPts),
+          indices: new Uint16Array(idxPts),
+          height: h,
+          color,
+          labelPos: [x, h + 0.2, y],
+        })
+      }
+    }
+    return result
+  }, [nR, R, beta, nTheta])
+
+  const approxValue = useMemo(() => {
+    return polarRiemannSum(fPolar, R, 0, beta, nR, nTheta)
+  }, [nR, R, beta, nTheta])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Wedge bars */}
+      {wedgeData.map((wedge, idx) => (
+        <mesh key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[wedge.vertices, 3]} />
+            <bufferAttribute attach="index" args={[wedge.indices, 1]} count={wedge.indices.length} />
+          </bufferGeometry>
+          <meshPhongMaterial color={wedge.color} transparent opacity={0.6} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Surface overlay */}
+      <Surface
+        func={fPolar}
+        xRange={[-R, R]}
+        yRange={[-R, R]}
+        color="#059669"
+        opacity={0.2}
+        resolution={25}
+      />
+
+      {/* Info label */}
+      <Html position={[0, 4.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-emerald-600 dark:text-emerald-400">
+            径向: {nR}, 角度: {nTheta}
+          </div>
+          <div className="text-muted-foreground">
+            ∫∫f·r dr dθ ≈ {formatValue(approxValue)}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Convergence Animation (convergence1) ---
+function ConvergenceScene() {
+  const { paramValue: n } = useLabStore()
+  const nInt = Math.max(2, Math.round(n))
+
+  const exactValue = useMemo(() => {
+    return numericalIntegral2D(f, -3, 3, -3, 3)
+  }, [])
+
+  const approxValue = useMemo(() => {
+    return riemannSum2D(f, 3, 3, nInt)
+  }, [nInt])
+
+  const error = Math.abs(approxValue - exactValue)
+
+  // Color gradient from red (high error) to green (low error)
+  const barColor = useMemo(() => {
+    const maxError = 10
+    const t = Math.min(1, error / maxError)
+    const r = t
+    const g = 1 - t
+    return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, 50)`
+  }, [error])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Surface */}
+      <Surface func={f} color="#10b981" opacity={0.3} resolution={30} />
+
+      {/* Riemann bars with error-based coloring */}
+      <RiemannBars
+        func={f}
+        n={nInt}
+        color={barColor}
+        opacity={0.6}
+      />
+
+      {/* Info overlay */}
+      <Html position={[0, 5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-foreground">
+            n = {nInt}×{nInt} = {nInt * nInt}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400">
+            近似值: {formatValue(approxValue)}
+          </div>
+          <div className="text-muted-foreground">
+            精确值: {formatValue(exactValue)}
+          </div>
+          <div style={{ color: barColor }}>
+            误差: {formatValue(error)}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Error Analysis (convergence2) ---
+function ErrorAnalysisScene() {
+  const { paramValue: maxN } = useLabStore()
+
+  const errorData = useMemo(() => {
+    return generateErrorData(f, [-3, 3], [-3, 3], maxN)
+  }, [maxN])
+
+  // Map n values to x positions
+  const barData = useMemo(() => {
+    if (errorData.length === 0) return { bars: [] as { x: number; hMid: number; hLeft: number; label: string }[], maxError: 1 }
+    const maxError = Math.max(...errorData.map(d => Math.max(d.errorMidpoint, d.errorLeft)), 0.001)
+    const barWidth = 0.6
+    const gap = 0.3
+    const bars = errorData.map((d, idx) => ({
+      x: idx * (barWidth + gap) - (errorData.length * (barWidth + gap)) / 2,
+      hMid: Math.log10(Math.max(1e-15, d.errorMidpoint)),
+      hLeft: Math.log10(Math.max(1e-15, d.errorLeft)),
+      label: `n=${d.n}`,
+    }))
+    return { bars, maxError }
+  }, [errorData])
+
+  // Normalize log heights to visual range [0, 4]
+  const minLog = barData.bars.length > 0 ? Math.min(...barData.bars.map(b => Math.min(b.hMid, b.hLeft))) : -10
+  const maxLog = barData.bars.length > 0 ? Math.max(...barData.bars.map(b => Math.max(b.hMid, b.hLeft))) : 0
+  const logRange = Math.max(1, maxLog - minLog)
+  const scaleH = 4 / logRange
+
+  return (
+    <AutoRotate speed={0.001}>
+      {/* Bars for midpoint error */}
+      {barData.bars.map((bar, idx) => {
+        const hMid = Math.max(0.02, (bar.hMid - minLog) * scaleH)
+        const hLeft = Math.max(0.02, (bar.hLeft - minLog) * scaleH)
+        return (
+          <group key={idx}>
+            {/* Midpoint error bar (emerald) */}
+            <mesh position={[bar.x - 0.15, hMid / 2, -0.2]}>
+              <boxGeometry args={[0.25, hMid, 0.3]} />
+              <meshPhongMaterial color="#10b981" transparent opacity={0.7} />
+            </mesh>
+            {/* Left endpoint error bar (amber) */}
+            <mesh position={[bar.x + 0.15, hLeft / 2, 0.2]}>
+              <boxGeometry args={[0.25, hLeft, 0.3]} />
+              <meshPhongMaterial color="#f59e0b" transparent opacity={0.7} />
+            </mesh>
+            {/* n label */}
+            {idx % Math.max(1, Math.floor(barData.bars.length / 8)) === 0 && (
+              <Text
+                position={[bar.x, -0.4, 0]}
+                fontSize={0.2}
+                color="#94a3b8"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {bar.label}
+              </Text>
+            )}
+          </group>
+        )
+      })}
+
+      {/* Legend */}
+      <Html position={[0, 5.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 bg-emerald-500 rounded-sm"></span>
+            <span className="text-emerald-600 dark:text-emerald-400">中点法误差</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 bg-amber-500 rounded-sm"></span>
+            <span className="text-amber-600 dark:text-amber-400">左端点法误差</span>
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Triple Integral Visualization (triple1) ---
+function TripleIntegralScene() {
+  const { paramValue: n } = useLabStore()
+  const nInt = Math.max(2, Math.round(n))
+
+  const voxelData = useMemo(() => {
+    const result: { pos: [number, number, number]; color: string; size: number }[] = []
+    const dx = 1 / nInt
+    const scale = 3 // Scale [0,1] to [0,3]
+    const offset = 0 // Start at origin
+    // f(x,y,z) = x² + y² + z², max at (1,1,1) = 3
+    const maxVal = 3
+
+    for (let i = 0; i < nInt; i++) {
+      for (let j = 0; j < nInt; j++) {
+        for (let k = 0; k < nInt; k++) {
+          const x = (i + 0.5) / nInt
+          const y = (j + 0.5) / nInt
+          const z = (k + 0.5) / nInt
+          const val = fTriple(x, y, z) // x² + y² + z²
+
+          // Heat map: blue (low) -> green (mid) -> red (high)
+          const t = val / maxVal
+          let r: number, g: number, b: number
+          if (t < 0.5) {
+            r = 0
+            g = t * 2
+            b = 1 - t * 2
+          } else {
+            r = (t - 0.5) * 2
+            g = 1 - (t - 0.5) * 2
+            b = 0
+          }
+          const color = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`
+
+          result.push({
+            pos: [
+              (x * scale + offset),
+              (z * scale + offset),
+              (y * scale + offset),
+            ],
+            color,
+            size: dx * scale * 0.9,
+          })
+        }
+      }
+    }
+    return result
+  }, [nInt])
+
+  const approxValue = useMemo(() => {
+    return tripleIntegralApprox(fTriple, [0, 1], [0, 1], [0, 1], nInt)
+  }, [nInt])
+
+  // Exact value of ∫₀¹∫₀¹∫₀¹ (x²+y²+z²) dV = 3 * (1/3) = 1
+  const exactValue = 1
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Voxels */}
+      {voxelData.map((voxel, idx) => (
+        <mesh key={idx} position={voxel.pos}>
+          <boxGeometry args={[voxel.size, voxel.size, voxel.size]} />
+          <meshPhongMaterial color={voxel.color} transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Wireframe cube outline */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([
+              0, 0, 0, 3, 0, 0,
+              3, 0, 0, 3, 0, 3,
+              3, 0, 3, 0, 0, 3,
+              0, 0, 3, 0, 0, 0,
+              0, 3, 0, 3, 3, 0,
+              3, 3, 0, 3, 3, 3,
+              3, 3, 3, 0, 3, 3,
+              0, 3, 3, 0, 3, 0,
+              0, 0, 0, 0, 3, 0,
+              3, 0, 0, 3, 3, 0,
+              3, 0, 3, 3, 3, 3,
+              0, 0, 3, 0, 3, 3,
+            ]), 3]}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" linewidth={1} />
+      </line>
+
+      {/* Axis labels */}
+      <Text position={[3.4, 0, 0]} fontSize={0.25} color="#ef4444" anchorX="center" anchorY="middle">x</Text>
+      <Text position={[0, 3.4, 0]} fontSize={0.25} color="#3b82f6" anchorX="center" anchorY="middle">z</Text>
+      <Text position={[0, 0, 3.4]} fontSize={0.25} color="#22c55e" anchorX="center" anchorY="middle">y</Text>
+
+      {/* Info overlay */}
+      <Html position={[1.5, 4.5, 1.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-foreground">
+            n = {nInt}³ = {nInt ** 3} 个体素
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400">
+            近似值: {formatValue(approxValue)}
+          </div>
+          <div className="text-muted-foreground">
+            精确值: {formatValue(exactValue)}
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            误差: {formatValue(Math.abs(approxValue - exactValue))}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 // --- Auto-rotate wrapper ---
 function AutoRotate({ children, speed = 0.002 }: { children: React.ReactNode; speed?: number }) {
   const ref = useRef<THREE.Group>(null)
@@ -1264,6 +1795,26 @@ export function SceneRenderer() {
 
       {mode === 'sphere_cyl2' && (
         <SphereCyl2Scene />
+      )}
+
+      {mode === 'polar1' && (
+        <PolarRegionScene />
+      )}
+
+      {mode === 'polar2' && (
+        <PolarRiemannScene />
+      )}
+
+      {mode === 'convergence1' && (
+        <ConvergenceScene />
+      )}
+
+      {mode === 'convergence2' && (
+        <ErrorAnalysisScene />
+      )}
+
+      {mode === 'triple1' && (
+        <TripleIntegralScene />
       )}
     </>
   )

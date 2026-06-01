@@ -3,9 +3,9 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
-import { Suspense } from 'react'
-import { useLabStore } from '@/store/lab-store'
-import { Loader2 } from 'lucide-react'
+import { Suspense, useMemo } from 'react'
+import { useLabStore, modeInfo } from '@/store/lab-store'
+import { Loader2, Move3d } from 'lucide-react'
 
 // Camera presets for different modes
 function getCameraForMode(mode: string): { position: [number, number, number]; fov: number } {
@@ -20,7 +20,11 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
       return { position: [6, 8, 4], fov: 50 }
     case 'cartesian1':
     case 'cartesian2':
+    case 'polar1':
+    case 'polar2':
       return { position: [5, 5, 5], fov: 50 }
+    case 'triple1':
+      return { position: [6, 5, 6], fov: 45 }
     default:
       return { position: [8, 6, 8], fov: 50 }
   }
@@ -40,13 +44,36 @@ function getBackgroundForMode(mode: string): string {
   if (mode.startsWith('cartesian')) {
     return 'from-amber-50 to-slate-100 dark:from-amber-950/30 dark:to-slate-900'
   }
+  if (mode.startsWith('polar')) {
+    return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
+  }
   if (mode === 'rect_approx') {
     return 'from-teal-50 to-slate-100 dark:from-teal-950/30 dark:to-slate-900'
   }
   if (mode.startsWith('sphere_cyl')) {
     return 'from-violet-50 to-slate-100 dark:from-violet-950/30 dark:to-slate-900'
   }
+  if (mode.startsWith('convergence')) {
+    return 'from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20'
+  }
+  if (mode.startsWith('triple')) {
+    return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
+}
+
+// Mode indicator color
+function getModeAccentColor(mode: string): string {
+  if (mode.startsWith('step')) return 'bg-emerald-500'
+  if (mode.startsWith('prop')) return 'bg-sky-500'
+  if (mode.startsWith('parity')) return 'bg-orange-500'
+  if (mode.startsWith('cartesian')) return 'bg-amber-500'
+  if (mode.startsWith('polar')) return 'bg-rose-500'
+  if (mode === 'rect_approx') return 'bg-teal-500'
+  if (mode.startsWith('sphere_cyl')) return 'bg-violet-500'
+  if (mode.startsWith('convergence')) return 'bg-cyan-500'
+  if (mode.startsWith('triple')) return 'bg-purple-500'
+  return 'bg-slate-500'
 }
 
 function LoadingIndicator() {
@@ -62,11 +89,29 @@ function LoadingIndicator() {
 
 export function Viewport() {
   const { mode } = useLabStore()
+  const info = modeInfo[mode]
   const cameraConfig = getCameraForMode(mode)
   const bgClass = getBackgroundForMode(mode)
+  const accentColor = getModeAccentColor(mode)
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner`}>
+    <div className={`w-full h-full bg-gradient-to-br ${bgClass} rounded-lg overflow-hidden relative shadow-inner transition-all duration-300`}>
+      {/* Mode indicator overlay */}
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 pointer-events-none">
+        <div className={cn("w-2 h-2 rounded-full", accentColor, "animate-pulse")} />
+        <span className="text-[10px] font-medium text-foreground/60 bg-background/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
+          {info.title}
+        </span>
+      </div>
+
+      {/* Controls hint */}
+      <div className="absolute bottom-2 right-2 z-10 pointer-events-none">
+        <div className="flex items-center gap-1 text-[9px] text-muted-foreground/50 bg-background/40 backdrop-blur-sm px-1.5 py-0.5 rounded">
+          <Move3d className="h-2.5 w-2.5" />
+          拖拽旋转 · 滚轮缩放
+        </div>
+      </div>
+
       <Suspense fallback={<LoadingIndicator />}>
         <Canvas
           camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
@@ -75,6 +120,7 @@ export function Viewport() {
         >
           <SceneRenderer />
           <OrbitControls
+            key={`orbit-${mode}`}
             enableDamping
             dampingFactor={0.1}
             rotateSpeed={0.5}
@@ -85,4 +131,8 @@ export function Viewport() {
       </Suspense>
     </div>
   )
+}
+
+function cn(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ')
 }

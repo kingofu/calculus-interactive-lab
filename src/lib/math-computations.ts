@@ -134,6 +134,153 @@ export function integralTriangularY(
   return sum
 }
 
+// 极坐标黎曼和
+export function polarRiemannSum(
+  func: (x: number, y: number) => number,
+  R: number,
+  alpha: number,
+  beta: number,
+  nR: number,
+  nTheta: number
+): number {
+  const dr = R / nR
+  const dTheta = (beta - alpha) / nTheta
+  let sum = 0
+  for (let i = 0; i < nR; i++) {
+    const r = (i + 0.5) * dr
+    for (let j = 0; j < nTheta; j++) {
+      const theta = alpha + (j + 0.5) * dTheta
+      const x = r * Math.cos(theta)
+      const y = r * Math.sin(theta)
+      sum += func(x, y) * r * dr * dTheta
+    }
+  }
+  return sum
+}
+
+// 极坐标区域高精度数值积分
+export function polarNumericalIntegral(
+  func: (x: number, y: number) => number,
+  R: number,
+  alpha: number,
+  beta: number
+): number {
+  return polarRiemannSum(func, R, alpha, beta, 300, 300)
+}
+
+// 三重积分近似（中点法）
+export function tripleIntegralApprox(
+  func: (x: number, y: number, z: number) => number,
+  xRange: [number, number],
+  yRange: [number, number],
+  zRange: [number, number],
+  n: number
+): number {
+  const [xMin, xMax] = xRange
+  const [yMin, yMax] = yRange
+  const [zMin, zMax] = zRange
+  const dx = (xMax - xMin) / n
+  const dy = (yMax - yMin) / n
+  const dz = (zMax - zMin) / n
+  let sum = 0
+  for (let i = 0; i < n; i++) {
+    const x = xMin + (i + 0.5) * dx
+    for (let j = 0; j < n; j++) {
+      const y = yMin + (j + 0.5) * dy
+      for (let k = 0; k < n; k++) {
+        const z = zMin + (k + 0.5) * dz
+        sum += func(x, y, z) * dx * dy * dz
+      }
+    }
+  }
+  return sum
+}
+
+// 三重积分高精度数值解
+export function tripleIntegralExact(
+  func: (x: number, y: number, z: number) => number,
+  xRange: [number, number],
+  yRange: [number, number],
+  zRange: [number, number]
+): number {
+  return tripleIntegralApprox(func, xRange, yRange, zRange, 30)
+}
+
+// 三重积分函数 f(x,y,z) = x² + y² + z²
+export const fTriple = (x: number, y: number, z: number) => x * x + y * y + z * z
+
+// 极坐标用函数（与 f 相同，但用于极坐标区域）
+export const fPolar = (x: number, y: number) => Math.max(0, 3 - (x * x + y * y) / 1.5)
+
+// 生成收敛数据（用于收敛动画图表）
+export function generateConvergenceData(
+  func: (x: number, y: number) => number,
+  xRange: [number, number],
+  yRange: [number, number],
+  maxN: number
+): { n: number; approx: number; exact: number; error: number }[] {
+  const exact = numericalIntegral2D(func, xRange[0], xRange[1], yRange[0], yRange[1])
+  const data: { n: number; approx: number; exact: number; error: number }[] = []
+  for (let n = 2; n <= maxN; n++) {
+    const a = xRange[1]
+    const b = yRange[1]
+    const approx = riemannSum2D(func, a, b, n)
+    data.push({
+      n,
+      approx,
+      exact,
+      error: Math.abs(approx - exact),
+    })
+  }
+  return data
+}
+
+// 生成误差分析数据（中点法 vs 左端点法）
+export function generateErrorData(
+  func: (x: number, y: number) => number,
+  xRange: [number, number],
+  yRange: [number, number],
+  maxN: number
+): { n: number; errorMidpoint: number; errorLeft: number }[] {
+  const exact = numericalIntegral2D(func, xRange[0], xRange[1], yRange[0], yRange[1])
+  const data: { n: number; errorMidpoint: number; errorLeft: number }[] = []
+  const [xMin, xMax] = xRange
+  const [yMin, yMax] = yRange
+
+  for (let n = 2; n <= maxN; n += Math.max(1, Math.floor(n / 20))) {
+    // Midpoint rule
+    const dxM = (xMax - xMin) / n
+    const dyM = (yMax - yMin) / n
+    let sumMid = 0
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const x = xMin + (i + 0.5) * dxM
+        const y = yMin + (j + 0.5) * dyM
+        sumMid += func(x, y) * dxM * dyM
+      }
+    }
+
+    // Left endpoint rule
+    const dxL = (xMax - xMin) / n
+    const dyL = (yMax - yMin) / n
+    let sumLeft = 0
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const x = xMin + i * dxL
+        const y = yMin + j * dyL
+        sumLeft += func(x, y) * dxL * dyL
+      }
+    }
+
+    data.push({
+      n,
+      errorMidpoint: Math.abs(sumMid - exact),
+      errorLeft: Math.abs(sumLeft - exact),
+    })
+  }
+  return data
+}
+
 // 格式化数字，保留指定小数位
 export function formatValue(value: number, digits: number = 4): string {
   if (Math.abs(value) < 1e-10) return '0'

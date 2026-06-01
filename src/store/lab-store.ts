@@ -7,26 +7,40 @@ export type LabMode =
   | 'cartesian1' | 'cartesian2'
   | 'rect_approx'
   | 'sphere_cyl1' | 'sphere_cyl2'
+  | 'polar1' | 'polar2'
+  | 'convergence1' | 'convergence2'
+  | 'triple1'
 
 interface LabState {
   mode: LabMode
   paramValue: number
   paramValue2: number
+  visitedModes: Set<LabMode>
+  autoTourActive: boolean
   setMode: (mode: LabMode) => void
   setParamValue: (value: number) => void
   setParamValue2: (value: number) => void
+  setAutoTourActive: (active: boolean) => void
 }
 
 export const useLabStore = create<LabState>((set) => ({
   mode: 'step1',
   paramValue: 2,
   paramValue2: 2,
+  visitedModes: new Set<LabMode>(['step1']),
+  autoTourActive: false,
   setMode: (mode) => {
     const info = modeInfo[mode]
-    set({ mode, paramValue: info.paramDefault, paramValue2: info.paramDefault2 ?? info.paramDefault })
+    set((state) => ({
+      mode,
+      paramValue: info.paramDefault,
+      paramValue2: info.paramDefault2 ?? info.paramDefault,
+      visitedModes: new Set([...state.visitedModes, mode]),
+    }))
   },
   setParamValue: (paramValue) => set({ paramValue }),
   setParamValue2: (paramValue2) => set({ paramValue2 }),
+  setAutoTourActive: (autoTourActive) => set({ autoTourActive }),
 }))
 
 export const modeInfo: Record<LabMode, {
@@ -192,5 +206,47 @@ export const modeInfo: Record<LabMode, {
     paramMin: -2.5, paramMax: 2.5, paramStep: 0.05, paramDefault: 0,
     paramLabel2: '圆柱半径 a',
     paramMin2: 0.5, paramMax2: 2.5, paramStep2: 0.1, paramDefault2: 1.5,
+  },
+  polar1: {
+    title: '极坐标区域',
+    section: '极坐标系计算',
+    math: '\\iint_D f(x,y)\\,d\\sigma = \\int_\\alpha^\\beta \\int_0^R f(r\\cos\\theta, r\\sin\\theta)\\,r\\,dr\\,d\\theta',
+    description: '极坐标系下，面积元素 dσ = r dr dθ，多出的因子 r 来自坐标变换的雅可比行列式。',
+    paramLabel: '区域半径 R',
+    paramMin: 0.5, paramMax: 3, paramStep: 0.1, paramDefault: 2,
+    paramLabel2: '角度范围 β',
+    paramMin2: 0.8, paramMax2: 6.28, paramStep2: 0.1, paramDefault2: 6.28,
+  },
+  polar2: {
+    title: '极坐标黎曼和',
+    section: '极坐标系计算',
+    math: '\\sum f(r_i,\\theta_j) \\cdot r_i \\cdot \\Delta r \\cdot \\Delta\\theta',
+    description: '将极坐标区域用同心圆和射线划分，每个小扇形区域面积约为 r·Δr·Δθ。在每个区域取函数值构造黎曼和。',
+    paramLabel: '径向分割数',
+    paramMin: 2, paramMax: 20, paramStep: 1, paramDefault: 6,
+  },
+  convergence1: {
+    title: '收敛过程动画',
+    section: '数值积分收敛演示',
+    math: '\\lim_{n \\to \\infty} S_n \\to \\iint_D f(x,y)\\,d\\sigma',
+    description: '观察黎曼和随分割数 n 增加而逐渐收敛到精确积分值的过程。图表展示近似值曲线趋近精确值水平线。',
+    paramLabel: '分割数 n',
+    paramMin: 2, paramMax: 100, paramStep: 1, paramDefault: 10,
+  },
+  convergence2: {
+    title: '误差分析',
+    section: '数值积分收敛演示',
+    math: '|S_n - I| = O(1/n^2)\\quad\\text{(中点法)}',
+    description: '在双对数坐标下观察误差随 n 的变化。中点法误差呈 O(1/n²) 收敛，斜率约为 -2；左端点法收敛较慢。',
+    paramLabel: '最大 n',
+    paramMin: 10, paramMax: 200, paramStep: 5, paramDefault: 50,
+  },
+  triple1: {
+    title: '三重积分可视化',
+    section: '三重积分概念',
+    math: '\\iiint_V f(x,y,z)\\,dV = \\lim \\sum f(x_i,y_j,z_k)\\Delta V',
+    description: '将积分区域 [0,1]³ 用小立方体填充，每个立方体颜色表示函数值 f(x,y,z)=x²+y²+z² 的大小，所有立方体贡献之和即为三重积分近似值。',
+    paramLabel: '分割数',
+    paramMin: 2, paramMax: 10, paramStep: 1, paramDefault: 4,
   },
 }

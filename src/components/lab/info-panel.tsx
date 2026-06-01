@@ -4,7 +4,7 @@ import { useLabStore, modeInfo } from '@/store/lab-store'
 import { MathDisplay } from './math-display'
 import { Badge } from '@/components/ui/badge'
 import { useComputedValues } from '@/hooks/use-computed-values'
-import { TrendingUp, Target, Calculator } from 'lucide-react'
+import { TrendingUp, Target, Calculator, Info, Sparkles } from 'lucide-react'
 
 export function InfoPanel() {
   const { mode } = useLabStore()
@@ -12,58 +12,65 @@ export function InfoPanel() {
   const computed = useComputedValues()
 
   return (
-    <div className="p-3 space-y-2">
+    <div className="p-3 space-y-2.5">
+      {/* Title row with section badge */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-0 px-1.5 py-0">
+        <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-0 px-1.5 py-0 gap-1">
+          <Info className="h-2.5 w-2.5" />
           {info.section}
         </Badge>
-        <h3 className="text-xs font-semibold text-foreground">{info.title}</h3>
+        <h3 className="text-xs font-bold text-foreground flex items-center gap-1">
+          <Sparkles className="h-3 w-3 text-amber-500" />
+          {info.title}
+        </h3>
       </div>
 
-      <div className="bg-muted/50 dark:bg-muted/30 rounded-md p-2 overflow-x-auto">
+      {/* Math formula */}
+      <div className="bg-muted/50 dark:bg-muted/30 rounded-lg p-2.5 overflow-x-auto border border-border/30">
         <MathDisplay math={info.math} display className="text-center" />
       </div>
 
+      {/* Description */}
       <p className="text-[11px] text-muted-foreground leading-relaxed">
         {info.description}
       </p>
 
       {/* Computed values section */}
       {computed && (
-        <div className="bg-muted/30 dark:bg-muted/20 rounded-md p-2 space-y-1 border border-border/50">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Calculator className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-[11px] font-semibold text-foreground">{computed.label}</span>
+        <div className="bg-gradient-to-br from-muted/40 to-muted/20 dark:from-muted/25 dark:to-muted/10 rounded-lg p-2.5 space-y-1.5 border border-border/40">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Calculator className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[11px] font-bold text-foreground">{computed.label}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             {/* Main value */}
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-1">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <TrendingUp className="h-2.5 w-2.5" />
                 计算值
               </span>
-              <span className="text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0 rounded">
+              <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0 rounded-sm">
                 {computed.mainValue}
               </span>
             </div>
 
             {/* Exact value */}
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-1">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <Target className="h-2.5 w-2.5" />
                 精确值
               </span>
-              <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
+              <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0 rounded-sm">
                 {computed.exactValue}
               </span>
             </div>
 
             {/* Approx value (if different) */}
             {computed.approxValue !== computed.mainValue && (
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">近似值</span>
-                <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] text-muted-foreground">近似值</span>
+                <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0 rounded-sm">
                   {computed.approxValue}
                 </span>
               </div>
@@ -71,9 +78,16 @@ export function InfoPanel() {
 
             {/* Error */}
             {computed.error !== '—' && computed.error !== '0' && (
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">误差</span>
-                <span className="text-[11px] font-mono text-red-500 dark:text-red-400">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] text-muted-foreground">误差</span>
+                <span className={cn(
+                  "text-[11px] font-mono px-1.5 py-0 rounded-sm",
+                  parseFloat(computed.error) < 0.01
+                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                    : parseFloat(computed.error) < 0.1
+                      ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
+                      : "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
+                )}>
                   {computed.error}
                 </span>
               </div>
@@ -83,4 +97,8 @@ export function InfoPanel() {
       )}
     </div>
   )
+}
+
+function cn(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ')
 }
