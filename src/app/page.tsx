@@ -45,6 +45,8 @@ const allModes: LabMode[] = [
   'jacobian1',
   'green1',
   'surface_area1', 'fubini1',
+  'stokes1', 'divergence1',
+  'arc_length1', 'mass_center1',
 ]
 
 function ThemeToggle() {

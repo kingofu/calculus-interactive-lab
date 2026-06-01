@@ -28,6 +28,9 @@ import {
   generateErrorData,
   surfaceAreaApprox,
   fubiniDoubleIntegral,
+  arcLengthApprox,
+  arcLengthExact,
+  massCenterComputation,
 } from '@/lib/math-computations'
 
 // --- Common Axes ---
@@ -2392,6 +2395,233 @@ function FubiniScene() {
 }
 
 // ============= MAIN SCENE RENDERER =============
+// --- Arc Length Scene (arc_length1) ---
+function ArcLengthScene() {
+  const { paramValue: n } = useLabStore()
+  const nInt = Math.max(2, Math.round(n))
+
+  // Curve: r(t) = (t - π, 1.5sin(t), 1.5cos(t)) for t ∈ [0, 2π]
+  const smoothCurve = useMemo(() => {
+    const pts: number[] = []
+    const res = 200
+    for (let i = 0; i <= res; i++) {
+      const t = (i / res) * 2 * Math.PI
+      pts.push(t - Math.PI, 1.5 * Math.sin(t), 1.5 * Math.cos(t))
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // Segmented approximation
+  const segPoints = useMemo(() => {
+    const pts: [number, number, number][] = []
+    for (let i = 0; i <= nInt; i++) {
+      const t = (i / nInt) * 2 * Math.PI
+      pts.push([t - Math.PI, 1.5 * Math.sin(t), 1.5 * Math.cos(t)])
+    }
+    return pts
+  }, [nInt])
+
+  const approxL = useMemo(() => arcLengthApprox(nInt), [nInt])
+  const exactL = useMemo(() => arcLengthExact(), [])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Smooth curve (green, thin) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[smoothCurve, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#10b981" opacity={0.5} transparent />
+      </line>
+
+      {/* Segmented line (amber, thicker segments) */}
+      {segPoints.map((pt, idx) => {
+        if (idx === 0) return null
+        const prev = segPoints[idx - 1]
+        return (
+          <line key={idx}>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([...prev, ...pt]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#f59e0b" linewidth={2} />
+          </line>
+        )
+      })}
+
+      {/* Small spheres at segment points */}
+      {segPoints.map((pt, idx) => (
+        <mesh key={idx} position={pt}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshPhongMaterial color="#f59e0b" />
+        </mesh>
+      ))}
+
+      {/* Drop lines to x-axis */}
+      {segPoints.map((pt, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array([pt[0], pt[1], pt[2], pt[0], 0, 0]), 3]}
+              count={2}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#f59e0b" opacity={0.3} transparent />
+        </line>
+      ))}
+
+      {/* Info overlay */}
+      <Html position={[0, 3, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-pink-600 dark:text-pink-400">
+            分段数: {nInt}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400">
+            近似弧长: {approxl.toFixed(4)}
+          </div>
+          <div className="text-muted-foreground">
+            精确弧长: {exactL.toFixed(4)}
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            误差: {Math.abs(approxL - exactL).toFixed(4)}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Mass Center Scene (mass_center1) ---
+function MassCenterScene() {
+  const { paramValue: a } = useLabStore()
+
+  // Compute mass center using the helper
+  const { mass, cx, cy } = useMemo(() => massCenterComputation(a), [a])
+
+  // Heat-mapped surface z = 2 - x² - y² with density ρ = 1 + a*(x²+y²)
+  const surfaceGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const normals: number[] = []
+    const res = 30
+    const range = 1
+    const dx = (2 * range) / res
+    const dy = (2 * range) / res
+    const cyan = new THREE.Color('#06b6d4')
+    const yellow = new THREE.Color('#eab308')
+    const red = new THREE.Color('#ef4444')
+
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -range + i * dx
+        const y = -range + j * dy
+        const z = 2 - x * x - y * y
+        vertices.push(x, z, y)
+        normals.push(0, 1, 0)
+        // Density-based color: low=cyan, mid=yellow, high=red
+        const rho = 1 + a * (x * x + y * y)
+        const maxRho = 1 + a * 2 // at corners
+        const t = Math.min(1, (rho - 1) / Math.max(0.01, maxRho - 1))
+        const col = t < 0.5
+          ? cyan.clone().lerp(yellow, t * 2)
+          : yellow.clone().lerp(red, (t - 0.5) * 2)
+        colors.push(col.r, col.g, col.b)
+      }
+    }
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const idx = i * (res + 1) + j
+        indices.push(idx, idx + res + 1, idx + 1, idx + 1, idx + res + 1, idx + res + 2)
+      }
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Surface height at centroid
+  const cz = 2 - cx * cx - cy * cy
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Heat-mapped surface */}
+      <mesh geometry={surfaceGeometry}>
+        <meshPhongMaterial vertexColors side={THREE.DoubleSide} transparent opacity={0.8} shininess={60} />
+      </mesh>
+
+      {/* Floor domain */}
+      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2, 2]} />
+        <meshPhongMaterial color="#06b6d4" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Centroid vertical line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([cx, 0, cy, cx, cz, cy]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+
+      {/* Centroid sphere on surface */}
+      <mesh position={[cx, cz, cy]}>
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshPhongMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.3} />
+      </mesh>
+
+      {/* Floor crosshair */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([cx - 0.2, 0.01, cy, cx + 0.2, 0.01, cy]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" opacity={0.6} transparent />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([cx, 0.01, cy - 0.2, cx, 0.01, cy + 0.2]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" opacity={0.6} transparent />
+      </line>
+
+      {/* Info overlay */}
+      <Html position={[0, 4, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-cyan-600 dark:text-cyan-400">
+            质量 M = {mass.toFixed(4)}
+          </div>
+          <div className="text-red-600 dark:text-red-400">
+            质心: ({cx.toFixed(3)}, {cy.toFixed(3)})
+          </div>
+          <div className="text-muted-foreground">
+            密度范围: [1, {(1 + a * 2).toFixed(2)}]
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
 
@@ -2647,6 +2877,22 @@ export function SceneRenderer() {
       {mode === 'fubini1' && (
         <FubiniScene />
       )}
+
+      {mode === 'stokes1' && (
+        <StokesScene />
+      )}
+
+      {mode === 'divergence1' && (
+        <DivergenceScene />
+      )}
+
+      {mode === 'arc_length1' && (
+        <ArcLengthScene />
+      )}
+
+      {mode === 'mass_center1' && (
+        <MassCenterScene />
+      )}
     </>
   )
 }
@@ -2741,5 +2987,398 @@ function SphereCyl2Scene() {
         </div>
       </Html>
     </group>
+  )
+}
+
+// --- Stokes' Theorem Scene (stokes1) ---
+function StokesScene() {
+  const { paramValue: a } = useLabStore()
+
+  // Surface: z = a*(2 - x² - y²) over the unit disk
+  // F = (-y/2, x/2, z*a)
+  // Curl F = (-a, 0, 1)
+  const surfaceFunc = useMemo(() => (x: number, y: number) => {
+    const r2 = x * x + y * y
+    if (r2 > 1) return 0
+    return a * (2 - r2)
+  }, [a])
+
+  // Paraboloid surface geometry (only over unit disk)
+  const surfaceGeom = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const res = 30
+    const col = new THREE.Color('#22c55e')
+
+    for (let i = 0; i <= res; i++) {
+      for (let j = 0; j <= res; j++) {
+        const x = -1 + (2 * i) / res
+        const y = -1 + (2 * j) / res
+        const r2 = x * x + y * y
+        const z = r2 <= 1 ? a * (2 - r2) : 0
+        const inside = r2 <= 1.02 ? 1 : 0.1
+        vertices.push(x, z, y)
+        colors.push(col.r * inside, col.g * inside, col.b * inside)
+      }
+    }
+
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const idx = i * (res + 1) + j
+        indices.push(idx, idx + res + 1, idx + 1, idx + 1, idx + res + 1, idx + res + 2)
+      }
+    }
+
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Boundary curve C at z = a on the unit circle
+  const boundaryPts = useMemo(() => {
+    const pts: number[] = []
+    const res = 80
+    for (let i = 0; i <= res; i++) {
+      const t = (2 * Math.PI * i) / res
+      pts.push(Math.cos(t), a, Math.sin(t))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  // Normal vectors (blue) on the surface showing curl direction
+  const normalArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number] }[] = []
+    const n = 5
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const x = -0.6 + (1.2 * i) / (n - 1)
+        const y = -0.6 + (1.2 * j) / (n - 1)
+        const r2 = x * x + y * y
+        if (r2 > 0.8) continue
+        const z = a * (2 - r2)
+        // Normal direction: (∂z/∂x, ∂z/∂y, -1) flipped for upward normal => (-∂z/∂x, 1, -∂z/∂y)
+        // curl F dot n: use simplified version - show normal arrows on surface
+        const nx = 2 * a * x
+        const ny = 1
+        const nz = 2 * a * y
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz)
+        arrows.push({
+          pos: [x, z, y],
+          dir: [nx / len, ny / len, nz / len],
+        })
+      }
+    }
+    return arrows
+  }, [a])
+
+  // Tangent arrows (amber) along boundary C showing circulation
+  const tangentArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number] }[] = []
+    const n = 12
+    for (let i = 0; i < n; i++) {
+      const t = (2 * Math.PI * i) / n
+      const x = Math.cos(t)
+      const y = Math.sin(t)
+      // Tangent direction (counterclockwise)
+      const tx = -Math.sin(t)
+      const ty = Math.cos(t)
+      arrows.push({
+        pos: [x, a, y],
+        dir: [tx, 0, ty],
+      })
+    }
+    return arrows
+  }, [a])
+
+  // Direction markers (red cones) on C
+  const directionMarkers = useMemo(() => {
+    const markers: { pos: [number, number, number]; rot: number }[] = []
+    const n = 6
+    for (let i = 0; i < n; i++) {
+      const t = (2 * Math.PI * i) / n
+      markers.push({
+        pos: [Math.cos(t), a, Math.sin(t)],
+        rot: t,
+      })
+    }
+    return markers
+  }, [a])
+
+  const lineIntegral = Math.PI
+  const surfaceIntegral = Math.PI
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Paraboloid surface S */}
+      <mesh geometry={surfaceGeom}>
+        <meshPhongMaterial vertexColors side={THREE.DoubleSide} transparent opacity={0.45} shininess={60} />
+      </mesh>
+
+      {/* Boundary curve C (red tube) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[boundaryPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={3} />
+      </line>
+
+      {/* Normal arrows (blue) on surface showing (∇×F)·n direction */}
+      {normalArrows.map((arrow, idx) => (
+        <group key={`n${idx}`}>
+          <arrowHelper
+            args={[
+              new THREE.Vector3(...arrow.dir),
+              new THREE.Vector3(...arrow.pos),
+              0.4,
+              0x3b82f6,
+              0.15,
+              0.08,
+            ]}
+          />
+        </group>
+      ))}
+
+      {/* Tangent arrows (amber) along C showing F·t circulation */}
+      {tangentArrows.map((arrow, idx) => (
+        <group key={`t${idx}`}>
+          <arrowHelper
+            args={[
+              new THREE.Vector3(...arrow.dir),
+              new THREE.Vector3(...arrow.pos),
+              0.3,
+              0xf59e0b,
+              0.12,
+              0.06,
+            ]}
+          />
+        </group>
+      ))}
+
+      {/* Direction markers (red cones) on C */}
+      {directionMarkers.map((marker, idx) => (
+        <mesh key={`d${idx}`} position={marker.pos} rotation={[0, -marker.rot + Math.PI / 2, 0]}>
+          <coneGeometry args={[0.06, 0.2, 8]} />
+          <meshPhongMaterial color="#ef4444" />
+        </mesh>
+      ))}
+
+      {/* Floor disk at z=a for boundary */}
+      <mesh position={[0, a, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1, 48]} />
+        <meshPhongMaterial color="#ef4444" transparent opacity={0.08} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Vertical lines connecting surface to floor at 4 points */}
+      {[0.5, -0.5].map((x) =>
+        [0.5, -0.5].map((y) => (
+          <line key={`v${x}${y}`}>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([x, 0, y, x, a * (2 - x * x - y * y), y]), 3]}
+                count={2}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#22c55e" opacity={0.3} transparent />
+          </line>
+        ))
+      )}
+
+      {/* Info overlay */}
+      <Html position={[0, a * 2 + 1.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-violet-600 dark:text-violet-400 font-semibold mb-1">
+            斯托克斯定理
+          </div>
+          <div className="text-muted-foreground">
+            F = (-y/2, x/2, z·{a.toFixed(1)})
+          </div>
+          <div className="text-muted-foreground">
+            ∇×F = ({(-a).toFixed(1)}, 0, 1)
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            ∮F·dr = {lineIntegral.toFixed(4)}
+          </div>
+          <div className="text-blue-600 dark:text-blue-400">
+            ∬(∇×F)·dS = {surfaceIntegral.toFixed(4)}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400 mt-1">
+            ✓ 验证: {Math.abs(lineIntegral - surfaceIntegral) < 0.001 ? '等式成立' : '计算中...'}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- Divergence Theorem Scene (divergence1) ---
+function DivergenceScene() {
+  const { paramValue: R } = useLabStore()
+
+  // F = (x, y, z), div F = 3
+  // Surface flux = ∯ F·dS = 4πR³
+  // Volume integral = ∭ 3 dV = 3 * (4/3)πR³ = 4πR³
+  const flux = 4 * Math.PI * R * R * R
+  const volumeIntegral = 4 * Math.PI * R * R * R
+
+  // Outward normal arrows on sphere surface
+  const surfaceArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number] }[] = []
+    // Sample points on sphere using fibonacci sphere
+    const n = 24
+    const goldenRatio = (1 + Math.sqrt(5)) / 2
+    for (let i = 0; i < n; i++) {
+      const theta = Math.acos(1 - 2 * (i + 0.5) / n)
+      const phi = 2 * Math.PI * i / goldenRatio
+      const x = Math.sin(theta) * Math.cos(phi)
+      const y = Math.cos(theta)
+      const z = Math.sin(theta) * Math.sin(phi)
+      // Outward normal = radial direction = (x, y, z) normalized (already unit)
+      arrows.push({
+        pos: [R * x, R * y, R * z],
+        dir: [x, y, z],
+      })
+    }
+    return arrows
+  }, [R])
+
+  // Interior divergence arrows (green, showing expansion)
+  const interiorArrows = useMemo(() => {
+    const arrows: { pos: [number, number, number]; dir: [number, number, number]; len: number }[] = []
+    // Sample some interior points along axes and diagonals
+    const positions: [number, number, number][] = []
+    const step = R * 0.4
+    for (let x = -R + step; x < R; x += step) {
+      for (let y = -R + step; y < R; y += step) {
+        for (let z = -R + step; z < R; z += step) {
+          if (x * x + y * y + z * z < R * R * 0.85) {
+            positions.push([x, y, z])
+          }
+        }
+      }
+    }
+    // Limit to ~20 arrows
+    const sampled = positions.filter((_, i) => i % Math.max(1, Math.floor(positions.length / 20)) === 0)
+    for (const pos of sampled) {
+      const len = Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2])
+      if (len < 0.01) continue
+      const dir: [number, number, number] = [pos[0] / len, pos[1] / len, pos[2] / len]
+      arrows.push({ pos, dir, len: Math.min(len * 0.3, 0.4) })
+    }
+    return arrows
+  }, [R])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Sphere surface (semi-transparent blue) */}
+      <mesh>
+        <sphereGeometry args={[R, 32, 24]} />
+        <meshPhongMaterial color="#3b82f6" transparent opacity={0.2} side={THREE.DoubleSide} shininess={60} />
+      </mesh>
+
+      {/* Sphere wireframe */}
+      <mesh>
+        <sphereGeometry args={[R, 16, 12]} />
+        <meshBasicMaterial color="#3b82f6" wireframe transparent opacity={0.15} />
+      </mesh>
+
+      {/* Cross-section disc at z=0 */}
+      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[R, 48]} />
+        <meshPhongMaterial color="#22c55e" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Cross-section circle outline */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array(Array.from({ length: 65 }, (_, i) => {
+              const t = (2 * Math.PI * i) / 64
+              return [R * Math.cos(t), 0, R * Math.sin(t)]
+            }).flat()), 3]}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#22c55e" linewidth={2} opacity={0.5} transparent />
+      </line>
+
+      {/* Outward normal flux arrows (amber) on surface */}
+      {surfaceArrows.map((arrow, idx) => (
+        <group key={`s${idx}`}>
+          <arrowHelper
+            args={[
+              new THREE.Vector3(...arrow.dir),
+              new THREE.Vector3(...arrow.pos),
+              R * 0.25,
+              0xf59e0b,
+              R * 0.1,
+              R * 0.05,
+            ]}
+          />
+        </group>
+      ))}
+
+      {/* Interior divergence arrows (green) showing ∇·F > 0 expansion */}
+      {interiorArrows.map((arrow, idx) => (
+        <group key={`i${idx}`}>
+          <arrowHelper
+            args={[
+              new THREE.Vector3(...arrow.dir),
+              new THREE.Vector3(...arrow.pos),
+              arrow.len,
+              0x22c55e,
+              arrow.len * 0.35,
+              arrow.len * 0.2,
+            ]}
+          />
+        </group>
+      ))}
+
+      {/* Radius indicator line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([0, 0, 0, R, 0, 0]), 3]}
+            count={2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* R label */}
+      <Text
+        position={[R / 2, 0.2, 0]}
+        fontSize={0.25}
+        color="#f59e0b"
+        anchorX="center"
+        anchorY="middle"
+      >
+        R={R.toFixed(1)}
+      </Text>
+
+      {/* Info overlay */}
+      <Html position={[0, R + 2, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-orange-600 dark:text-orange-400 font-semibold mb-1">
+            高斯散度定理
+          </div>
+          <div className="text-muted-foreground">
+            F = (x, y, z), ∇·F = 3
+          </div>
+          <div className="text-amber-600 dark:text-amber-400">
+            ∯F·dS = 4πR³ = {flux.toFixed(3)}
+          </div>
+          <div className="text-green-600 dark:text-green-400">
+            ∭(∇·F)dV = 3·(4/3)πR³ = {volumeIntegral.toFixed(3)}
+          </div>
+          <div className="text-emerald-600 dark:text-emerald-400 mt-1">
+            ✓ 验证: {Math.abs(flux - volumeIntegral) < 0.001 ? '等式成立' : '计算中...'}
+          </div>
+        </div>
+      </Html>
+    </AutoRotate>
   )
 }

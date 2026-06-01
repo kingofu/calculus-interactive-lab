@@ -41,6 +41,9 @@ import {
   ChevronsUpDown,
   Mountain,
   GitMerge,
+  Atom,
+  Spline,
+  Crosshair,
 } from 'lucide-react'
 
 const sections = [
@@ -175,6 +178,42 @@ const sections = [
       { mode: 'fubini1' as LabMode, label: '富比尼定理', icon: GitMerge },
     ],
   },
+  {
+    title: '斯托克斯定理',
+    subtitle: '环量与旋度通量',
+    icon: Waypoints,
+    color: 'violet',
+    modes: [
+      { mode: 'stokes1' as LabMode, label: '斯托克斯定理', icon: Waypoints },
+    ],
+  },
+  {
+    title: '高斯散度定理',
+    subtitle: '通量与散度积分',
+    icon: Atom,
+    color: 'orange',
+    modes: [
+      { mode: 'divergence1' as LabMode, label: '高斯散度定理', icon: Atom },
+    ],
+  },
+  {
+    title: '弧长与曲线积分',
+    subtitle: '弧长近似与精确计算',
+    icon: Spline,
+    color: 'pink',
+    modes: [
+      { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
+    ],
+  },
+  {
+    title: '质心与转动惯量',
+    subtitle: '变密度质心计算',
+    icon: Crosshair,
+    color: 'cyan',
+    modes: [
+      { mode: 'mass_center1' as LabMode, label: '质心计算', icon: Crosshair },
+    ],
+  },
 ]
 
 // Color map for section accent
@@ -282,6 +321,14 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-fuchsia-500',
     badge: 'bg-fuchsia-200/60 dark:bg-fuchsia-800/40',
     badgeText: 'text-fuchsia-700 dark:text-fuchsia-300',
+  },
+  pink: {
+    activeBg: 'bg-pink-100 dark:bg-pink-900/40',
+    activeText: 'text-pink-800 dark:text-pink-300',
+    border: 'before:bg-pink-500',
+    dot: 'bg-pink-500',
+    badge: 'bg-pink-200/60 dark:bg-pink-800/40',
+    badgeText: 'text-pink-700 dark:text-pink-300',
   },
 }
 

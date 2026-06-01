@@ -551,3 +551,83 @@ Stage Summary:
 6. **动画时间线**: 为每个概念添加逐步动画讲解
 7. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
 8. **辅助功能**: 3D canvas的ARIA标签，纯键盘参数输入
+
+---
+Task ID: 4-a
+Agent: Stokes & Divergence Agent
+Task: Add Stokes' Theorem (stokes1) and Divergence Theorem (divergence1) visualization modes
+
+Work Log:
+- Read worklog.md to understand project status (27 existing modes)
+- Added `'stokes1' | 'divergence1'` to LabMode type in `src/store/lab-store.ts`
+- Added modeInfo entries for both modes:
+  - stokes1: 斯托克斯定理, section: 斯托克斯定理, paramLabel: 曲面变形 (0.3-2.0, default 1)
+  - divergence1: 高斯散度定理, section: 高斯散度定理, paramLabel: 球体半径 (0.5-3.0, default 1.5)
+- Added `StokesScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Green semi-transparent paraboloid surface z = a*(2 - x² - y²) over unit disk
+  - Red boundary curve C at z = a on the unit circle
+  - Blue normal arrows on surface showing (∇×F)·n direction (5x5 grid)
+  - Amber tangent arrows along C showing F·t circulation (12 arrows)
+  - Red cone direction markers on C showing counterclockwise orientation (6 cones)
+  - Floor disk at z=a, vertical connecting lines
+  - Html overlay with: F=(-y/2, x/2, z·a), ∇×F=(-a, 0, 1), ∮F·dr = π, ∬(∇×F)·dS = π, verification
+- Added `DivergenceScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Blue semi-transparent sphere as closed surface S
+  - Amber outward normal flux arrows on sphere surface (24 fibonacci-distributed points)
+  - Green interior divergence arrows showing ∇·F > 0 expansion (~20 arrows)
+  - Cross-section disc at z=0 showing interior
+  - Radius indicator line with R label
+  - Html overlay with: F=(x,y,z), ∇·F=3, ∯F·dS = 4πR³, ∭(∇·F)dV = 4πR³, verification
+- Added "斯托克斯定理" section in sidebar with Waypoints icon and violet color
+- Added "高斯散度定理" section in sidebar with Atom icon and orange color
+- Added orange colorMap entry in sidebar (active states, badges)
+- Added 'stokes1' and 'divergence1' to allModes array in page.tsx
+- Added camera preset [6,8,4] fov 50 for both new modes in viewport.tsx
+- Added violet-to-purple gradient background for stokes1, orange-to-amber gradient for divergence1
+- Added bg-violet-500 accent for stokes1, bg-orange-500 accent for divergence1 in viewport.tsx
+- Added stokes1 and divergence1 computed values cases in use-computed-values.ts:
+  - stokes1: line integral = π, surface integral = π, error = 0
+  - divergence1: flux = 4πR³, volume integral = 4πR³, error = 0
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **29 visualization modes** (was 27)
+- **stokes1**: Paraboloid surface with boundary curve, normal/tangent arrows, direction markers, numerical verification
+- **divergence1**: Sphere with outward flux arrows, interior divergence arrows, cross-section, numerical verification
+- Both scenes use AutoRotate for dynamic viewing
+- Both theorems mathematically verified (line integral = surface integral = π for Stokes; flux = volume integral = 4πR³ for Divergence)
+- Violet color theme for Stokes, orange color theme for Divergence
+
+---
+Task ID: 4-c
+Agent: Scene Components Agent
+Task: Add ArcLengthScene and MassCenterScene components and their SceneRenderer cases
+
+Work Log:
+- Read worklog.md to understand project status (29 existing modes)
+- Read scene-renderer.tsx to understand current structure (SceneRenderer at line 2398, last mode case divergence1 at line 2885)
+- Confirmed `arcLengthApprox`, `arcLengthExact`, `massCenterComputation` already imported in scene-renderer.tsx
+- Confirmed `AutoRotate`, `Html`, `THREE`, `useLabStore`, `useMemo` all available
+- Added `ArcLengthScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Smooth curve r(t) = (t-π, 1.5sin(t), 1.5cos(t)) in green (200-point resolution)
+  - Segmented amber approximation lines connecting n sample points
+  - Amber spheres at segment points
+  - Drop lines from curve points to x-axis
+  - Html overlay with segment count, approximate arc length, exact arc length, and error
+- Added `MassCenterScene` component in `src/components/lab/scene-renderer.tsx`:
+  - Heat-mapped surface z = 2 - x² - y² with density ρ = 1 + a*(x²+y²) (cyan→yellow→red color gradient)
+  - Cyan semi-transparent floor domain
+  - Red centroid vertical line, centroid sphere on surface, and floor crosshair
+  - Html overlay with mass M, centroid coordinates, density range
+- Added SceneRenderer cases:
+  - `mode === 'arc_length1'` → `<ArcLengthScene />`
+  - `mode === 'mass_center1'` → `<MassCenterScene />`
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **ArcLengthScene**: Helix-like 3D curve with n-segment piecewise linear approximation, arc length computation with error display
+- **MassCenterScene**: Heat-mapped paraboloid with density-based coloring, centroid visualization with crosshair and vertical line
+- Both scenes use AutoRotate for dynamic viewing
+- All lint checks pass, dev server compiles

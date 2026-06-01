@@ -13,6 +13,8 @@ export type LabMode =
   | 'jacobian1'
   | 'green1'
   | 'surface_area1' | 'fubini1'
+  | 'stokes1' | 'divergence1'
+  | 'arc_length1' | 'mass_center1'
 
 interface LabState {
   mode: LabMode
@@ -285,5 +287,37 @@ export const modeInfo: Record<LabMode, {
     description: '富比尼定理说明，在一定条件下，二重积分可以化为两次单积分（累次积分）。可以先对 y 积分再对 x 积分，也可以先对 x 积分再对 y 积分，两种顺序的结果相同。图中同时展示两种积分顺序的切片方式。',
     paramLabel: '切片数量',
     paramMin: 3, paramMax: 20, paramStep: 1, paramDefault: 8,
+  },
+  stokes1: {
+    title: '斯托克斯定理',
+    section: '斯托克斯定理',
+    math: '\\oint_C \\mathbf{F}\\cdot d\\mathbf{r} = \\iint_S (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}',
+    description: '斯托克斯定理将沿闭曲线 C 的环量与以 C 为边界的曲面 S 上的旋度通量联系起来。左端是向量场沿边界曲线的环量，右端是旋度场穿过曲面的通量。调整参数观察曲面变形时等式仍然成立。',
+    paramLabel: '曲面变形',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  divergence1: {
+    title: '高斯散度定理',
+    section: '高斯散度定理',
+    math: '\\oiint_S \\mathbf{F}\\cdot d\\mathbf{S} = \\iiint_V (\\nabla \\cdot \\mathbf{F})\\,dV',
+    description: '高斯散度定理（又称散度定理）将闭曲面 S 上的通量与 S 所围体积 V 内的散度积分联系起来。对于向量场 F=(x,y,z)，散度 ∇·F=3，通量等于 4πR³。调整半径观察两种计算方式的等价性。',
+    paramLabel: '球体半径',
+    paramMin: 0.5, paramMax: 3, paramStep: 0.1, paramDefault: 1.5,
+  },
+  arc_length1: {
+    title: '弧长计算',
+    section: '弧长与曲线积分',
+    math: 'L = \\int_a^b \\sqrt{1 + [f\'(x)]^2}\\,dx = \\int_a^b |\\mathbf{r}\'(t)|\\,dt',
+    description: '弧长公式将曲线的长度表示为速度大小的积分。在参数曲线 r(t)=(t, 1.5sin(t), 1.5cos(t)) 上，弧长等于 |r\'(t)| 的积分。随着分段数增加，折线长度趋近真实弧长。',
+    paramLabel: '分段数',
+    paramMin: 2, paramMax: 50, paramStep: 1, paramDefault: 8,
+  },
+  mass_center1: {
+    title: '质心计算',
+    section: '质心与转动惯量',
+    math: '\\bar{x} = \\frac{\\iint_D x\\rho\\,d\\sigma}{\\iint_D \\rho\\,d\\sigma},\\quad \\bar{y} = \\frac{\\iint_D y\\rho\\,d\\sigma}{\\iint_D \\rho\\,d\\sigma}',
+    description: '质心是密度加权平均位置。对于变密度薄片，质心坐标等于一阶矩除以总质量。图中曲面按密度着色（蓝=低密度，红=高密度），标记点为质心位置。调整密度变化率观察质心移动。',
+    paramLabel: '密度变化率',
+    paramMin: 0.1, paramMax: 3, paramStep: 0.1, paramDefault: 1,
   },
 }

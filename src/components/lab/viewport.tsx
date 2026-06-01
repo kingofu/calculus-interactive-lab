@@ -32,6 +32,10 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'green1':
     case 'surface_area1':
     case 'fubini1':
+    case 'stokes1':
+    case 'divergence1':
+    case 'arc_length1':
+    case 'mass_center1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -79,6 +83,18 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'fubini1') {
     return 'from-slate-50 to-violet-50 dark:from-slate-900/50 dark:to-violet-950/20'
   }
+  if (mode === 'stokes1') {
+    return 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20'
+  }
+  if (mode === 'divergence1') {
+    return 'from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20'
+  }
+  if (mode === 'arc_length1') {
+    return 'from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20'
+  }
+  if (mode === 'mass_center1') {
+    return 'from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -97,6 +113,10 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'green1') return 'bg-red-500'
   if (mode === 'surface_area1') return 'bg-teal-500'
   if (mode === 'fubini1') return 'bg-slate-500'
+  if (mode === 'stokes1') return 'bg-violet-500'
+  if (mode === 'divergence1') return 'bg-orange-500'
+  if (mode === 'arc_length1') return 'bg-pink-500'
+  if (mode === 'mass_center1') return 'bg-cyan-500'
   return 'bg-slate-500'
 }
 

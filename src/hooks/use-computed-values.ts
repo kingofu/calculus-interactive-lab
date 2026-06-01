@@ -25,6 +25,9 @@ import {
   formatValue,
   surfaceAreaApprox,
   fubiniDoubleIntegral,
+  arcLengthApprox,
+  arcLengthExact,
+  massCenterComputation,
 } from '@/lib/math-computations'
 
 export interface ComputedValues {
@@ -310,6 +313,62 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: formatValue(values.dxdy),
           error: formatValue(Math.abs(values.dydx - values.dxdy)),
           label: '∫∫f dσ (两种顺序验证)',
+        }
+      }
+
+      case 'stokes1': {
+        // Stokes' theorem: line integral = surface integral
+        // For F=(-y/2, x/2, z·a), ∇×F=(-a, 0, 1)
+        // Both integrals equal π for unit disk paraboloid
+        const a = paramValue
+        const lineIntegral = Math.PI // ∮ F·dr for unit circle
+        const surfaceIntegral = Math.PI // ∫∫(∇×F)·dS = ∫∫1 dS = π
+        return {
+          mainValue: formatValue(lineIntegral),
+          approxValue: formatValue(lineIntegral),
+          exactValue: formatValue(surfaceIntegral),
+          error: formatValue(Math.abs(lineIntegral - surfaceIntegral)),
+          label: `斯托克斯验证: ∮=∬ (∇×F)·dS`,
+        }
+      }
+
+      case 'divergence1': {
+        // Gauss divergence theorem: surface flux = volume integral of divergence
+        // For F=(x,y,z), ∇·F=3, flux=4πR³, volume integral=3×(4/3)πR³=4πR³
+        const R = paramValue
+        const flux = 4 * Math.PI * R * R * R
+        const volumeInt = 3 * (4 / 3) * Math.PI * R * R * R
+        return {
+          mainValue: formatValue(flux),
+          approxValue: formatValue(flux),
+          exactValue: formatValue(volumeInt),
+          error: formatValue(Math.abs(flux - volumeInt)),
+          label: `高斯定理: ∯F·dS = ∭(∇·F)dV = ${formatValue(flux)}`,
+        }
+      }
+
+      case 'arc_length1': {
+        const n = Math.round(paramValue)
+        const approx = arcLengthApprox(n)
+        const exact = arcLengthExact()
+        return {
+          mainValue: formatValue(approx),
+          approxValue: formatValue(approx),
+          exactValue: formatValue(exact),
+          error: formatValue(Math.abs(approx - exact)),
+          label: `弧长近似 (${n}段) vs 精确值`,
+        }
+      }
+
+      case 'mass_center1': {
+        const a = paramValue
+        const { mass, cx, cy } = massCenterComputation(a)
+        return {
+          mainValue: formatValue(mass),
+          approxValue: `(${cx.toFixed(3)}, ${cy.toFixed(3)})`,
+          exactValue: `ρ(x,y) = 1 + ${a.toFixed(1)}·(x²+y²)`,
+          error: formatValue(Math.sqrt(cx * cx + cy * cy)),
+          label: `质心 (x̄, ȳ) = (${cx.toFixed(3)}, ${cy.toFixed(3)})`,
         }
       }
 

@@ -359,3 +359,53 @@ export function fubiniDoubleIntegral(
 
   return { dydx, dxdy, direct }
 }
+
+// 弧长近似计算：r(t) = (t, 1.5sin(t), 1.5cos(t)), t ∈ [0, 2π]
+// 用 n 段折线逼近弧长
+export function arcLengthApprox(n: number): number {
+  const tMin = 0
+  const tMax = 2 * Math.PI
+  const dt = (tMax - tMin) / n
+  let length = 0
+  for (let i = 0; i < n; i++) {
+    const t1 = tMin + i * dt
+    const t2 = tMin + (i + 1) * dt
+    const x1 = t1 - Math.PI, y1 = 1.5 * Math.sin(t1), z1 = 1.5 * Math.cos(t1)
+    const x2 = t2 - Math.PI, y2 = 1.5 * Math.sin(t2), z2 = 1.5 * Math.cos(t2)
+    const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1
+    length += Math.sqrt(dx * dx + dy * dy + dz * dz)
+  }
+  return length
+}
+
+// 弧长精确值：L = 2π√3.25
+export function arcLengthExact(): number {
+  return 2 * Math.PI * Math.sqrt(3.25)
+}
+
+// 质心计算：z = 2 - x² - y² over [-1,1]×[-1,1]
+// 密度 ρ(x,y) = 1 + a*(x²+y²)
+export function massCenterComputation(a: number): { mass: number; cx: number; cy: number } {
+  const n = 50
+  const xMin = -1, xMax = 1, yMin = -1, yMax = 1
+  const dx = (xMax - xMin) / n
+  const dy = (yMax - yMin) / n
+  let mass = 0, mx = 0, my = 0
+
+  for (let i = 0; i < n; i++) {
+    const x = xMin + (i + 0.5) * dx
+    for (let j = 0; j < n; j++) {
+      const y = yMin + (j + 0.5) * dy
+      const rho = 1 + a * (x * x + y * y)
+      mass += rho * dx * dy
+      mx += x * rho * dx * dy
+      my += y * rho * dx * dy
+    }
+  }
+
+  return {
+    mass,
+    cx: mass > 0 ? mx / mass : 0,
+    cy: mass > 0 ? my / mass : 0,
+  }
+}
