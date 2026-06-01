@@ -505,8 +505,152 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'isosurface1': {
+        const n = Math.round(paramValue)
+        const funcType = Math.round(paramValue2)
+        // Compute level values
+        const levels: number[] = []
+        for (let i = 0; i < n; i++) {
+          const c = funcType === 0
+            ? (i + 1) * (16 / n)
+            : (i + 1) * (8 / n)
+          levels.push(c)
+        }
+        const levelStr = levels.map((c, i) => `c${i + 1}=${c.toFixed(1)}`).join(', ')
+        const minC = levels[0]
+        const maxC = levels[levels.length - 1]
+        return {
+          mainValue: `${n}`,
+          approxValue: `c ∈ [${minC.toFixed(1)}, ${maxC.toFixed(1)}]`,
+          exactValue: funcType === 0 ? 'f(x,y,z)=x²+y²+z²' : 'f(x,y)=x²+y²',
+          error: levelStr,
+          label: `${n}个等值面/等高线层`,
+        }
+      }
+
+      case 'directional1': {
+        const theta = paramValue
+        const a = paramValue2
+        const px = 0.5
+        const py = 0.5
+        const gx = 2 * a * px
+        const gy = 2 * a * py
+        const gradMag = Math.sqrt(gx * gx + gy * gy)
+        const ux = Math.cos(theta)
+        const uy = Math.sin(theta)
+        const dirDeriv = gx * ux + gy * uy
+        const angleBetween = gradMag > 0.001 ? Math.acos(Math.max(-1, Math.min(1, dirDeriv / gradMag))) : 0
+        return {
+          mainValue: formatValue(dirDeriv),
+          approxValue: `|∇f| = ${formatValue(gradMag)}`,
+          exactValue: `θ = ${(angleBetween * 180 / Math.PI).toFixed(0)}°`,
+          error: formatValue(Math.abs(gradMag - Math.abs(dirDeriv))),
+          label: `D_uf = ${formatValue(dirDeriv)} = |∇f|·cosθ`,
+        }
+      }
+
+      case 'curl1': {
+        const a = paramValue
+        // F = (-y, x), curl = ∂Q/∂x - ∂P/∂y = 1-(-1) = 2
+        const curlValue = 2 * a
+        return {
+          mainValue: formatValue(curlValue),
+          approxValue: '逆时针 (CCW)',
+          exactValue: `∂Q/∂x - ∂P/∂y = ${formatValue(a)}-(-${formatValue(a)})`,
+          error: formatValue(Math.abs(curlValue)),
+          label: `旋度大小 = ${formatValue(curlValue)} (逆时针)`,
+        }
+      }
+
+      case 'divergence_field1': {
+        const a = paramValue
+        // F = (x, y), div = ∂P/∂x + ∂Q/∂y = 1+1 = 2
+        const divValue = 2 * a
+        return {
+          mainValue: formatValue(divValue),
+          approxValue: '源 (Source)',
+          exactValue: `∂P/∂x + ∂Q/∂y = ${formatValue(a)}+${formatValue(a)}`,
+          error: formatValue(Math.abs(divValue)),
+          label: `散度值 = ${formatValue(divValue)} (源场)`,
+        }
+      }
+
+      case 'conservative1': {
+        const a = paramValue
+        // F = (a*x, a*y), ∇×F = 0, φ = a/2*(x²+y²)
+        // Path integral from A=(-2,0) to B=(2,0) = φ(B)-φ(A) = a/2*(4) - a/2*(4) = 0
+        const phiB = a / 2 * (4)
+        const phiA = a / 2 * (4)
+        const pathIntegral = phiB - phiA
+        return {
+          mainValue: formatValue(pathIntegral),
+          approxValue: `∇×F = 0`,
+          exactValue: `φ = ${a.toFixed(1)}/2·(x²+y²)`,
+          error: formatValue(Math.abs(pathIntegral)),
+          label: `路径积分 = φ(B)-φ(A) = ${formatValue(pathIntegral)}`,
+        }
+      }
+
+      case 'taylor1': {
+        const N = Math.round(paramValue)
+        // Compute max error for sin(x) vs Taylor polynomial on [-3, 3]
+        let maxError = 0
+        for (let x = -3; x <= 3; x += 0.05) {
+          const sinY = Math.sin(x)
+          let taylorY = 0
+          for (let n = 0; n <= N; n++) {
+            const sign = n % 2 === 0 ? 1 : -1
+            taylorY += sign * Math.pow(x, 2 * n + 1) / factorial2(2 * n + 1)
+          }
+          maxError = Math.max(maxError, Math.abs(sinY - taylorY))
+        }
+        return {
+          mainValue: formatValue(maxError),
+          approxValue: `T${N}(x)`,
+          exactValue: `sin(x)`,
+          error: formatValue(maxError),
+          label: `N=${N} 阶泰勒逼近最大误差`,
+        }
+      }
+
+      case 'surface_integral1': {
+        const a = paramValue
+        const range = 1.5
+        const n = 80
+        const dx = (2 * range) / n
+        let sum = 0
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            const x = -range + (i + 0.5) * dx
+            const y = -range + (j + 0.5) * dx
+            const z = a * (x * x + y * y)
+            const dzdx = 2 * a * x
+            const dzdy = 2 * a * y
+            const dsFactor = Math.sqrt(1 + dzdx * dzdx + dzdy * dzdy)
+            sum += z * dsFactor * dx * dx
+          }
+        }
+        const maxR = range * Math.SQRT2
+        const dsFactorMax = Math.sqrt(1 + 4 * a * a * maxR * maxR)
+        return {
+          mainValue: formatValue(sum),
+          approxValue: `dS因子范围: [1, ${dsFactorMax.toFixed(2)}]`,
+          exactValue: `∫∫_D f·√(1+gx²+gy²) dxdy`,
+          error: formatValue(dsFactorMax),
+          label: `曲面积分值 ≈ ${formatValue(sum)}`,
+        }
+      }
+
       default:
         return null
     }
   }, [mode, paramValue, paramValue2])
+}
+
+// Helper: factorial
+function factorial2(n: number): number {
+  if (n <= 1) return 1
+  let result = 1
+  for (let i = 2; i <= n; i++) result *= i
+  return result
 }

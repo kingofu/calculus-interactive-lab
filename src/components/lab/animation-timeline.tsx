@@ -2,115 +2,142 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLabStore, type LabMode } from '@/store/lab-store'
-import { Play, Pause, Check, Grid3x3, Box, Infinity } from 'lucide-react'
+import { Play, Pause, RotateCcw, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-const STEPS: { mode: LabMode; label: string; icon: React.ReactNode }[] = [
-  { mode: 'step1', label: '区域划分', icon: <Grid3x3 className="h-3 w-3" /> },
-  { mode: 'step2', label: '网格划分', icon: <Grid3x3 className="h-3 w-3" /> },
-  { mode: 'step3', label: '方柱近似', icon: <Box className="h-3 w-3" /> },
-  { mode: 'step4', label: '取极限', icon: <Infinity className="h-3 w-3" /> },
-]
+const conceptSteps: LabMode[] = ['step1', 'step2', 'step3', 'step4']
+const stepNames = ['区域划分', '网格划分', '方柱近似', '取极限']
+const STEP_DURATION = 3000 // 3 seconds per step
 
-const STEP_MODES = new Set<string>(['step1', 'step2', 'step3', 'step4'])
-
-interface AnimationTimelineProps {
-  className?: string
-}
-
-export function AnimationTimeline({ className }: AnimationTimelineProps) {
+export function AnimationTimeline() {
   const { mode, setMode } = useLabStore()
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stepStartTimeRef = useRef<number>(0)
+  const activePlayIdRef = useRef(0)
 
-  // Check if we're in concept mode
-  const isInConceptMode = STEP_MODES.has(mode)
-  const currentStepIndex = STEPS.findIndex(s => s.mode === mode)
+  // Only show for concept step modes
+  const isConceptStep = conceptSteps.includes(mode)
+  const currentStepIndex = conceptSteps.indexOf(mode)
 
-  // Effective playing state - stops if we leave concept modes
-  const effectivePlaying = isPlaying && isInConceptMode
+  // Derived: animation is complete when at last step and not playing
+  const isComplete = currentStepIndex >= 3 && !isPlaying && isConceptStep
 
-  // Auto-play logic: step through step1→step2→step3→step4 at 4-second intervals
+  // Effective playing: only play if we're in concept mode
+  const effectivePlaying = isPlaying && isConceptStep
+
+  // Clean up timers helper
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [])
+
+  // Stop playing when leaving concept modes
+  useEffect(() => {
+    if (!isConceptStep) {
+      clearTimers()
+      activePlayIdRef.current += 1
+      // We need to reset isPlaying but can't call setState in effect body
+      // Use a microtask to defer it
+      queueMicrotask(() => {
+        setIsPlaying(false)
+      })
+    }
+  }, [isConceptStep, clearTimers])
+
+  // Auto-advance logic with smooth progress
   useEffect(() => {
     if (!effectivePlaying) {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      if (timerRef.current) clearTimeout(timerRef.current)
-      intervalRef.current = null
-      timerRef.current = null
+      clearTimers()
       return
     }
 
-    // Reset progress tracking
+    const playId = ++activePlayIdRef.current
     stepStartTimeRef.current = Date.now()
+    // Defer setState to avoid synchronous setState in effect body
+    requestAnimationFrame(() => setProgress(0))
 
     // Progress animation interval (update every 50ms for smooth animation)
     intervalRef.current = setInterval(() => {
+      // Check if this play session is still active
+      if (activePlayIdRef.current !== playId) {
+        clearTimers()
+        return
+      }
       const elapsed = Date.now() - stepStartTimeRef.current
-      const stepDuration = 4000
-      const pct = Math.min(100, (elapsed / stepDuration) * 100)
+      const pct = Math.min(100, (elapsed / STEP_DURATION) * 100)
       setProgress(pct)
     }, 50)
 
-    // Step transition timer
-    const advance = () => {
-      const idx = STEPS.findIndex(s => s.mode === useLabStore.getState().mode)
-      if (idx < STEPS.length - 1) {
-        const nextMode = STEPS[idx + 1].mode
-        setMode(nextMode)
-        stepStartTimeRef.current = Date.now()
-        // Schedule next transition
-        timerRef.current = setTimeout(advance, 4000)
-      } else {
-        // Reached the end, stop playing
-        setIsPlaying(false)
-      }
+    // Step transition via recursive setTimeout
+    const scheduleNextStep = () => {
+      timerRef.current = setTimeout(() => {
+        // Validate play session
+        if (activePlayIdRef.current !== playId) return
+
+        const currentMode = useLabStore.getState().mode
+        const idx = conceptSteps.indexOf(currentMode)
+
+        if (idx < conceptSteps.length - 1) {
+          // Advance to next step
+          setMode(conceptSteps[idx + 1])
+          stepStartTimeRef.current = Date.now()
+          setProgress(0)
+          // Schedule next step
+          scheduleNextStep()
+        } else {
+          // Animation complete
+          setIsPlaying(false)
+          setProgress(0)
+        }
+      }, STEP_DURATION)
     }
 
-    timerRef.current = setTimeout(advance, 4000)
+    scheduleNextStep()
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      if (timerRef.current) clearTimeout(timerRef.current)
-      intervalRef.current = null
-      timerRef.current = null
+      clearTimers()
     }
-  }, [effectivePlaying, setMode])
+  }, [effectivePlaying, clearTimers, setMode])
 
-  // Reset progress when mode changes or playing stops
+  // Reset progress when mode changes during non-play
   const prevModeRef = useRef(mode)
-  const prevPlayingRef = useRef(effectivePlaying)
-  if (mode !== prevModeRef.current || effectivePlaying !== prevPlayingRef.current) {
-    prevModeRef.current = mode
-    prevPlayingRef.current = effectivePlaying
-    stepStartTimeRef.current = Date.now()
-    // Reset progress via ref-based approach instead of setState in effect
-    // We use requestAnimationFrame to avoid synchronous setState
-    requestAnimationFrame(() => setProgress(0))
-  }
-
-  // If isPlaying is true but we left concept mode, auto-stop
-  // This is derived, not a setState-in-effect
-  if (isPlaying && !isInConceptMode) {
-    // We'll handle this via the effectivePlaying variable
-    // and clean up the auto-play in the next render cycle
-    setIsPlaying(false)
-  }
+  useEffect(() => {
+    if (mode !== prevModeRef.current) {
+      prevModeRef.current = mode
+      if (!effectivePlaying) {
+        // Defer to avoid synchronous setState in effect body
+        requestAnimationFrame(() => setProgress(0))
+      }
+    }
+  }, [mode, effectivePlaying])
 
   const togglePlay = useCallback(() => {
-    if (!isInConceptMode) return
-    setIsPlaying(prev => {
-      if (!prev) {
-        // If at the last step, restart from step1
-        const currentIdx = STEPS.findIndex(s => s.mode === useLabStore.getState().mode)
-        if (currentIdx === STEPS.length - 1) {
-          setMode('step1')
-        }
-      }
-      return !prev
-    })
-  }, [isInConceptMode, setMode])
+    if (!isConceptStep) return
+
+    if (currentStepIndex >= 3) {
+      // Restart from beginning
+      setMode(conceptSteps[0])
+      setIsPlaying(true)
+    } else {
+      setIsPlaying(prev => !prev)
+    }
+  }, [isConceptStep, currentStepIndex, setMode])
+
+  const reset = useCallback(() => {
+    setIsPlaying(false)
+    activePlayIdRef.current += 1
+    clearTimers()
+    setMode(conceptSteps[0])
+  }, [clearTimers, setMode])
 
   // Expose toggle play for external keyboard shortcut
   useEffect(() => {
@@ -121,55 +148,84 @@ export function AnimationTimeline({ className }: AnimationTimelineProps) {
     return () => window.removeEventListener('timeline-toggle-play', handler)
   }, [togglePlay])
 
-  if (!isInConceptMode) return null
+  if (!isConceptStep) return null
 
   const completedSteps = currentStepIndex
 
   return (
     <div
-      className={`
-        absolute bottom-8 left-3 right-3 z-20
-        animate-[slide-up_0.3s_ease-out_forwards]
-        ${className ?? ''}
-      `}
+      className="absolute bottom-8 left-3 right-3 z-20 animate-[slide-up_0.3s_ease-out_forwards]"
       style={{ pointerEvents: 'auto' }}
     >
       <div
-        className="
-          bg-background/80 backdrop-blur-md
-          border border-emerald-200/50 dark:border-emerald-800/40
-          rounded-lg shadow-lg shadow-emerald-500/5
-          px-3 py-2
-          relative
-          overflow-hidden
-        "
+        className={cn(
+          "bg-background/85 backdrop-blur-md rounded-xl px-4 py-2.5 shadow-lg relative overflow-hidden transition-all duration-300",
+          isComplete
+            ? "border border-emerald-300/50 dark:border-emerald-700/40 shadow-emerald-500/10"
+            : "border border-border/50 shadow-black/5"
+        )}
       >
         {/* Top gradient border */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
+        <div className={cn(
+          "absolute top-0 left-0 right-0 h-[2px] rounded-full transition-colors duration-500",
+          isComplete
+            ? "bg-gradient-to-r from-transparent via-emerald-500 to-transparent"
+            : "bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"
+        )} />
 
-        <div className="flex items-center gap-2">
-          {/* Timeline nodes */}
-          <div className="flex-1 flex items-center gap-0 relative">
+        <div className="flex items-center gap-3">
+          {/* Play/Pause button */}
+          <button
+            type="button"
+            onClick={togglePlay}
+            className={cn(
+              "h-8 w-8 flex items-center justify-center rounded-full transition-all active:scale-90 shrink-0",
+              isComplete
+                ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 hover:bg-emerald-600"
+                : effectivePlaying
+                  ? "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60"
+                  : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/60"
+            )}
+            aria-label={effectivePlaying ? '暂停动画' : '播放动画'}
+          >
+            {isComplete ? (
+              <Check className="h-4 w-4" />
+            ) : effectivePlaying ? (
+              <Pause className="h-3.5 w-3.5" />
+            ) : (
+              <Play className="h-3.5 w-3.5 ml-0.5" />
+            )}
+          </button>
+
+          {/* Status label */}
+          {isComplete && (
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 animate-[fade-in_0.3s_ease-out]">
+              ✅ 完成
+            </span>
+          )}
+
+          {/* Timeline */}
+          <div className="flex-1 flex items-center gap-0 relative min-w-0">
             {/* Background connector line */}
-            <div className="absolute top-[11px] left-[12px] right-[12px] h-[2px] bg-muted-foreground/15 rounded-full" />
+            <div className="absolute top-[10px] left-[13px] right-[13px] h-[2px] bg-muted-foreground/15 rounded-full" />
 
             {/* Completed connector line */}
             <div
-              className="absolute top-[11px] left-[12px] h-[2px] bg-emerald-500 rounded-full transition-all duration-300 ease-out"
+              className="absolute top-[10px] left-[13px] h-[2px] bg-emerald-500 rounded-full transition-all duration-500 ease-out"
               style={{
                 width: completedSteps > 0
-                  ? `calc(${(completedSteps / (STEPS.length - 1)) * 100}% - ${(1 - completedSteps / (STEPS.length - 1)) * 24}px)`
+                  ? `calc(${(completedSteps / (conceptSteps.length - 1)) * 100}% - ${(1 - completedSteps / (conceptSteps.length - 1)) * 26}px)`
                   : '0px'
               }}
             />
 
-            {/* In-progress connector line */}
-            {effectivePlaying && currentStepIndex < STEPS.length - 1 && (
+            {/* In-progress connector line (animated) */}
+            {effectivePlaying && currentStepIndex < conceptSteps.length - 1 && (
               <div
-                className="absolute top-[11px] h-[2px] bg-emerald-400/50 rounded-full transition-none"
+                className="absolute top-[10px] h-[2px] bg-emerald-400/50 rounded-full"
                 style={{
-                  left: `calc(${(currentStepIndex / (STEPS.length - 1)) * 100}% + ${12 - (currentStepIndex / (STEPS.length - 1)) * 24}px)`,
-                  width: `calc(${(1 / (STEPS.length - 1)) * 100}% - ${24 / (STEPS.length - 1)}px)`,
+                  left: `calc(${(currentStepIndex / (conceptSteps.length - 1)) * 100}% + ${13 - (currentStepIndex / (conceptSteps.length - 1)) * 26}px)`,
+                  width: `calc(${(1 / (conceptSteps.length - 1)) * 100}% - ${26 / (conceptSteps.length - 1)}px)`,
                   transformOrigin: 'left',
                   transform: `scaleX(${progress / 100})`,
                 }}
@@ -177,93 +233,81 @@ export function AnimationTimeline({ className }: AnimationTimelineProps) {
             )}
 
             {/* Step nodes */}
-            {STEPS.map((step, i) => {
-              const isCompleted = i < currentStepIndex
-              const isCurrent = i === currentStepIndex
+            {stepNames.map((name, idx) => {
+              const isCompleted = idx < currentStepIndex
+              const isCurrent = idx === currentStepIndex
 
               return (
                 <div
-                  key={step.mode}
+                  key={idx}
                   className="flex-1 flex flex-col items-center relative cursor-pointer group"
                   onClick={() => {
-                    if (!effectivePlaying) setMode(step.mode)
+                    if (!effectivePlaying) {
+                      setMode(conceptSteps[idx])
+                    }
                   }}
                   role="button"
                   tabIndex={0}
-                  aria-label={`跳转到${step.label}`}
+                  aria-label={`跳转到${name}`}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      if (!effectivePlaying) setMode(step.mode)
+                      if (!effectivePlaying) {
+                        setMode(conceptSteps[idx])
+                      }
                     }
                   }}
                 >
+                  {/* Pulsing ring for current step */}
+                  {isCurrent && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-emerald-400/20 animate-ping" />
+                  )}
+
                   {/* Node circle */}
                   <div
-                    className={`
-                      w-6 h-6 rounded-full flex items-center justify-center
-                      transition-all duration-300 relative z-10
-                      ${isCompleted
-                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                    className={cn(
+                      "w-[22px] h-[22px] rounded-full flex items-center justify-center",
+                      "transition-all duration-300 relative z-10 text-[9px] font-bold border-2",
+                      isCompleted
+                        ? "bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/30"
                         : isCurrent
-                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 ring-2 ring-emerald-300 dark:ring-emerald-700 ring-offset-1 ring-offset-background'
-                          : 'bg-muted-foreground/15 text-muted-foreground/50 group-hover:bg-muted-foreground/25 group-hover:text-muted-foreground/70'
-                      }
-                    `}
+                          ? "bg-emerald-100 dark:bg-emerald-900/60 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-500/20"
+                          : "bg-muted/50 border-muted-foreground/20 text-muted-foreground/40 group-hover:bg-muted-foreground/10 group-hover:border-muted-foreground/30"
+                    )}
                   >
                     {isCompleted ? (
-                      <Check className="h-3 w-3" />
-                    ) : isCurrent ? (
-                      step.icon
+                      <Check className="h-2.5 w-2.5" />
                     ) : (
-                      <span className="text-[9px] font-bold">{i + 1}</span>
+                      idx + 1
                     )}
                   </div>
 
                   {/* Label */}
                   <span
-                    className={`
-                      text-[9px] mt-0.5 leading-tight text-center transition-colors duration-300
-                      ${isCurrent
-                        ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                    className={cn(
+                      "text-[8px] mt-0.5 leading-tight text-center transition-colors duration-300 whitespace-nowrap",
+                      isCurrent
+                        ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                         : isCompleted
-                          ? 'text-emerald-600/70 dark:text-emerald-400/70'
-                          : 'text-muted-foreground/40 group-hover:text-muted-foreground/60'
-                      }
-                    `}
+                          ? "text-emerald-600/70 dark:text-emerald-400/70"
+                          : "text-muted-foreground/40 group-hover:text-muted-foreground/60"
+                    )}
                   >
-                    {step.label}
+                    {name}
                   </span>
                 </div>
               )
             })}
           </div>
 
-          {/* Play/Pause button */}
+          {/* Reset button */}
           <button
-            className="
-              flex items-center gap-1 h-6 px-2
-              rounded-md text-[10px] font-medium
-              bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
-              hover:bg-emerald-500/20
-              border border-emerald-500/20 dark:border-emerald-500/30
-              transition-all duration-200
-              shrink-0
-            "
-            onClick={togglePlay}
-            aria-label={isPlaying ? '暂停动画' : '播放动画'}
+            type="button"
+            onClick={reset}
+            className="h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-all active:scale-90 shrink-0"
+            aria-label="重置动画"
           >
-            {effectivePlaying ? (
-              <>
-                <Pause className="h-3 w-3" />
-                <span>暂停</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3 w-3" />
-                <span>播放</span>
-              </>
-            )}
+            <RotateCcw className="h-3 w-3" />
           </button>
         </div>
       </div>

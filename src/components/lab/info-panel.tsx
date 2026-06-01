@@ -192,6 +192,230 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-teal-50/50 via-muted/30 to-emerald-50/50 dark:from-teal-950/20 dark:via-muted/20 dark:to-emerald-950/20',
     computedBorder: 'border-teal-200/40 dark:border-teal-800/30',
   },
+  '等值面与等高线': {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/40',
+    text: 'text-cyan-800 dark:text-cyan-300',
+    border: 'border-0',
+    glow: 'shadow-cyan-500/20',
+    computedBg: 'from-cyan-50/50 via-muted/30 to-teal-50/50 dark:from-cyan-950/20 dark:via-muted/20 dark:to-teal-950/20',
+    computedBorder: 'border-cyan-200/40 dark:border-cyan-800/30',
+  },
+  '旋度场与散度场': {
+    bg: 'bg-rose-100 dark:bg-rose-900/40',
+    text: 'text-rose-800 dark:text-rose-300',
+    border: 'border-0',
+    glow: 'shadow-rose-500/20',
+    computedBg: 'from-rose-50/50 via-muted/30 to-pink-50/50 dark:from-rose-950/20 dark:via-muted/20 dark:to-pink-950/20',
+    computedBorder: 'border-rose-200/40 dark:border-rose-800/30',
+  },
+  '保守场与势函数': {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/40',
+    text: 'text-emerald-800 dark:text-emerald-300',
+    border: 'border-0',
+    glow: 'shadow-emerald-500/20',
+    computedBg: 'from-emerald-50/50 via-muted/30 to-teal-50/50 dark:from-emerald-950/20 dark:via-muted/20 dark:to-teal-950/20',
+    computedBorder: 'border-emerald-200/40 dark:border-emerald-800/30',
+  },
+  '泰勒展开与逼近': {
+    bg: 'bg-amber-100 dark:bg-amber-900/40',
+    text: 'text-amber-800 dark:text-amber-300',
+    border: 'border-0',
+    glow: 'shadow-amber-500/20',
+    computedBg: 'from-amber-50/50 via-muted/30 to-orange-50/50 dark:from-amber-950/20 dark:via-muted/20 dark:to-orange-950/20',
+    computedBorder: 'border-amber-200/40 dark:border-amber-800/30',
+  },
+  '曲面积分': {
+    bg: 'bg-violet-100 dark:bg-violet-900/40',
+    text: 'text-violet-800 dark:text-violet-300',
+    border: 'border-0',
+    glow: 'shadow-violet-500/20',
+    computedBg: 'from-violet-50/50 via-muted/30 to-purple-50/50 dark:from-violet-950/20 dark:via-muted/20 dark:to-purple-950/20',
+    computedBorder: 'border-violet-200/40 dark:border-violet-800/30',
+  },
+}
+
+// Map of mode → related formulas (2-3 per mode)
+const relatedFormulas: Record<string, { formula: string; label: string }[]> = {
+  step1: [
+    { formula: 'D \\subseteq \\mathbb{R}^2', label: '积分区域' },
+    { formula: 'f: D \\to \\mathbb{R}', label: '被积函数' },
+  ],
+  step2: [
+    { formula: '\\lambda = \\max_i \\text{diam}(\\Delta D_i)', label: '分割细度' },
+    { formula: '\\Delta\\sigma_i = \\text{area}(\\Delta D_i)', label: '面积元素' },
+  ],
+  step3: [
+    { formula: 'V_n = \\sum_{i=1}^{n} f(\\xi_i,\\eta_i)\\Delta\\sigma_i', label: '黎曼和' },
+    { formula: '\\Delta\\sigma_i \\approx f(\\xi_i,\\eta_i) \\cdot \\Delta x \\cdot \\Delta y', label: '方柱体积' },
+  ],
+  step4: [
+    { formula: 'V = \\iint_D f(x,y)\\,d\\sigma', label: '曲顶柱体体积' },
+    { formula: '\\lambda \\to 0 \\Rightarrow S_n \\to I', label: '极限过程' },
+  ],
+  prop1: [
+    { formula: '\\iint_D f\\,d\\sigma + \\iint_D f\\,d\\sigma = 2\\iint_D f\\,d\\sigma', label: '特殊情况 k=2' },
+    { formula: 'k=0 \\Rightarrow \\iint_D 0\\,d\\sigma = 0', label: '特殊情况 k=0' },
+  ],
+  prop2: [
+    { formula: '\\iint_D (f+g)\\,d\\sigma = \\iint_D f\\,d\\sigma + \\iint_D g\\,d\\sigma', label: '加法' },
+    { formula: '\\iint_D (f-g)\\,d\\sigma = \\iint_D f\\,d\\sigma - \\iint_D g\\,d\\sigma', label: '减法' },
+  ],
+  prop3: [
+    { formula: 'D_1 \\cap D_2 = \\emptyset', label: '无公共内点' },
+    { formula: 'S_D = S_{D_1} + S_{D_2}', label: '面积可加' },
+  ],
+  prop4: [
+    { formula: 'S_D = \\iint_D d\\sigma', label: '区域面积' },
+    { formula: '\\iint_D 1\\,d\\sigma = S_D', label: '单位函数' },
+  ],
+  prop5: [
+    { formula: 'f \\leq g \\Rightarrow V_f \\leq V_g', label: '体积比较' },
+    { formula: '|\\iint_D f\\,d\\sigma| \\leq \\iint_D |f|\\,d\\sigma', label: '绝对值不等式' },
+  ],
+  prop6: [
+    { formula: 'm = \\min_D f,\\quad M = \\max_D f', label: '最值' },
+    { formula: 'm \\cdot S_D \\leq V \\leq M \\cdot S_D', label: '体积范围' },
+  ],
+  prop7: [
+    { formula: '\\exists(\\xi,\\eta) \\in D', label: '中值点存在' },
+    { formula: 'f(\\xi,\\eta) = \\frac{1}{S_D}\\iint_D f\\,d\\sigma', label: '平均值' },
+  ],
+  parity1: [
+    { formula: 'D = [-a,a]\\times[-b,b]', label: '对称区域' },
+    { formula: 'f(-x,y) = -f(x,y)', label: '奇函数定义' },
+  ],
+  parity2: [
+    { formula: '\\iint_D f\\,d\\sigma = 2\\iint_{D^+} f\\,d\\sigma', label: '偶函数性质' },
+    { formula: 'f(-x,y) = f(x,y)', label: '偶函数定义' },
+  ],
+  cartesian1: [
+    { formula: '\\int_a^b \\int_{\\phi_1(x)}^{\\phi_2(x)} f(x,y)\\,dy\\,dx', label: 'X型累次积分' },
+    { formula: '\\phi_1(x) \\leq y \\leq \\phi_2(x)', label: 'y的范围' },
+  ],
+  cartesian2: [
+    { formula: '\\int_c^d \\int_{\\psi_1(y)}^{\\psi_2(y)} f(x,y)\\,dx\\,dy', label: 'Y型累次积分' },
+    { formula: '\\psi_1(y) \\leq x \\leq \\psi_2(y)', label: 'x的范围' },
+  ],
+  rect_approx: [
+    { formula: '\\Delta x = \\frac{b-a}{n}', label: '步长' },
+    { formula: 'L_n \\leq \\int_a^b f\\,dx \\leq R_n', label: '左右端点' },
+  ],
+  sphere_cyl1: [
+    { formula: 'x^2+y^2+z^2=R^2', label: '球面方程' },
+    { formula: 'x^2+y^2=a^2', label: '圆柱方程' },
+  ],
+  sphere_cyl2: [
+    { formula: 'V = \\int A(z)\\,dz', label: '截面法' },
+    { formula: 'A(z) = \\pi a^2,\\ |z| \\leq \\sqrt{R^2-a^2}', label: '截面积' },
+  ],
+  polar1: [
+    { formula: 'x = r\\cos\\theta,\\quad y = r\\sin\\theta', label: '极坐标变换' },
+    { formula: 'd\\sigma = r\\,dr\\,d\\theta', label: '面积元素' },
+  ],
+  polar2: [
+    { formula: '\\Delta\\sigma_i \\approx r_i \\Delta r \\Delta\\theta', label: '扇形面积近似' },
+    { formula: 'J = \\frac{\\partial(x,y)}{\\partial(r,\\theta)} = r', label: '雅可比行列式' },
+  ],
+  convergence1: [
+    { formula: '|S_n - I| \\to 0', label: '收敛定义' },
+    { formula: 'S_n = \\sum f(x_i,y_j)\\Delta\\sigma_{ij}', label: '黎曼和' },
+  ],
+  convergence2: [
+    { formula: 'E_n = O(1/n^2)\\text{(中点法)}', label: '中点法误差阶' },
+    { formula: 'E_n = O(1/n)\\text{(左端点法)}', label: '左端点误差阶' },
+  ],
+  triple1: [
+    { formula: '\\Delta V = \\Delta x \\Delta y \\Delta z', label: '体积元素' },
+    { formula: 'f(x,y,z) = x^2+y^2+z^2', label: '被积函数' },
+  ],
+  jacobian1: [
+    { formula: '\\left|\\frac{\\partial(x,y)}{\\partial(u,v)}\\right| = a^2', label: '雅可比值' },
+    { formula: 'x = au\\cos\\theta - av\\sin\\theta', label: '变换公式' },
+  ],
+  green1: [
+    { formula: '\\oint_C P\\,dx + Q\\,dy = \\iint_D (Q_x - P_y)\\,dA', label: '格林公式' },
+    { formula: 'A = \\frac{1}{2}\\oint_C x\\,dy - y\\,dx', label: '面积公式' },
+  ],
+  surface_area1: [
+    { formula: 'dS = \\sqrt{1+f_x^2+f_y^2}\\,dxdy', label: '面积微元' },
+    { formula: '\\mathbf{n} = \\frac{(-f_x,-f_y,1)}{\\sqrt{1+f_x^2+f_y^2}}', label: '法向量' },
+  ],
+  fubini1: [
+    { formula: '\\int_a^b\\int_{\\phi_1}^{\\phi_2} f\\,dy\\,dx = \\int_c^d\\int_{\\psi_1}^{\\psi_2} f\\,dx\\,dy', label: '交换积分序' },
+    { formula: 'f \\in L^1(D)', label: '可积条件' },
+  ],
+  stokes1: [
+    { formula: '\\nabla \\times \\mathbf{F} = \\text{curl}\\,\\mathbf{F}', label: '旋度' },
+    { formula: '\\oint_C \\mathbf{F}\\cdot d\\mathbf{r}', label: '环量' },
+  ],
+  divergence1: [
+    { formula: '\\nabla \\cdot \\mathbf{F} = \\text{div}\\,\\mathbf{F}', label: '散度' },
+    { formula: '\\oiint_S \\mathbf{F}\\cdot d\\mathbf{S}', label: '通量' },
+  ],
+  arc_length1: [
+    { formula: "ds = |\\mathbf{r}'(t)|\\,dt", label: '弧长微元' },
+    { formula: 'L \\approx \\sum |\\mathbf{r}(t_{i+1})-\\mathbf{r}(t_i)|', label: '折线逼近' },
+  ],
+  mass_center1: [
+    { formula: 'M = \\iint_D \\rho(x,y)\\,d\\sigma', label: '总质量' },
+    { formula: '\\bar{x} = M_y/M,\\quad \\bar{y} = M_x/M', label: '质心坐标' },
+  ],
+  moment_of_inertia1: [
+    { formula: 'I_x = \\iint_D y^2\\rho\\,d\\sigma', label: '绕x轴' },
+    { formula: 'I_y = \\iint_D x^2\\rho\\,d\\sigma', label: '绕y轴' },
+  ],
+  cylindrical1: [
+    { formula: 'x=r\\cos\\theta,\\quad y=r\\sin\\theta,\\quad z=z', label: '柱坐标变换' },
+    { formula: 'dV = r\\,dr\\,d\\theta\\,dz', label: '体积元素' },
+  ],
+  gradient1: [
+    { formula: '\\nabla f = (f_x, f_y)', label: '梯度定义' },
+    { formula: '|\\nabla f| = \\sqrt{f_x^2+f_y^2}', label: '梯度模' },
+  ],
+  spherical1: [
+    { formula: 'x=r\\sin\\phi\\cos\\theta,\\quad y=r\\sin\\phi\\sin\\theta,\\quad z=r\\cos\\phi', label: '球坐标变换' },
+    { formula: 'dV = r^2\\sin\\phi\\,dr\\,d\\theta\\,d\\phi', label: '体积元素' },
+  ],
+  laplace1: [
+    { formula: '\\Delta u = u_{xx}+u_{yy}=0', label: '拉普拉斯方程' },
+    { formula: 'u(x,y) = \\text{Re}(e^{x+iy})', label: '调和函数构造' },
+  ],
+  fourier1: [
+    { formula: 'a_n = \\frac{1}{\\pi}\\int_{-\\pi}^{\\pi} f(x)\\cos nx\\,dx', label: '余弦系数' },
+    { formula: 'b_n = \\frac{1}{\\pi}\\int_{-\\pi}^{\\pi} f(x)\\sin nx\\,dx', label: '正弦系数' },
+  ],
+  vector_field1: [
+    { formula: '\\mathbf{F} = (P(x,y), Q(x,y))', label: '向量场' },
+    { formula: 'W = \\int_C \\mathbf{F}\\cdot d\\mathbf{r}', label: '做功' },
+  ],
+  directional1: [
+    { formula: 'D_\\mathbf{u}f = \\nabla f \\cdot \\hat{\\mathbf{u}}', label: '方向导数' },
+    { formula: 'D_\\mathbf{u}f = |\\nabla f|\\cos\\theta', label: '与梯度关系' },
+  ],
+  isosurface1: [
+    { formula: 'f(x,y,z)=c \\Rightarrow \\text{等值面}', label: '等值面定义' },
+    { formula: '\\nabla f \\perp \\text{等值面}', label: '梯度垂直等值面' },
+  ],
+  curl1: [
+    { formula: '\\nabla \\times \\mathbf{F} = (Q_x-P_y)\\mathbf{k}', label: '二维旋度' },
+    { formula: '\\text{curl} > 0: \\text{逆时针}', label: '旋度符号' },
+  ],
+  divergence_field1: [
+    { formula: '\\nabla \\cdot \\mathbf{F} = P_x+Q_y', label: '二维散度' },
+    { formula: '\\text{div}>0: \\text{源},\\quad \\text{div}<0: \\text{汇}', label: '散度含义' },
+  ],
+  conservative1: [
+    { formula: '\\mathbf{F} = \\nabla \\phi \\Rightarrow \\nabla \\times \\mathbf{F} = 0', label: '无旋等价' },
+    { formula: '\\oint_C \\mathbf{F}\\cdot d\\mathbf{r} = 0', label: '闭路径积分为零' },
+  ],
+  taylor1: [
+    { formula: 'f^{(n)}(a) = \\frac{d^n f}{dx^n}\\big|_{x=a}', label: 'n阶导数' },
+    { formula: 'R_n = O((x-a)^{n+1})', label: '余项' },
+  ],
+  surface_integral1: [
+    { formula: 'd\\mathbf{S} = \\mathbf{n}\\,dS', label: '有向面积元素' },
+    { formula: '\\iint_\\Sigma f\\,dS = \\iint_D f\\sqrt{1+z_x^2+z_y^2}\\,dxdy', label: '投影法' },
+  ],
 }
 
 // Get the section color config, fallback to emerald
@@ -219,11 +443,16 @@ const sectionModes: Record<string, LabMode[]> = {
   '弧长与曲线积分': ['arc_length1'],
   '质心与转动惯量': ['mass_center1', 'moment_of_inertia1'],
   '柱坐标系计算': ['cylindrical1'],
-  '梯度场与方向导数': ['gradient1'],
+  '梯度场与方向导数': ['gradient1', 'directional1'],
   '球坐标系计算': ['spherical1'],
   '拉普拉斯方程': ['laplace1'],
   '傅里叶级数与逼近': ['fourier1'],
   '向量场与线积分': ['vector_field1'],
+  '等值面与等高线': ['isosurface1'],
+  '旋度场与散度场': ['curl1', 'divergence_field1'],
+  '保守场与势函数': ['conservative1'],
+  '泰勒展开与逼近': ['taylor1'],
+  '曲面积分': ['surface_integral1'],
 }
 
 export function InfoPanel() {
@@ -275,6 +504,29 @@ export function InfoPanel() {
       <p className="text-[11px] text-muted-foreground leading-relaxed bg-background/30 rounded-md px-2 py-1.5 border border-border/20">
         {info.description}
       </p>
+
+      {/* Related Formulas section */}
+      {relatedFormulas[mode] && relatedFormulas[mode].length > 0 && (
+        <div className={cn(
+          "rounded-lg p-2 space-y-1.5 border",
+          colors.computedBg, colors.computedBorder
+        )}>
+          <div className="flex items-center gap-1">
+            <Zap className="h-2.5 w-2.5 text-amber-500/70" />
+            <span className="text-[9px] font-semibold text-muted-foreground">相关公式</span>
+          </div>
+          <div className="space-y-1">
+            {relatedFormulas[mode].map((item, idx) => (
+              <div key={idx} className="flex items-start gap-2 bg-background/40 rounded px-1.5 py-1 border border-border/15">
+                <span className="text-[8px] text-muted-foreground/60 shrink-0 pt-0.5 min-w-[40px] text-right font-sans">
+                  {item.label}
+                </span>
+                <MathDisplay math={item.formula} className="text-[11px]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Computed values section with section-colored styling */}
       {computed && (

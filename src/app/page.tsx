@@ -51,6 +51,13 @@ const allModes: LabMode[] = [
   'moment_of_inertia1', 'cylindrical1',
   'gradient1', 'spherical1', 'laplace1',
   'fourier1', 'vector_field1',
+  'directional1',
+  'isosurface1',
+  'curl1',
+  'divergence_field1',
+  'conservative1',
+  'taylor1',
+  'surface_integral1',
 ]
 
 function ThemeToggle() {
@@ -129,6 +136,20 @@ function HomeContent() {
         setShowOnboarding(true)
       }, 1500)
       return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // URL parameter support: load mode and params from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const modeParam = params.get('mode')
+    const param1 = params.get('param1')
+    const param2 = params.get('param2')
+
+    if (modeParam && modeParam in modeInfo) {
+      setMode(modeParam as LabMode)
+      if (param1) setParamValue(Number(param1))
+      if (param2) setParamValue2(Number(param2))
     }
   }, [])
 
@@ -270,7 +291,9 @@ function HomeContent() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="relative flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 shadow-sm">
+      <header className="relative flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 shadow-sm overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-teal-400/[0.06] to-emerald-500/[0.03] bg-[length:200%_100%] animate-[header-gradient_8s_ease-in-out_infinite]" />
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Mobile menu */}
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -293,10 +316,13 @@ function HomeContent() {
             </div>
             <div className="flex flex-col">
               <h1 className="text-xs sm:text-sm font-bold tracking-tight leading-none">
-                二重积分互动实验室
+                多元微积分互动实验室
               </h1>
-              <span className="text-[7px] sm:text-[8px] text-muted-foreground/60 font-medium tracking-wider mt-0.5 hidden sm:block">
-                DOUBLE INTEGRAL INTERACTIVE LAB
+              <span
+                key={mode}
+                className="text-[7px] sm:text-[8px] text-muted-foreground/60 font-medium tracking-wider mt-0.5 hidden sm:block animate-[subtitle-swap_0.4s_ease-out]"
+              >
+                MULTIVARIABLE CALCULUS INTERACTIVE LAB
               </span>
             </div>
           </div>
@@ -334,19 +360,23 @@ function HomeContent() {
             <TooltipContent side="bottom" className="text-xs">{autoTourActive ? '停止导览 (T)' : '自动导览 (T)'}</TooltipContent>
           </Tooltip>
 
-          {/* Current mode badge with transition */}
-          <Badge
-            key={mode}
-            variant="outline"
-            className="hidden sm:flex items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20 animate-[slide-down_0.3s_ease-out]"
-          >
-            <span className="font-mono">{currentIndex + 1}/{allModes.length}</span>
-            <span className="text-muted-foreground">·</span>
-            <span className="truncate max-w-[80px]">{info.title}</span>
-            {favorites.has(mode) && (
-              <Star className="h-2.5 w-2.5 text-amber-500 fill-amber-500 ml-0.5" />
-            )}
-          </Badge>
+          {/* Mode counter badge with animated number transitions */}
+          <div className="hidden sm:flex items-center gap-1 animate-[pulse-soft_3s_ease-in-out_infinite]">
+            <Badge
+              key={`badge-${mode}`}
+              variant="outline"
+              className="items-center gap-1 text-[10px] px-1.5 py-0 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20 animate-[slide-down_0.3s_ease-out]"
+            >
+              <span key={`idx-${currentIndex + 1}`} className="font-mono animate-[count-up_0.3s_ease-out]">{currentIndex + 1}</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="font-mono">{allModes.length}</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="truncate max-w-[80px]">{info.title}</span>
+              {favorites.has(mode) && (
+                <Star className="h-2.5 w-2.5 text-amber-500 fill-amber-500 ml-0.5" />
+              )}
+            </Badge>
+          </div>
 
           {/* Reset button */}
           <Tooltip>
@@ -439,71 +469,94 @@ function HomeContent() {
       </div>
 
       {/* Footer */}
-      <footer className="relative flex items-center justify-between px-3 sm:px-5 py-1.5 bg-background/95 backdrop-blur shrink-0">
-        {/* Gradient top border with animation */}
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-        {/* Secondary decorative line */}
-        <div className="absolute top-[1.5px] left-1/4 right-1/4 h-[0.5px] bg-gradient-to-r from-transparent via-teal-400/30 to-transparent" />
-
-        <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-          <span className="text-[9px] text-muted-foreground hidden sm:inline">
-            二重积分全功能互动实验室 · 高等数学可视化教学工具
-          </span>
-          <span className="text-[9px] text-muted-foreground sm:hidden">
-            二重积分实验室
-          </span>
-        </div>
-
-        {/* Current section name with transition */}
-        <div className="flex items-center gap-1.5 hidden md:flex">
-          <span
-            key={info.section}
-            className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded transition-all duration-300 animate-[slide-down_0.3s_ease-out]"
+      <footer className="relative flex flex-col bg-background/95 backdrop-blur shrink-0">
+        {/* Mode progress bar - thin bar at very top */}
+        <div className="w-full h-[3px] bg-muted/40">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 transition-all duration-700 ease-out relative overflow-hidden"
+            style={{ width: `${progressPercent}%` }}
           >
-            {info.section}
-          </span>
+            {autoTourActive && (
+              <div className="absolute inset-0 animate-[shimmer-progress_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-muted-foreground hidden sm:inline">
-            共 {totalModes} 个模式 · 已探索 {visitedCount} 个
-          </span>
-
-          {/* Mode navigation arrows with hover effects */}
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 transition-all hover:scale-110"
-              onClick={goToPrevMode}
-              disabled={currentIndex === 0}
-            >
-              <ChevronLeft className="h-3 w-3" />
-              <span className="sr-only">上一个模式</span>
-            </Button>
-            <span className="text-[9px] font-mono text-muted-foreground min-w-[24px] text-center tabular-nums">
-              {currentIndex + 1}
+        <div className="flex items-center justify-between px-3 sm:px-5 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="relative">
+              <GraduationCap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <span className="text-[9px] text-muted-foreground hidden sm:inline">
+              多元微积分互动实验室
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 transition-all hover:scale-110"
-              onClick={goToNextMode}
-              disabled={currentIndex === allModes.length - 1}
-            >
-              <ChevronRight className="h-3 w-3" />
-              <span className="sr-only">下一个模式</span>
-            </Button>
+            <span className="text-[9px] text-muted-foreground sm:hidden">
+              微积分实验室
+            </span>
           </div>
 
-          <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
-            <span>用</span>
-            <Heart className="h-2.5 w-2.5 text-red-400 animate-[bounce-subtle_2s_ease-in-out_infinite]" />
-            <span>构建</span>
+          {/* Current section + mode name with transition */}
+          <div className="flex items-center gap-1.5">
+            {/* Auto-tour animated dot indicator */}
+            {autoTourActive && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            )}
+            <span
+              key={info.section}
+              className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded transition-all duration-300 animate-[slide-down_0.3s_ease-out]"
+            >
+              {info.section}
+            </span>
+            <span className="text-[8px] text-muted-foreground/40 hidden sm:inline">·</span>
+            <span
+              key={mode}
+              className="text-[9px] text-foreground/80 font-medium hidden sm:inline animate-[slide-down_0.3s_ease-out]"
+            >
+              {info.title}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-muted-foreground hidden sm:inline">
+              已探索 {visitedCount}/{totalModes}
+            </span>
+
+            {/* Mode navigation arrows with hover effects */}
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 transition-all hover:scale-110"
+                onClick={goToPrevMode}
+                disabled={currentIndex === 0}
+              >
+                <ChevronLeft className="h-3 w-3" />
+                <span className="sr-only">上一个模式</span>
+              </Button>
+              <span className="text-[9px] font-mono text-muted-foreground min-w-[24px] text-center tabular-nums">
+                {currentIndex + 1}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 transition-all hover:scale-110"
+                onClick={goToNextMode}
+                disabled={currentIndex === allModes.length - 1}
+              >
+                <ChevronRight className="h-3 w-3" />
+                <span className="sr-only">下一个模式</span>
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+              <span>用</span>
+              <Heart className="h-2.5 w-2.5 text-red-400 animate-[bounce-subtle_2s_ease-in-out_infinite]" />
+              <span>构建</span>
+            </div>
           </div>
         </div>
       </footer>
@@ -518,7 +571,7 @@ function HomeContent() {
               <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
               <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[260px]">
                 <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                  欢迎使用二重积分互动实验室！← 侧边栏选择可视化模式，滑块调整参数，拖拽旋转3D场景
+                  欢迎使用多元微积分互动实验室！← 侧边栏选择可视化模式，滑块调整参数，拖拽旋转3D场景
                 </p>
                 <Button
                   variant="outline"
@@ -538,7 +591,7 @@ function HomeContent() {
               <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
               <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[220px]">
                 <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                  欢迎使用二重积分互动实验室！点击菜单按钮选择模式，滑块调整参数，拖拽旋转3D场景
+                  欢迎使用多元微积分互动实验室！点击菜单按钮选择模式，滑块调整参数，拖拽旋转3D场景
                 </p>
                 <Button
                   variant="outline"

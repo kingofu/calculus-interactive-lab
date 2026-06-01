@@ -46,6 +46,13 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'laplace1':
     case 'fourier1':
     case 'vector_field1':
+    case 'directional1':
+    case 'isosurface1':
+    case 'curl1':
+    case 'divergence_field1':
+    case 'conservative1':
+    case 'taylor1':
+    case 'surface_integral1':
       return { position: [6, 8, 4], fov: 50 }
     default:
       return { position: [8, 6, 8], fov: 50 }
@@ -123,6 +130,27 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'vector_field1') {
     return 'from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20'
   }
+  if (mode === 'isosurface1') {
+    return 'from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20'
+  }
+  if (mode === 'directional1') {
+    return 'from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/20'
+  }
+  if (mode === 'curl1') {
+    return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
+  }
+  if (mode === 'divergence_field1') {
+    return 'from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20'
+  }
+  if (mode === 'conservative1') {
+    return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
+  }
+  if (mode === 'taylor1') {
+    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+  }
+  if (mode === 'surface_integral1') {
+    return 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20'
+  }
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
 
@@ -151,6 +179,13 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'laplace1') return 'bg-slate-500'
   if (mode === 'fourier1') return 'bg-orange-500'
   if (mode === 'vector_field1') return 'bg-teal-500'
+  if (mode === 'isosurface1') return 'bg-cyan-500'
+  if (mode === 'directional1') return 'bg-yellow-500'
+  if (mode === 'curl1') return 'bg-rose-500'
+  if (mode === 'divergence_field1') return 'bg-pink-500'
+  if (mode === 'conservative1') return 'bg-emerald-500'
+  if (mode === 'taylor1') return 'bg-amber-500'
+  if (mode === 'surface_integral1') return 'bg-violet-500'
   return 'bg-slate-500'
 }
 

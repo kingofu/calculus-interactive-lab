@@ -54,6 +54,10 @@ import {
   Check,
   Activity,
   Wind,
+  Trophy,
+  RotateCw,
+  Shield,
+  Clock,
 } from 'lucide-react'
 
 const sections = [
@@ -241,6 +245,7 @@ const sections = [
     color: 'yellow',
     modes: [
       { mode: 'gradient1' as LabMode, label: '梯度场可视化', icon: Navigation },
+      { mode: 'directional1' as LabMode, label: '方向导数', icon: Compass },
     ],
   },
   {
@@ -279,10 +284,56 @@ const sections = [
       { mode: 'vector_field1' as LabMode, label: '向量场线积分', icon: Wind },
     ],
   },
+  {
+    title: '等值面与等高线',
+    subtitle: '等值面与等高线可视化',
+    icon: Layers,
+    color: 'cyan',
+    modes: [
+      { mode: 'isosurface1' as LabMode, label: '等值面与等高线', icon: Layers },
+    ],
+  },
+  {
+    title: '旋度场与散度场',
+    subtitle: '旋度与散度可视化',
+    icon: RotateCw,
+    color: 'rose',
+    modes: [
+      { mode: 'curl1' as LabMode, label: '旋度场可视化', icon: RotateCw },
+      { mode: 'divergence_field1' as LabMode, label: '散度场可视化', icon: RotateCw },
+    ],
+  },
+  {
+    title: '保守场与势函数',
+    subtitle: '保守场、势函数与路径无关性',
+    icon: Shield,
+    color: 'emerald2',
+    modes: [
+      { mode: 'conservative1' as LabMode, label: '保守场与势函数', icon: Shield },
+    ],
+  },
+  {
+    title: '泰勒展开与逼近',
+    subtitle: '泰勒展开与多项式逼近',
+    icon: TrendingUp,
+    color: 'amber2',
+    modes: [
+      { mode: 'taylor1' as LabMode, label: '泰勒展开逼近', icon: TrendingUp },
+    ],
+  },
+  {
+    title: '曲面积分',
+    subtitle: '对面积的曲面积分',
+    icon: Mountain,
+    color: 'violet2',
+    modes: [
+      { mode: 'surface_integral1' as LabMode, label: '对面积的曲面积分', icon: Mountain },
+    ],
+  },
 ]
 
 // Color map for section accent
-const colorMap: Record<string, { activeBg: string; activeText: string; border: string; dot: string; badge: string; badgeText: string }> = {
+const colorMap: Record<string, { activeBg: string; activeText: string; border: string; dot: string; badge: string; badgeText: string; hoverBg: string }> = {
   emerald: {
     activeBg: 'bg-emerald-100 dark:bg-emerald-900/40',
     activeText: 'text-emerald-800 dark:text-emerald-300',
@@ -290,6 +341,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-emerald-500',
     badge: 'bg-emerald-200/60 dark:bg-emerald-800/40',
     badgeText: 'text-emerald-700 dark:text-emerald-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-emerald-50/80 hover:to-emerald-50/30 dark:hover:from-emerald-900/20 dark:hover:to-emerald-900/10',
   },
   sky: {
     activeBg: 'bg-sky-100 dark:bg-sky-900/40',
@@ -298,6 +350,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-sky-500',
     badge: 'bg-sky-200/60 dark:bg-sky-800/40',
     badgeText: 'text-sky-700 dark:text-sky-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-sky-50/80 hover:to-sky-50/30 dark:hover:from-sky-900/20 dark:hover:to-sky-900/10',
   },
   orange: {
     activeBg: 'bg-orange-100 dark:bg-orange-900/40',
@@ -306,6 +359,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-orange-500',
     badge: 'bg-orange-200/60 dark:bg-orange-800/40',
     badgeText: 'text-orange-700 dark:text-orange-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-orange-50/80 hover:to-orange-50/30 dark:hover:from-orange-900/20 dark:hover:to-orange-900/10',
   },
   amber: {
     activeBg: 'bg-amber-100 dark:bg-amber-900/40',
@@ -314,6 +368,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-amber-500',
     badge: 'bg-amber-200/60 dark:bg-amber-800/40',
     badgeText: 'text-amber-700 dark:text-amber-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-amber-50/80 hover:to-amber-50/30 dark:hover:from-amber-900/20 dark:hover:to-amber-900/10',
   },
   rose: {
     activeBg: 'bg-rose-100 dark:bg-rose-900/40',
@@ -322,6 +377,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-rose-500',
     badge: 'bg-rose-200/60 dark:bg-rose-800/40',
     badgeText: 'text-rose-700 dark:text-rose-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-rose-50/80 hover:to-rose-50/30 dark:hover:from-rose-900/20 dark:hover:to-rose-900/10',
   },
   teal: {
     activeBg: 'bg-teal-100 dark:bg-teal-900/40',
@@ -330,6 +386,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-teal-500',
     badge: 'bg-teal-200/60 dark:bg-teal-800/40',
     badgeText: 'text-teal-700 dark:text-teal-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-teal-50/80 hover:to-teal-50/30 dark:hover:from-teal-900/20 dark:hover:to-teal-900/10',
   },
   violet: {
     activeBg: 'bg-violet-100 dark:bg-violet-900/40',
@@ -338,6 +395,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-violet-500',
     badge: 'bg-violet-200/60 dark:bg-violet-800/40',
     badgeText: 'text-violet-700 dark:text-violet-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-violet-50/80 hover:to-violet-50/30 dark:hover:from-violet-900/20 dark:hover:to-violet-900/10',
   },
   cyan: {
     activeBg: 'bg-cyan-100 dark:bg-cyan-900/40',
@@ -346,6 +404,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-cyan-500',
     badge: 'bg-cyan-200/60 dark:bg-cyan-800/40',
     badgeText: 'text-cyan-700 dark:text-cyan-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-cyan-50/30 dark:hover:from-cyan-900/20 dark:hover:to-cyan-900/10',
   },
   purple: {
     activeBg: 'bg-purple-100 dark:bg-purple-900/40',
@@ -354,6 +413,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-purple-500',
     badge: 'bg-purple-200/60 dark:bg-purple-800/40',
     badgeText: 'text-purple-700 dark:text-purple-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-purple-50/80 hover:to-purple-50/30 dark:hover:from-purple-900/20 dark:hover:to-purple-900/10',
   },
   lime: {
     activeBg: 'bg-lime-100 dark:bg-lime-900/40',
@@ -362,6 +422,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-lime-500',
     badge: 'bg-lime-200/60 dark:bg-lime-800/40',
     badgeText: 'text-lime-700 dark:text-lime-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-lime-50/80 hover:to-lime-50/30 dark:hover:from-lime-900/20 dark:hover:to-lime-900/10',
   },
   red: {
     activeBg: 'bg-red-100 dark:bg-red-900/40',
@@ -370,6 +431,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-red-500',
     badge: 'bg-red-200/60 dark:bg-red-800/40',
     badgeText: 'text-red-700 dark:text-red-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-red-50/80 hover:to-red-50/30 dark:hover:from-red-900/20 dark:hover:to-red-900/10',
   },
   indigo: {
     activeBg: 'bg-indigo-100 dark:bg-indigo-900/40',
@@ -378,6 +440,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-indigo-500',
     badge: 'bg-indigo-200/60 dark:bg-indigo-800/40',
     badgeText: 'text-indigo-700 dark:text-indigo-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-indigo-50/80 hover:to-indigo-50/30 dark:hover:from-indigo-900/20 dark:hover:to-indigo-900/10',
   },
   fuchsia: {
     activeBg: 'bg-fuchsia-100 dark:bg-fuchsia-900/40',
@@ -386,6 +449,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-fuchsia-500',
     badge: 'bg-fuchsia-200/60 dark:bg-fuchsia-800/40',
     badgeText: 'text-fuchsia-700 dark:text-fuchsia-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-fuchsia-50/80 hover:to-fuchsia-50/30 dark:hover:from-fuchsia-900/20 dark:hover:to-fuchsia-900/10',
   },
   pink: {
     activeBg: 'bg-pink-100 dark:bg-pink-900/40',
@@ -394,6 +458,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-pink-500',
     badge: 'bg-pink-200/60 dark:bg-pink-800/40',
     badgeText: 'text-pink-700 dark:text-pink-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-pink-50/80 hover:to-pink-50/30 dark:hover:from-pink-900/20 dark:hover:to-pink-900/10',
   },
   yellow: {
     activeBg: 'bg-yellow-100 dark:bg-yellow-900/40',
@@ -402,6 +467,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-yellow-500',
     badge: 'bg-yellow-200/60 dark:bg-yellow-800/40',
     badgeText: 'text-yellow-700 dark:text-yellow-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-yellow-50/80 hover:to-yellow-50/30 dark:hover:from-yellow-900/20 dark:hover:to-yellow-900/10',
   },
   green: {
     activeBg: 'bg-green-100 dark:bg-green-900/40',
@@ -410,6 +476,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-green-500',
     badge: 'bg-green-200/60 dark:bg-green-800/40',
     badgeText: 'text-green-700 dark:text-green-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-green-50/80 hover:to-green-50/30 dark:hover:from-green-900/20 dark:hover:to-green-900/10',
   },
   slate: {
     activeBg: 'bg-slate-100 dark:bg-slate-900/40',
@@ -418,6 +485,7 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-slate-500',
     badge: 'bg-slate-200/60 dark:bg-slate-800/40',
     badgeText: 'text-slate-700 dark:text-slate-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-slate-50/80 hover:to-slate-50/30 dark:hover:from-slate-900/20 dark:hover:to-slate-900/10',
   },
   warm: {
     activeBg: 'bg-orange-100 dark:bg-orange-900/40',
@@ -426,6 +494,34 @@ const colorMap: Record<string, { activeBg: string; activeText: string; border: s
     dot: 'bg-orange-500',
     badge: 'bg-orange-200/60 dark:bg-orange-800/40',
     badgeText: 'text-orange-700 dark:text-orange-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-orange-50/80 hover:to-orange-50/30 dark:hover:from-orange-900/20 dark:hover:to-orange-900/10',
+  },
+  emerald2: {
+    activeBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+    activeText: 'text-emerald-800 dark:text-emerald-300',
+    border: 'before:bg-emerald-500',
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-200/60 dark:bg-emerald-800/40',
+    badgeText: 'text-emerald-700 dark:text-emerald-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-emerald-50/80 hover:to-emerald-50/30 dark:hover:from-emerald-900/20 dark:hover:to-emerald-900/10',
+  },
+  amber2: {
+    activeBg: 'bg-amber-100 dark:bg-amber-900/40',
+    activeText: 'text-amber-800 dark:text-amber-300',
+    border: 'before:bg-amber-500',
+    dot: 'bg-amber-500',
+    badge: 'bg-amber-200/60 dark:bg-amber-800/40',
+    badgeText: 'text-amber-700 dark:text-amber-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-amber-50/80 hover:to-amber-50/30 dark:hover:from-amber-900/20 dark:hover:to-amber-900/10',
+  },
+  violet2: {
+    activeBg: 'bg-violet-100 dark:bg-violet-900/40',
+    activeText: 'text-violet-800 dark:text-violet-300',
+    border: 'before:bg-violet-500',
+    dot: 'bg-violet-500',
+    badge: 'bg-violet-200/60 dark:bg-violet-800/40',
+    badgeText: 'text-violet-700 dark:text-violet-300',
+    hoverBg: 'hover:bg-gradient-to-r hover:from-violet-50/80 hover:to-violet-50/30 dark:hover:from-violet-900/20 dark:hover:to-violet-900/10',
   },
 }
 
@@ -435,7 +531,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
-  const { mode, setMode, visitedModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
+  const { mode, setMode, visitedModes, recentModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [favoritesCollapsed, setFavoritesCollapsed] = useState(false)
@@ -468,6 +564,9 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     : sections
 
   const hasNoResults = debouncedQuery.length > 0 && filteredSections.length === 0
+
+  // Total mode count for progress calculation
+  const totalModeCount = sections.reduce((acc, s) => acc + s.modes.length, 0)
 
   // Build a map from mode to section color for favorites
   const modeToSectionColor = useMemo(() => {
@@ -600,6 +699,43 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           )}
         </div>
 
+        {/* Recently Visited section */}
+        {recentModes.length > 1 && (
+          <div className="mb-1 pt-1 border-t border-border/30">
+            <div className="flex items-center gap-1 px-2 mb-1">
+              <Clock className="h-2.5 w-2.5 text-muted-foreground/50" />
+              <span className="text-[8px] font-medium text-muted-foreground/60">最近访问</span>
+            </div>
+            <div className="flex flex-wrap gap-1 px-1">
+              {recentModes.slice(0, 5).map(recentMode => {
+                const isActive = mode === recentMode
+                const recentInfo = modeInfo[recentMode]
+                const sectionColor = modeToSectionColor[recentMode] || 'emerald'
+                const colors = colorMap[sectionColor] || colorMap.emerald
+                return (
+                  <button
+                    key={recentMode}
+                    type="button"
+                    className={cn(
+                      "text-[8px] px-1.5 py-0.5 rounded transition-all leading-none",
+                      isActive
+                        ? cn(colors.activeBg, colors.activeText, "font-semibold shadow-sm")
+                        : "bg-muted/40 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    )}
+                    onClick={() => {
+                      setMode(recentMode)
+                      onModeSelect?.()
+                    }}
+                    title={recentInfo.title}
+                  >
+                    {recentInfo.title.length > 6 ? recentInfo.title.slice(0, 6) + '…' : recentInfo.title}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Favorites section */}
         {favoriteModes.length > 0 && (
           <div className="mb-1 pt-1 border-t border-border/30">
@@ -704,8 +840,8 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                   <button
                     type="button"
                     className={cn(
-                      "w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors cursor-pointer",
-                      sectionActive ? colors.activeBg + ' ' + colors.activeText : 'hover:bg-accent/50'
+                      "w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all cursor-pointer",
+                      sectionActive ? colors.activeBg + ' ' + colors.activeText : colors.hoverBg
                     )}
                     onClick={() => toggleSection(section.title)}
                   >
@@ -764,12 +900,13 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                       <div key={m} className="relative">
                         <Button
                           ref={isActive ? activeRef : undefined}
+                          key={`btn-${m}`}
                           variant="ghost"
                           size="sm"
                           className={cn(
                             'w-full justify-start gap-2 text-xs h-7 px-2 pr-8 transition-all relative group',
                             isActive
-                              ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border}`
+                              ? `${colors.activeBg} ${colors.activeText} font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-4 before:rounded-r ${colors.border} animate-[count-up_0.3s_ease-out]`
                               : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                           )}
                           onClick={() => {
@@ -817,6 +954,54 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
             </div>
           )
         })}
+
+        {/* Completion progress at bottom with circular indicator */}
+        <div className="mt-2 pt-2 border-t border-border/30 px-2">
+          <div className="flex items-center gap-3">
+            {/* Circular progress indicator */}
+            <div className="relative shrink-0">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center"
+                style={{
+                  background: `conic-gradient(from 0deg, #10b981 0%, #14b8a6 ${Math.round((visitedModes.size / totalModeCount) * 100)}%, transparent ${Math.round((visitedModes.size / totalModeCount) * 100)}%, transparent 100%)`,
+                  mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))',
+                  WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))',
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {Math.round((visitedModes.size / totalModeCount) * 100)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Trophy className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[9px] font-medium text-muted-foreground">总体进度</span>
+              </div>
+              <div className="flex items-center gap-2 text-[8px]">
+                <span className="text-muted-foreground">
+                  共 <span className="text-foreground font-mono font-medium">{totalModeCount}</span> 个
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  已探索 <span className="font-mono font-medium">{visitedModes.size}</span>
+                </span>
+                <span className="text-muted-foreground/60">
+                  剩余 <span className="font-mono">{totalModeCount - visitedModes.size}</span>
+                </span>
+              </div>
+              {/* Thin progress bar */}
+              <div className="w-full h-1 bg-muted/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${Math.round((visitedModes.size / totalModeCount) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </ScrollArea>
   )

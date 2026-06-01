@@ -1,11 +1,14 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, SlidersHorizontal, Minus, Plus } from 'lucide-react'
+import { RotateCcw, SlidersHorizontal, Minus, Plus, Zap, Share2 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { modePresets, type Preset } from '@/lib/presets'
+import { useToast } from '@/components/lab/toast-provider'
 
 function SliderWithProgress({
   value,
@@ -105,6 +108,20 @@ function SliderWithProgress({
 export function ControlsPanel() {
   const { mode, paramValue, paramValue2, setParamValue, setParamValue2 } = useLabStore()
   const info = modeInfo[mode]
+  const presets = modePresets[mode]
+  const { toast } = useToast()
+
+  const handleShare = useCallback(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('mode', mode)
+    url.searchParams.set('param1', String(paramValue))
+    if (info.paramLabel2) {
+      url.searchParams.set('param2', String(paramValue2))
+    }
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      toast('链接已复制！', 'success')
+    })
+  }, [mode, paramValue, paramValue2, info, toast])
 
   const handleReset = () => {
     setParamValue(info.paramDefault)
@@ -151,7 +168,54 @@ export function ControlsPanel() {
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">重置为默认值 (R)</TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1 transition-all hover:scale-105 active:scale-95"
+                onClick={handleShare}
+              >
+                <Share2 className="h-2.5 w-2.5" />
+                分享
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">复制当前模式链接</TooltipContent>
+          </Tooltip>
         </div>
+
+        {presets && presets.length > 0 && (
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Zap className="h-3 w-3 text-amber-500" />
+              <span className="text-[9px] font-medium text-muted-foreground">预设方案</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {presets.map((preset: Preset, idx: number) => {
+                const isActive = Math.abs(paramValue - preset.param1) < 0.01
+                  && (!preset.param2 || Math.abs(paramValue2 - preset.param2) < 0.01)
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setParamValue(preset.param1)
+                      if (preset.param2 !== undefined) setParamValue2(preset.param2)
+                    }}
+                    className={cn(
+                      "text-[9px] px-2 py-1 rounded-md border transition-all active:scale-95",
+                      isActive
+                        ? "bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 font-medium shadow-sm"
+                        : "bg-muted/30 border-border/40 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-border"
+                    )}
+                  >
+                    {preset.emoji} {preset.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <SliderWithProgress
           value={paramValue}

@@ -17,7 +17,10 @@ export type LabMode =
   | 'arc_length1' | 'mass_center1'
   | 'moment_of_inertia1' | 'cylindrical1'
   | 'gradient1' | 'spherical1' | 'laplace1'
-  | 'fourier1' | 'vector_field1'
+  | 'fourier1' | 'vector_field1' | 'isosurface1' | 'directional1'
+  | 'curl1' | 'divergence_field1'
+  | 'conservative1' | 'taylor1'
+  | 'surface_integral1'
 
 export interface TooltipData {
   content: string
@@ -51,6 +54,7 @@ interface LabState {
   paramValue: number
   paramValue2: number
   visitedModes: Set<LabMode>
+  recentModes: LabMode[]
   favorites: Set<LabMode>
   autoTourActive: boolean
   tooltip: TooltipData | null
@@ -69,18 +73,23 @@ export const useLabStore = create<LabState>((set) => ({
   paramValue: 2,
   paramValue2: 2,
   visitedModes: new Set<LabMode>(['step1']),
+  recentModes: ['step1'] as LabMode[],
   favorites: new Set<LabMode>(),
   autoTourActive: false,
   tooltip: null,
   setMode: (mode) => {
     const info = modeInfo[mode]
-    set((state) => ({
-      mode,
-      paramValue: info.paramDefault,
-      paramValue2: info.paramDefault2 ?? info.paramDefault,
-      visitedModes: new Set([...state.visitedModes, mode]),
-      tooltip: null,
-    }))
+    set((state) => {
+      const recent = [mode, ...state.recentModes.filter(m => m !== mode)].slice(0, 10)
+      return {
+        mode,
+        paramValue: info.paramDefault,
+        paramValue2: info.paramDefault2 ?? info.paramDefault,
+        visitedModes: new Set([...state.visitedModes, mode]),
+        recentModes: recent,
+        tooltip: null,
+      }
+    })
   },
   setParamValue: (paramValue) => set({ paramValue }),
   setParamValue2: (paramValue2) => set({ paramValue2 }),
@@ -438,5 +447,65 @@ export const modeInfo: Record<LabMode, {
     description: '向量场的线积分计算力场沿路径所做的功。图中展示向量场F=(P,Q)和积分路径C，箭头表示场方向，颜色表示场的大小。线积分值等于路径上F·dr的总和。调整参数观察不同路径和场的变化。',
     paramLabel: '路径弯曲度',
     paramMin: 0, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  directional1: {
+    title: '方向导数',
+    section: '梯度场与方向导数',
+    math: 'D_\\mathbf{u}f = \\nabla f \\cdot \\mathbf{u} = |\\nabla f|\\cos\\theta',
+    description: '方向导数D_uf表示函数f沿方向u的变化率。当u与梯度方向一致时，方向导数取最大值|∇f|；当u与梯度方向垂直时，方向导数为0。图中展示曲面上的梯度向量（红色）和可旋转的方向向量u（蓝色），以及它们之间的夹角θ。右侧曲线图显示方向导数随角度θ的变化。',
+    paramLabel: '方向角度 θ',
+    paramMin: 0, paramMax: 6.28, paramStep: 0.1, paramDefault: 0,
+    paramLabel2: '曲面陡度',
+    paramMin2: 0.3, paramMax2: 2, paramStep2: 0.1, paramDefault2: 1,
+  },
+  isosurface1: {
+    title: '等值面与等高线',
+    section: '等值面与等高线',
+    math: 'f(x,y,z) = c \\quad \\text{(等值面)}\\quad f(x,y) = c \\quad \\text{(等高线)}',
+    description: '等值面是三维空间中函数值等于常数的曲面，等高线是二维平面上函数值等于常数的曲线。等值面可以看作是等高线在三维空间中的推广。图中展示函数f(x,y,z)=x²+y²+z²在不同常数c下的等值面（同心球面），以及f(x,y)=x²+y²在xy平面上的等高线（同心圆）。调整参数改变等值面的层次。',
+    paramLabel: '等值层数',
+    paramMin: 2, paramMax: 8, paramStep: 1, paramDefault: 4,
+    paramLabel2: '函数类型',
+    paramMin2: 0, paramMax2: 1, paramStep2: 1, paramDefault2: 0,
+  },
+  curl1: {
+    title: '旋度场可视化',
+    section: '旋度场与散度场',
+    math: '\\nabla \\times \\mathbf{F} = \\left(\\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y}\\right)\\mathbf{k}',
+    description: '旋度衡量向量场在某点的旋转程度。对于二维场F=(P,Q)，旋度为∂Q/∂x - ∂P/∂y。正旋度表示逆时针旋转（红色），负旋度表示顺时针旋转（蓝色）。图中展示向量场及其旋度分布。',
+    paramLabel: '场强缩放',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  divergence_field1: {
+    title: '散度场可视化',
+    section: '旋度场与散度场',
+    math: '\\nabla \\cdot \\mathbf{F} = \\frac{\\partial P}{\\partial x} + \\frac{\\partial Q}{\\partial y}',
+    description: '散度衡量向量场在某点的发散或汇聚程度。正散度表示源（红色向外扩散），负散度表示汇（蓝色向内汇聚），零散度表示无源场。图中展示向量场及其散度分布。',
+    paramLabel: '场强缩放',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  conservative1: {
+    title: '保守场与势函数',
+    section: '保守场与势函数',
+    math: '\\nabla \\times \\mathbf{F} = 0 \\Leftrightarrow \\mathbf{F} = \\nabla \\phi',
+    description: '保守场是无旋的向量场（∇×F=0），等价于存在势函数φ使得F=∇φ。保守场中沿任意闭曲线的线积分为0，路径积分与路径无关。图中展示保守场F=(x, y)及其势函数φ=½(x²+y²)的等高线。',
+    paramLabel: '场强缩放',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  taylor1: {
+    title: '泰勒展开逼近',
+    section: '泰勒展开与逼近',
+    math: 'f(x) = \\sum_{n=0}^{N} \\frac{f^{(n)}(a)}{n!}(x-a)^n',
+    description: '泰勒展开将函数在某点附近用多项式逼近。随着阶数N增加，逼近范围逐渐扩大。图中展示目标函数sin(x)及其N阶泰勒多项式，观察逼近精度随N的变化。同时展示3D视角下的函数曲面和泰勒多项式曲面。',
+    paramLabel: '展开阶数 N',
+    paramMin: 1, paramMax: 15, paramStep: 1, paramDefault: 3,
+  },
+  surface_integral1: {
+    title: '对面积的曲面积分',
+    section: '曲面积分',
+    math: '\\iint_\\Sigma f(x,y,z)\\,dS = \\iint_D f(x,y,g(x,y))\\sqrt{1+g_x^2+g_y^2}\\,dxdy',
+    description: '对面积的曲面积分将函数值沿曲面Σ进行积分。通过参数化曲面，将曲面积分转化为二重积分。图中展示曲面Σ=z(x,y)，函数值通过颜色编码，面积元素dS=√(1+zx²+zy²)dxdy在陡峭处更大。',
+    paramLabel: '曲面陡度',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
   },
 }
