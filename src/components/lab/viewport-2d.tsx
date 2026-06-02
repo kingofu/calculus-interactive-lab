@@ -343,48 +343,67 @@ function SVGAxes({ xRange = [-6, 6], yRange = [-4, 4], scale, offsetX, offsetY }
 function Limit1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
   const { paramValue: c, paramValue2: L } = useLabStore()
   const eps = 0.3
-  const steps = 300
+  // Sequence: a_n = L + 1/n^c, where c = convergence speed (larger c → faster convergence)
+  const xMax = 25
 
   const convergencePath = useMemo(() => curveToPath(
-    (n) => L + c / Math.max(n, 0.1),
-    0.1, 6, steps, scale, offsetX, offsetY
+    (n) => L + 1 / Math.pow(Math.max(n, 0.01), c),
+    0.5, xMax, 1000, scale, offsetX, offsetY
   ), [c, L, scale, offsetX, offsetY])
 
   const sequencePoints = useMemo(() => {
     const pts: { n: number; an: number }[] = []
-    for (let n = 1; n <= 40; n++) {
-      pts.push({ n: n * 0.15, an: L + c / n })
+    for (let n = 1; n <= 20; n++) {
+      pts.push({ n, an: L + 1 / Math.pow(n, c) })
     }
     return pts
   }, [c, L])
 
+  // Find N such that |a_N - L| < eps
+  const nEps = useMemo(() => {
+    for (let n = 1; n <= 1000; n++) {
+      if (Math.abs(L + 1 / Math.pow(n, c) - L) < eps) return n
+    }
+    return 1000
+  }, [c, L, eps])
+
   return (
     <g>
-      <SVGAxes xRange={[-1, 7]} yRange={[L - 1.5, L + 2]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
+      <SVGAxes xRange={[-1, xMax + 1]} yRange={[L - 0.8, L + 1.8]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
       {/* ε-band */}
-      <rect x={sx(0, scale, offsetX)} y={sy(L + eps, scale, offsetY)} width={sx(6, scale, offsetX) - sx(0, scale, offsetX)} height={eps * scale * 2} fill="#10b981" opacity={0.12} />
-      <line x1={sx(0, scale, offsetX)} y1={sy(L + eps, scale, offsetY)} x2={sx(6, scale, offsetX)} y2={sy(L + eps, scale, offsetY)} stroke="#10b981" strokeWidth={1.5} opacity={0.5} />
-      <line x1={sx(0, scale, offsetX)} y1={sy(L - eps, scale, offsetY)} x2={sx(6, scale, offsetX)} y2={sy(L - eps, scale, offsetY)} stroke="#10b981" strokeWidth={1.5} opacity={0.5} />
+      <rect x={sx(0, scale, offsetX)} y={sy(L + eps, scale, offsetY)} width={sx(xMax, scale, offsetX) - sx(0, scale, offsetX)} height={eps * scale * 2} fill="#10b981" opacity={0.12} />
+      <line x1={sx(0, scale, offsetX)} y1={sy(L + eps, scale, offsetY)} x2={sx(xMax, scale, offsetX)} y2={sy(L + eps, scale, offsetY)} stroke="#10b981" strokeWidth={1.5} opacity={0.5} />
+      <line x1={sx(0, scale, offsetX)} y1={sy(L - eps, scale, offsetY)} x2={sx(xMax, scale, offsetX)} y2={sy(L - eps, scale, offsetY)} stroke="#10b981" strokeWidth={1.5} opacity={0.5} />
       {/* Limit line */}
-      <line x1={sx(0, scale, offsetX)} y1={sy(L, scale, offsetY)} x2={sx(6, scale, offsetX)} y2={sy(L, scale, offsetY)} stroke="#f59e0b" strokeWidth={2} />
+      <line x1={sx(0, scale, offsetX)} y1={sy(L, scale, offsetY)} x2={sx(xMax, scale, offsetX)} y2={sy(L, scale, offsetY)} stroke="#f59e0b" strokeWidth={2} />
       {/* Convergence curve */}
       <path d={convergencePath} fill="none" stroke="#14b8a6" strokeWidth={2} />
+      {/* N_ε indicator line */}
+      {nEps <= xMax && (
+        <line x1={sx(nEps, scale, offsetX)} y1={sy(L - 0.8, scale, offsetY)} x2={sx(nEps, scale, offsetX)} y2={sy(L + 1.8, scale, offsetY)} stroke="#8b5cf6" strokeWidth={1} strokeDasharray="4,4" opacity={0.6} />
+      )}
       {/* Sequence scatter points */}
       {sequencePoints.map((pt, idx) => {
         const withinEps = Math.abs(pt.an - L) < eps
         const cx = sx(pt.n, scale, offsetX)
         const cy = sy(pt.an, scale, offsetY)
-        return <circle key={idx} cx={cx} cy={cy} r={3} fill={withinEps ? '#10b981' : '#ef4444'} />
+        return <circle key={idx} cx={cx} cy={cy} r={3.5} fill={withinEps ? '#10b981' : '#ef4444'} />
       })}
-      {/* Drop lines */}
-      {sequencePoints.slice(0, 20).map((pt, idx) => {
+      {/* Drop lines from points to L */}
+      {sequencePoints.map((pt, idx) => {
         const withinEps = Math.abs(pt.an - L) < eps
         const cx = sx(pt.n, scale, offsetX)
-        return <line key={`drop-${idx}`} x1={cx} y1={sy(pt.an, scale, offsetY)} x2={cx} y2={sy(L, scale, offsetY)} stroke={withinEps ? '#10b981' : '#ef4444'} strokeWidth={0.8} opacity={0.4} />
+        return <line key={`drop-${idx}`} x1={cx} y1={sy(pt.an, scale, offsetY)} x2={cx} y2={sy(L, scale, offsetY)} stroke={withinEps ? '#10b981' : '#ef4444'} strokeWidth={0.8} opacity={0.35} />
       })}
-      {/* Label */}
-      <text x={sx(5.5, scale, offsetX)} y={sy(L + eps + 0.15, scale, offsetY)} fontSize={11} fill="#10b981" textAnchor="end">ε</text>
-      <text x={sx(5.5, scale, offsetX)} y={sy(L + 0.15, scale, offsetY)} fontSize={11} fill="#f59e0b" textAnchor="end">L</text>
+      {/* Labels */}
+      <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(L + eps + 0.12, scale, offsetY)} fontSize={11} fill="#10b981" textAnchor="end">+ε</text>
+      <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(L - eps + 0.12, scale, offsetY)} fontSize={11} fill="#10b981" textAnchor="end">-ε</text>
+      <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(L + 0.15, scale, offsetY)} fontSize={11} fill="#f59e0b" textAnchor="end">L</text>
+      {nEps <= xMax && (
+        <text x={sx(nEps, scale, offsetX)} y={sy(L + 1.6, scale, offsetY)} fontSize={10} fill="#8b5cf6" textAnchor="middle">N_ε={nEps}</text>
+      )}
+      {/* x-axis label */}
+      <text x={sx(xMax + 0.5, scale, offsetX)} y={sy(L - 0.8, scale, offsetY) - 4} fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.5} className="text-foreground">n</text>
     </g>
   )
 }
@@ -1202,13 +1221,22 @@ function getOverlayContent(mode: LabMode): ReactNode {
   switch (mode) {
     case 'limit1': {
       const c = paramValue, L = paramValue2, eps = 0.3
+      const aN = (n: number) => L + 1 / Math.pow(n, c)
+      const lastErr = Math.abs(aN(20) - L)
+      // Find N_ε
+      let nEps = 1000
+      for (let n = 1; n <= 1000; n++) {
+        if (Math.abs(aN(n) - L) < eps) { nEps = n; break }
+      }
       return (
         <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
           <div className="text-teal-600 dark:text-teal-400 font-semibold">数列极限</div>
-          <div>aₙ = {L.toFixed(1)} + {c.toFixed(1)}/n</div>
+          <div>aₙ = {L.toFixed(1)} + 1/n^{c.toFixed(1)}</div>
           <div className="text-amber-600 dark:text-amber-400">L = {L.toFixed(2)}</div>
           <div>ε = {eps.toFixed(2)}</div>
-          <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
+          <div className="text-purple-600 dark:text-purple-400">N_ε = {nEps}</div>
+          <div className="text-emerald-600 dark:text-emerald-400">|a₂₀ - L| = {lastErr.toFixed(4)}</div>
+          <div className="text-rose-600 dark:text-rose-400 text-[10px]">收敛阶: O(1/n^{c.toFixed(1)})</div>
         </div>
       )
     }

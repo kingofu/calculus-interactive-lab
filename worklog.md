@@ -2596,3 +2596,38 @@ Stage Summary:
 - **3D modes unchanged** - continue using R3F Canvas with OrbitControls
 - **New features**: SVG-based pan/zoom, draggable overlays, reset view, double-click reset
 - Zero Three.js/R3F imports in 2D engine
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix limit1 (数列极限) scatter points and curve alignment bug, correct convergence speed definition
+
+Work Log:
+- User reported "数列极限显示的不对，点和线都分离了" and asked about "收敛速度" definition
+- Analyzed Limit1SVG component: found root cause - scatter points used `n * 0.15` as x-coordinate but `L + c/n` as y-coordinate, while curve used `y = L + c/x`. At x=0.15, curve gives y=L+6.67c but point has y=L+c. Complete misalignment.
+- Also identified that "收敛速度 c" label was misleading: in a_n = L + c/n, larger c means SLOWER convergence, not faster
+- Fixed Limit1SVG component in `src/components/lab/viewport-2d.tsx`:
+  - Changed formula from `a_n = L + c/n` to `a_n = L + 1/n^c` where c truly represents convergence speed
+  - Scatter points now use integer n (1 to 20) directly as x-coordinate
+  - Convergence curve uses same formula `y = L + 1/x^c`, matching scatter points perfectly
+  - Expanded x-range to [-1, 26] to show convergence over n=1 to n=25
+  - Increased curve resolution to 1000 steps for smooth rendering
+  - Added N_ε indicator (vertical dashed line showing when sequence enters ε-band)
+  - Added N_ε value display in overlay
+  - Added convergence rate notation O(1/n^c) in overlay
+  - Added x-axis label "n" instead of default "x"
+- Updated overlay content for limit1:
+  - Formula display: aₙ = L + 1/n^c
+  - Shows N_ε value, |a₂₀ - L|, and convergence rate O(1/n^c)
+- Updated mode definition in `src/store/lab-store.ts`:
+  - Changed paramLabel from "收敛速度 c" to "收敛阶数 c"
+  - Updated description explaining c as convergence order: c=1 → O(1/n), c=2 → O(1/n²)
+- Used agent-browser + VLM to verify fix: scatter points now perfectly aligned with convergence curve
+- All lint checks pass, dev server compiles successfully
+
+Stage Summary:
+- **Critical bug fixed**: Limit1SVG scatter points now align perfectly with convergence curve
+- **Convergence speed definition corrected**: Changed from misleading `a_n = L + c/n` (larger c = slower) to meaningful `a_n = L + 1/n^c` (larger c = faster)
+- **Parameter renamed**: "收敛速度 c" → "收敛阶数 c" for mathematical accuracy
+- **New features**: N_ε indicator line, convergence rate display O(1/n^c), x-axis label "n"
+- VLM confirmed: "The scatter points (colored dots) appear to be sitting exactly on the teal-colored convergence curve"
