@@ -305,30 +305,30 @@ function SVGAxes({ xRange = [-6, 6], yRange = [-4, 4], scale, offsetX, offsetY }
   return (
     <g className="svg-axes">
       {xTicks.map((x) => (
-        <line key={`grid-x-${x}`} x1={toSvgX(x)} y1={toSvgY(yRange[0])} x2={toSvgX(x)} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={0.5} opacity={0.08} className="text-foreground" />
+        <line key={`grid-x-${x}`} x1={toSvgX(x)} y1={toSvgY(yRange[0])} x2={toSvgX(x)} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
       ))}
       {yTicks.map((y) => (
-        <line key={`grid-y-${y}`} x1={toSvgX(xRange[0])} y1={toSvgY(y)} x2={toSvgX(xRange[1])} y2={toSvgY(y)} stroke="currentColor" strokeWidth={0.5} opacity={0.08} className="text-foreground" />
+        <line key={`grid-y-${y}`} x1={toSvgX(xRange[0])} y1={toSvgY(y)} x2={toSvgX(xRange[1])} y2={toSvgY(y)} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
       ))}
-      <line x1={toSvgX(xRange[0])} y1={axisOriginY} x2={toSvgX(xRange[1])} y2={axisOriginY} stroke="currentColor" strokeWidth={1.2} opacity={0.35} className="text-foreground" />
-      <line x1={axisOriginX} y1={toSvgY(yRange[0])} x2={axisOriginX} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={1.2} opacity={0.35} className="text-foreground" />
-      <polygon points={`${toSvgX(xRange[1])},${axisOriginY} ${toSvgX(xRange[1]) - 8},${axisOriginY - 4} ${toSvgX(xRange[1]) - 8},${axisOriginY + 4}`} fill="currentColor" opacity={0.35} className="text-foreground" />
-      <polygon points={`${axisOriginX},${toSvgY(yRange[1])} ${axisOriginX - 4},${toSvgY(yRange[1]) + 8} ${axisOriginX + 4},${toSvgY(yRange[1]) + 8}`} fill="currentColor" opacity={0.35} className="text-foreground" />
+      <line x1={toSvgX(xRange[0])} y1={axisOriginY} x2={toSvgX(xRange[1])} y2={axisOriginY} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
+      <line x1={axisOriginX} y1={toSvgY(yRange[0])} x2={axisOriginX} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
+      <polygon points={`${toSvgX(xRange[1])},${axisOriginY} ${toSvgX(xRange[1]) - 8},${axisOriginY - 4} ${toSvgX(xRange[1]) - 8},${axisOriginY + 4}`} fill="currentColor" opacity={0.5} className="text-foreground" />
+      <polygon points={`${axisOriginX},${toSvgY(yRange[1])} ${axisOriginX - 4},${toSvgY(yRange[1]) + 8} ${axisOriginX + 4},${toSvgY(yRange[1]) + 8}`} fill="currentColor" opacity={0.5} className="text-foreground" />
       {xTicks.filter(x => x !== 0).map((x) => (
         <g key={`xtick-${x}`}>
-          <line x1={toSvgX(x)} y1={axisOriginY - tickLen} x2={toSvgX(x)} y2={axisOriginY + tickLen} stroke="currentColor" strokeWidth={1} opacity={0.3} className="text-foreground" />
-          <text x={toSvgX(x)} y={axisOriginY + tickLen + 12} textAnchor="middle" fontSize={10} fill="currentColor" opacity={0.4} className="text-foreground">{x}</text>
+          <line x1={toSvgX(x)} y1={axisOriginY - tickLen} x2={toSvgX(x)} y2={axisOriginY + tickLen} stroke="currentColor" strokeWidth={1} opacity={0.4} className="text-foreground" />
+          <text x={toSvgX(x)} y={axisOriginY + tickLen + 12} textAnchor="middle" fontSize={10} fill="currentColor" opacity={0.55} className="text-foreground">{x}</text>
         </g>
       ))}
       {yTicks.filter(y => y !== 0).map((y) => (
         <g key={`ytick-${y}`}>
-          <line x1={axisOriginX - tickLen} y1={toSvgY(y)} x2={axisOriginX + tickLen} y2={toSvgY(y)} stroke="currentColor" strokeWidth={1} opacity={0.3} className="text-foreground" />
-          <text x={axisOriginX - tickLen - 4} y={toSvgY(y) + 4} textAnchor="end" fontSize={10} fill="currentColor" opacity={0.4} className="text-foreground">{y}</text>
+          <line x1={axisOriginX - tickLen} y1={toSvgY(y)} x2={axisOriginX + tickLen} y2={toSvgY(y)} stroke="currentColor" strokeWidth={1} opacity={0.4} className="text-foreground" />
+          <text x={axisOriginX - tickLen - 4} y={toSvgY(y) + 4} textAnchor="end" fontSize={10} fill="currentColor" opacity={0.55} className="text-foreground">{y}</text>
         </g>
       ))}
-      <text x={axisOriginX - 8} y={axisOriginY + 14} textAnchor="end" fontSize={10} fill="currentColor" opacity={0.4} className="text-foreground">O</text>
-      <text x={toSvgX(xRange[1]) - 4} y={axisOriginY + 22} textAnchor="end" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.5} className="text-foreground">x</text>
-      <text x={axisOriginX + 16} y={toSvgY(yRange[1]) + 6} textAnchor="start" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.5} className="text-foreground">y</text>
+      <text x={axisOriginX - 8} y={axisOriginY + 14} textAnchor="end" fontSize={10} fill="currentColor" opacity={0.55} className="text-foreground">O</text>
+      <text x={toSvgX(xRange[1]) - 4} y={axisOriginY + 22} textAnchor="end" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">x</text>
+      <text x={axisOriginX + 16} y={toSvgY(yRange[1]) + 6} textAnchor="start" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">y</text>
     </g>
   )
 }
