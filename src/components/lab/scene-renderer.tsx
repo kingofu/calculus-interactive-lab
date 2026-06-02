@@ -40,6 +40,59 @@ import {
   findMeanValueIntegralPoint,
 } from '@/lib/math-computations'
 
+// --- Draggable Overlay for 2D scene info cards ---
+function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
+  children: React.ReactNode; defaultX?: number; defaultY?: number
+}) {
+  const [pos, setPos] = useState({ x: defaultX, y: defaultY })
+  const [dragging, setDragging] = useState(false)
+  const dragStart = useRef({ x: 0, y: 0, posLeft: 0, posTop: 0 })
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setDragging(true)
+    dragStart.current = {
+      x: e.clientX, y: e.clientY,
+      posLeft: pos.x, posTop: pos.y
+    }
+  }, [pos])
+
+  useEffect(() => {
+    if (!dragging) return
+    const onMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStart.current.x
+      const dy = e.clientY - dragStart.current.y
+      setPos({
+        x: Math.max(0, dragStart.current.posLeft + dx),
+        y: Math.max(0, dragStart.current.posTop + dy)
+      })
+    }
+    const onMouseUp = () => setDragging(false)
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [dragging])
+
+  return (
+    <div
+      style={{ position: 'absolute', left: pos.x, top: pos.y, cursor: dragging ? 'grabbing' : 'default' }}
+      className={dragging ? 'select-none' : ''}
+    >
+      {/* Drag handle */}
+      <div
+        onMouseDown={onMouseDown}
+        className="flex justify-center py-1 cursor-grab active:cursor-grabbing"
+      >
+        <div className="w-8 h-1 rounded-full bg-emerald-400/60" />
+      </div>
+      {children}
+    </div>
+  )
+}
+
 // --- Tooltip helper ---
 function getPointerPos(e: ThreeEvent<PointerEvent>): { x: number; y: number } {
   // R3F events extend Three.js Intersection and include DOM event properties
@@ -4743,6 +4796,7 @@ function Limit1Scene() {
 
   return (
     <>
+      <Axes2D xRange={6.5} yRange={4} />
       {/* ε-band (horizontal planes at L±ε) */}
       <mesh position={[3, L + eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 2]} />
@@ -4796,7 +4850,7 @@ function Limit1Scene() {
         </line>
       ))}
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">数列极限</div>
             <div>aₙ = {L.toFixed(1)} + {c.toFixed(1)}/n</div>
@@ -4804,7 +4858,7 @@ function Limit1Scene() {
             <div>ε = {eps.toFixed(2)}</div>
             <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -4850,6 +4904,7 @@ function Limit2Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={4} />
       {/* Curve f(x) = sin(x)+1 */}
       <line>
         <bufferGeometry>
@@ -4914,7 +4969,7 @@ function Limit2Scene() {
         <lineBasicMaterial color="#f59e0b" opacity={0.5} transparent />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">函数极限 ε-δ</div>
             <div>f(x) = sin(x)+1, x₀ = π/2</div>
@@ -4922,7 +4977,7 @@ function Limit2Scene() {
             <div className="text-orange-500 dark:text-orange-400">δ ≈ {delta.toFixed(4)}</div>
             <div className="text-amber-600 dark:text-amber-400">L = f(x₀) = {L.toFixed(2)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -4951,6 +5006,7 @@ function Derivative1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={3} />
       {/* Curve f(x) = sin(x)+0.5x */}
       <line>
         <bufferGeometry>
@@ -4996,7 +5052,7 @@ function Derivative1Scene() {
         <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">导数定义 (割线→切线)</div>
             <div>f(x) = sin(x)+0.5x, x₀ = 1</div>
@@ -5005,7 +5061,7 @@ function Derivative1Scene() {
             <div>Δx = {deltaX.toFixed(2)}</div>
             <div className="text-amber-600 dark:text-amber-400">|差值| = {Math.abs(tangentSlope - secantSlope).toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5043,6 +5099,7 @@ function Derivative2Scene() {
 
   return (
     <>
+      <Axes2D xRange={3} yRange={5} />
       {/* f(x) = x³-3x (blue, offset z=-0.5) */}
       <line>
         <bufferGeometry>
@@ -5085,7 +5142,7 @@ function Derivative2Scene() {
       <Text position={[-2.5, 4, -0.5]} fontSize={0.2} color="#3b82f6">f(x)</Text>
       <Text position={[-2.5, 4, 0.5]} fontSize={0.2} color="#ef4444">f&apos;(x)</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">切线与导函数</div>
             <div>f(x) = x³-3x, f&apos;(x) = 3x²-3</div>
@@ -5093,7 +5150,7 @@ function Derivative2Scene() {
             <div className="text-blue-500 dark:text-blue-400">f(x₀) = {fAt(x0).toFixed(3)}</div>
             <div className="text-red-500 dark:text-red-400">f&apos;(x₀) = {dfAt(x0).toFixed(3)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5121,6 +5178,7 @@ function Derivative3Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={5} />
       {/* Curve f(x) = x² */}
       <line>
         <bufferGeometry>
@@ -5167,7 +5225,7 @@ function Derivative3Scene() {
         <lineBasicMaterial color="#94a3b8" opacity={0.6} transparent />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">微分与线性近似</div>
             <div>f(x) = x²</div>
@@ -5176,7 +5234,7 @@ function Derivative3Scene() {
             <div className="text-red-500 dark:text-red-400">dy = {dy.toFixed(4)}</div>
             <div className="text-amber-600 dark:text-amber-400">误差 = {Math.abs(deltaY - dy).toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5202,6 +5260,7 @@ function Rolle1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3} yRange={5} />
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5248,7 +5307,7 @@ function Rolle1Scene() {
         <lineBasicMaterial color="#ef4444" linewidth={2} />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">罗尔定理</div>
             <div>f(x) = {a.toFixed(1)}·(x-1)(x-3)(x-5)</div>
@@ -5256,7 +5315,7 @@ function Rolle1Scene() {
             <div className="text-red-500 dark:text-red-400">ξ₁ ≈ {xi1.toFixed(3)}, f(ξ₁) ≈ {fXi1.toFixed(3)}</div>
             <div className="text-red-500 dark:text-red-400">ξ₂ ≈ {xi2.toFixed(3)}, f(ξ₂) ≈ {fXi2.toFixed(3)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5286,6 +5345,7 @@ function Lagrange1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={4} />
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5322,7 +5382,7 @@ function Lagrange1Scene() {
         <meshPhongMaterial color="#3b82f6" />
       </mesh>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">拉格朗日中值定理</div>
             <div>f(x) = {a.toFixed(1)}·(x³-6x²+11x)</div>
@@ -5330,7 +5390,7 @@ function Lagrange1Scene() {
             <div className="text-red-500 dark:text-red-400">f&apos;(ξ) = {tangentSlope.toFixed(4)}</div>
             <div>ξ ≈ {xi.toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5371,6 +5431,7 @@ function IndefIntegral1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3} yRange={6} />
       {/* Family of curves F(x) = x² + C */}
       {curves.map((curve, idx) => (
         <line key={idx}>
@@ -5390,14 +5451,14 @@ function IndefIntegral1Scene() {
       <Text position={[-2.5, -5, -1]} fontSize={0.2} color="#94a3b8">f(x)=2x</Text>
       <Text position={[-2.5, 5, 0]} fontSize={0.2} color="#14b8a6">F(x)=x²+C</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">原函数族</div>
             <div>∫2x dx = x² + C</div>
             <div>曲线数量: {numCurves}</div>
             <div>C ∈ [{(-4).toFixed(1)}, {(4).toFixed(1)}]</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5471,6 +5532,7 @@ function Ftc1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={4} />
       {/* f(x) curve at z=-1 */}
       <line>
         <bufferGeometry>
@@ -5511,7 +5573,7 @@ function Ftc1Scene() {
       <Text position={[-3, 2, -1]} fontSize={0.2} color="#14b8a6">f(x)</Text>
       <Text position={[-3, 2, 1]} fontSize={0.2} color="#f59e0b">Φ(x)</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">微积分基本定理</div>
             <div>f(x) = sin(x)+1</div>
@@ -5520,7 +5582,7 @@ function Ftc1Scene() {
             <div className="text-amber-600 dark:text-amber-400">Φ({upperLimit.toFixed(1)}) = {phiAtX.toFixed(4)}</div>
             <div>Φ&apos;(x) = f(x) ✓</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5584,6 +5646,7 @@ function MeanValueIntegral1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={4} />
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5613,7 +5676,7 @@ function MeanValueIntegral1Scene() {
         <meshPhongMaterial color="#ef4444" />
       </mesh>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">积分中值定理</div>
             <div>f(x) = {a.toFixed(1)}·sin(x)+1</div>
@@ -5622,7 +5685,7 @@ function MeanValueIntegral1Scene() {
             <div className="text-red-500 dark:text-red-400">ξ ≈ {xi.toFixed(4)}</div>
             <div>f(ξ) = {(a * Math.sin(xi) + 1).toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -5694,6 +5757,7 @@ function Area1Scene() {
 
   return (
     <>
+      <Axes2D xRange={3.5} yRange={3} />
       {/* f(x) = a+cos(x) */}
       <line>
         <bufferGeometry>
@@ -5715,14 +5779,14 @@ function Area1Scene() {
       <Text position={[-3.5, a + 1, 0]} fontSize={0.18} color="#14b8a6" anchorX="left">f(x)={a.toFixed(1)}+cos(x)</Text>
       <Text position={[-3.5, -1.5, 0]} fontSize={0.18} color="#f59e0b" anchorX="left">g(x)=sin(x)</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
             <div className="text-teal-600 dark:text-teal-400 font-semibold">曲线间面积</div>
             <div>S = ∫|f(x)-g(x)|dx</div>
             <div className="text-emerald-600 dark:text-emerald-400">面积 = {area.toFixed(4)}</div>
             <div>间距 a = {a.toFixed(1)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </>
   )
@@ -6020,13 +6084,13 @@ function Continuity1Scene() {
         </>
       )}
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-green-600 dark:text-green-400 font-semibold">连续函数 f(x) = x²</div>
             {!isContinuous && <div className="text-red-600 dark:text-red-400 font-semibold">不连续函数 g(x)：x=0处跳跃间断</div>}
             <div className="text-muted-foreground mt-1">连续性: {isContinuous ? '✓ 连续' : '✗ 不连续'}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6114,13 +6178,13 @@ function Discontinuity1Scene() {
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[oscPts, 3]} /></bufferGeometry><lineBasicMaterial color="#8b5cf6" linewidth={2} /></line>
       </>)}
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="font-semibold" style={{ color: info.color }}>{info.name}</div>
             <div className="text-muted-foreground">{info.desc}</div>
             <div className="text-muted-foreground mt-1">类型 {dtype}/4：1=可去 2=跳跃 3=无穷 4=振荡</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6196,13 +6260,13 @@ function ImportantLimits1Scene() {
       <mesh position={[xVal, expVal - 1.5, 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
 
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x → 1：x={xVal.toFixed(2)} 时 = {sinVal.toFixed(4)}</div>
             <div className="text-amber-600 dark:text-amber-400 font-semibold">(1+1/x)^x → e：x={xVal.toFixed(2)} 时 = {expVal.toFixed(4)}</div>
             <div className="text-muted-foreground">e ≈ {Math.E.toFixed(6)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6265,13 +6329,13 @@ function Lhopital1Scene() {
       <mesh position={[eps, fPrimeOverGPrimeVal, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
 
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x = {fOverGVal.toFixed(4)}</div>
             <div className="text-red-600 dark:text-red-400 font-semibold">cos(x)/1 = {fPrimeOverGPrimeVal.toFixed(4)}</div>
             <div className="text-green-600 dark:text-green-400 mt-1">极限值 L = 1</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6325,14 +6389,14 @@ function Monotonicity1Scene() {
       <mesh position={[-1, a * (-1 + 3), 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
       <mesh position={[1, a * (1 - 3), 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f97316" /></mesh>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x³-3x)</div>
             <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(3x²-3)</div>
             <div className="text-green-600">绿色: f&apos;&gt;0 递增</div>
             <div className="text-orange-600">橙色: f&apos;&lt;0 递减</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6387,14 +6451,14 @@ function Extrema1Scene() {
       <Text position={[-sqrt2, a * (4 - 8) + 0.4, 0]} fontSize={0.15} color="#22c55e">极小</Text>
       <Text position={[sqrt2, a * (4 - 8) + 0.4, 0]} fontSize={0.15} color="#22c55e">极小</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x⁴-4x²)</div>
             <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(4x³-8x)</div>
             <div className="text-red-600">红色: 极大值点(x=0)</div>
             <div className="text-green-600">绿色: 极小值点(x=±√2)</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6432,14 +6496,14 @@ function Concavity1Scene() {
       <mesh position={[0, 0, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
       <Text position={[0.2, 0.3, 0]} fontSize={0.18} color="#22c55e">拐点</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-amber-600 dark:text-amber-400 font-semibold">f(x) = {a.toFixed(1)}x³</div>
             <div className="text-blue-600">蓝色: 凹区间(x&gt;0, f&apos;&apos;&gt;0)</div>
             <div className="text-red-600">红色: 凸区间(x&lt;0, f&apos;&apos;&lt;0)</div>
             <div className="text-green-600">拐点: x=0, f&apos;&apos;(0)=0</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6503,14 +6567,14 @@ function Curvature1Scene() {
       {/* Center of curvature */}
       <mesh position={[cx, cy, 0]}><sphereGeometry args={[0.06, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = cos(x)</div>
             <div className="text-red-600">曲率 κ = {kappa.toFixed(4)}</div>
             <div className="text-amber-600">曲率半径 R = {R.toFixed(4)}</div>
             <div className="text-muted-foreground">观察点 x₀ = {x0.toFixed(2)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6551,7 +6615,7 @@ function HigherDerivative1Scene() {
         </line>
       ) : null)}
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             {Array.from({ length: n + 1 }, (_, i) => (
               <div key={i} style={{ color: colors[i] }} className={i === n ? 'font-semibold' : 'opacity-70'}>
@@ -6560,7 +6624,7 @@ function HigherDerivative1Scene() {
             ))}
             <div className="text-muted-foreground mt-1">当前阶数: n = {n}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6623,13 +6687,13 @@ function Substitution1Scene() {
       <Text position={[-2.5, -2, 0]} fontSize={0.2} color="#3b82f6">原函数 f(g(x))g&apos;(x)</Text>
       <Text position={[0, 6, 0]} fontSize={0.2} color="#ef4444">换元后 f(u)</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-blue-600 dark:text-blue-400 font-semibold">原积分变量 x</div>
             <div className="text-red-600 dark:text-red-400 font-semibold">换元: {subLabels[st - 1]}</div>
             <div className="text-muted-foreground">类型 {st}/3</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6690,14 +6754,14 @@ function IntegrationByParts1Scene() {
       <Text position={[-2.5, 2, 0]} fontSize={0.2} color="#3b82f6">u(x)</Text>
       <Text position={[-2.5, 5, 0]} fontSize={0.2} color="#ef4444">v(x)</Text>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="font-semibold text-emerald-600">∫u dv = uv - ∫v du</div>
             <div className="text-blue-600 dark:text-blue-400">u(x) (蓝色)</div>
             <div className="text-red-600 dark:text-red-400">v(x) (红色)</div>
             <div className="text-muted-foreground">{uvLabel}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6749,7 +6813,7 @@ function ImproperIntegral1Scene() {
         <lineBasicMaterial color={convergent ? '#3b82f6' : '#ef4444'} linewidth={2} />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="font-semibold" style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
               ∫₁^∞ 1/x^{p.toFixed(1)} dx
@@ -6760,7 +6824,7 @@ function ImproperIntegral1Scene() {
             <div className="text-muted-foreground">近似值 ≈ {integralVal.toFixed(4)}</div>
             <div className="text-muted-foreground">p = {p.toFixed(1)} {convergent ? '(p>1)' : '(p≤1)'}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6821,13 +6885,13 @@ function PolarArea1Scene() {
         <lineBasicMaterial color="#8b5cf6" linewidth={2} />
       </line>
       <Html fullscreen>
-        <div className="absolute top-12 left-3 pointer-events-none">
+        <DraggableOverlay>
           <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
             <div className="text-violet-600 dark:text-violet-400 font-semibold">r = {a.toFixed(1)} + cos(θ)</div>
             <div className="text-violet-600">S = ½∫r²(θ)dθ</div>
             <div className="text-emerald-600 dark:text-emerald-400">S = π({a.toFixed(1)}² + ½) = {area.toFixed(4)}</div>
           </div>
-        </div>
+        </DraggableOverlay>
       </Html>
     </group>
   )
