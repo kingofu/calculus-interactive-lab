@@ -2883,3 +2883,77 @@ Stage Summary:
 - **Bug fixed**: All 3D mode floating text boxes are now draggable (was: 31 non-draggable)
 - **Bug fixed**: Double integral concept steps no longer have origin jumps (consistent [-2,2] range)
 - All lint checks pass, dev server compiles successfully
+
+---
+Task ID: 4
+Agent: Mode Cleanup Agent
+Task: Delete 10 modes inappropriate for geometric representation
+
+Work Log:
+- Read worklog.md to understand project status
+- Searched entire `src/` directory for all 10 modes to delete:
+  1. lhopital1 (洛必达法则)
+  2. substitution1 (换元积分法)
+  3. integration_by_parts1 (分部积分法)
+  4. higher_derivative1 (高阶导数)
+  5. important_limits1 (重要极限)
+  6. convergence2 (误差分析)
+  7. prop1 (常数倍性质)
+  8. prop2 (加减性质)
+  9. prop4 (常函数积分)
+  10. prop5 (比较性质)
+- **Search results**: 6 of the 10 modes (lhopital1, substitution1, integration_by_parts1, higher_derivative1, important_limits1, convergence2) were already completely absent from the codebase — they had never been implemented or had been removed in earlier refactors
+- **Found orphaned references** for prop1, prop2, prop4, prop5 in `src/components/lab/info-panel.tsx` — these were stale entries in the `relatedFormulas` map left over from when those modes existed in earlier versions
+- Removed prop1, prop2, prop4, prop5 entries from `relatedFormulas` map in `src/components/lab/info-panel.tsx`
+- Verified all 9 target files:
+  - `src/store/lab-store.ts` — No references found (modes not in LabMode type or modeInfo)
+  - `src/components/lab/sidebar.tsx` — No references found (modes not in sidebar navigation)
+  - `src/components/lab/viewport-2d.tsx` — No references found
+  - `src/components/lab/viewport.tsx` — No references found (no camera presets/backgrounds for these modes)
+  - `src/components/lab/scene-renderer.tsx` — No references found (no scene cases for these modes)
+  - `src/hooks/use-computed-values.ts` — No references found (no computed value cases)
+  - `src/components/lab/info-panel.tsx` — **Cleaned up** prop1, prop2, prop4, prop5 from relatedFormulas map
+  - `src/components/lab/scene-error-boundary.tsx` — No references found (modes not in allModes list)
+  - `src/app/page.tsx` — No references found (modes not in allModes array)
+- Did NOT delete math computation functions from math-computations.ts as instructed
+- Ran `bun run lint` — zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **6 modes were already fully removed** from the codebase: lhopital1, substitution1, integration_by_parts1, higher_derivative1, important_limits1, convergence2
+- **4 modes had orphaned data cleaned up**: prop1, prop2, prop4, prop5 relatedFormulas entries removed from info-panel.tsx
+- All 9 target files verified clean of references to the 10 deleted modes
+- Lint passes with zero errors
+
+---
+Task ID: 16
+Agent: Main
+Task: Fix step2 coordinate range, fix draggable overlay background movement, cleanup remaining tasks
+
+Work Log:
+- **Fix step2 (网格划分) coordinate range**:
+  - Removed common XYGrid (size=4, range -4 to 4) from step2 to prevent visual confusion
+  - Added custom Axes (length=3) and AxisLabels for step2 matching region D range [-2, 2]
+  - Added GridCellFills component: alternating light green squares showing grid cell subdivision within region D
+  - Result: step2 now shows only the relevant coordinate range [-2, 2] with clear grid subdivision
+- **Fix draggable overlay background movement**:
+  - Added `overlayDragging` state to Zustand store (lab-store.ts)
+  - Updated DraggableOverlay to set `overlayDragging=true` on drag start, `false` on drag end
+  - Added `e.stopPropagation()` and `e.preventDefault()` to mouse/touch event handlers
+  - Added `pointer-events: auto`, `touch-action: none`, `user-select: none` to overlay container
+  - Added `enabled={!overlayDragging}` prop to OrbitControls to disable 3D rotation during drag
+  - Added `pointer-events: none` to Canvas wrapper div when overlay is being dragged
+  - Added touch event support (onTouchStart, onTouchMove, onTouchEnd)
+  - Result: dragging info panels no longer causes 3D scene to rotate/move
+- **Remove 最近访问 feature**: Already removed from codebase in previous session
+- **Delete 10 modes**: 6 already removed, cleaned up 4 orphaned prop1/prop2/prop4/prop5 entries from info-panel.tsx
+- **viewType fixes**: All already correct - rect_approx='2d', arc_length1='2d', fourier1='2d', surface_integral1 in correct chapter
+- Removed dead 3D scene code for rect_approx (was already using 2D rendering)
+- Created cron job for periodic 15-minute review
+
+Stage Summary:
+- **step2 coordinate range fixed**: Custom axes + grid cell fills, no more confusing common grid overlay
+- **Draggable overlay fixed**: Background stays still when dragging info panels (OrbitControls disabled + pointer-events blocked)
+- **All pending cleanup tasks completed**: 最近访问 removed, 10 modes deleted (already gone), viewType corrections verified
+- Lint passes with zero errors, dev server compiles successfully
+- Cron job created for periodic review (15-minute interval)

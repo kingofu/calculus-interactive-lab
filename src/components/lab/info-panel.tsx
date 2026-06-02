@@ -252,25 +252,9 @@ const relatedFormulas: Record<string, { formula: string; label: string }[]> = {
     { formula: 'V = \\iint_D f(x,y)\\,d\\sigma', label: '曲顶柱体体积' },
     { formula: '\\lambda \\to 0 \\Rightarrow S_n \\to I', label: '极限过程' },
   ],
-  prop1: [
-    { formula: '\\iint_D f\\,d\\sigma + \\iint_D f\\,d\\sigma = 2\\iint_D f\\,d\\sigma', label: '特殊情况 k=2' },
-    { formula: 'k=0 \\Rightarrow \\iint_D 0\\,d\\sigma = 0', label: '特殊情况 k=0' },
-  ],
-  prop2: [
-    { formula: '\\iint_D (f+g)\\,d\\sigma = \\iint_D f\\,d\\sigma + \\iint_D g\\,d\\sigma', label: '加法' },
-    { formula: '\\iint_D (f-g)\\,d\\sigma = \\iint_D f\\,d\\sigma - \\iint_D g\\,d\\sigma', label: '减法' },
-  ],
   prop3: [
     { formula: 'D_1 \\cap D_2 = \\emptyset', label: '无公共内点' },
     { formula: 'S_D = S_{D_1} + S_{D_2}', label: '面积可加' },
-  ],
-  prop4: [
-    { formula: 'S_D = \\iint_D d\\sigma', label: '区域面积' },
-    { formula: '\\iint_D 1\\,d\\sigma = S_D', label: '单位函数' },
-  ],
-  prop5: [
-    { formula: 'f \\leq g \\Rightarrow V_f \\leq V_g', label: '体积比较' },
-    { formula: '|\\iint_D f\\,d\\sigma| \\leq \\iint_D |f|\\,d\\sigma', label: '绝对值不等式' },
   ],
   prop6: [
     { formula: 'm = \\min_D f,\\quad M = \\max_D f', label: '最值' },

@@ -268,7 +268,7 @@ function LoadingIndicator() {
 }
 
 export function Viewport() {
-  const { mode, autoRotate, setAutoRotate } = useLabStore()
+  const { mode, autoRotate, setAutoRotate, overlayDragging } = useLabStore()
   const info = modeInfo[mode]
   const cameraConfig = getCameraForMode(mode)
   const bgClass = getBackgroundForMode(mode)
@@ -429,6 +429,7 @@ export function Viewport() {
         <Viewport2D />
       ) : (
         /* 3D mode: perspective Canvas with orbit controls */
+        <div className="w-full h-full" style={{ pointerEvents: overlayDragging ? 'none' : 'auto' }}>
         <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
           <Suspense fallback={<LoadingIndicator />}>
             <Canvas
@@ -445,6 +446,7 @@ export function Viewport() {
               <SceneRenderer />
               <OrbitControls
                 key={`orbit-3d-${conceptSteps.includes(mode as LabMode) ? 'concept' : mode}-${sceneKey}`}
+                enabled={!overlayDragging}
                 enableDamping
                 dampingFactor={0.1}
                 rotateSpeed={0.5}
@@ -457,6 +459,7 @@ export function Viewport() {
             </Canvas>
           </Suspense>
         </SceneErrorBoundary>
+        </div>
       )}
 
       {/* Interactive hover tooltip overlay */}

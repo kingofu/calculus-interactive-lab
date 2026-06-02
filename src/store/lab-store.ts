@@ -85,11 +85,13 @@ interface LabState {
   autoTourActive: boolean
   autoRotate: boolean
   tooltip: TooltipData | null
+  overlayDragging: boolean
   setMode: (mode: LabMode) => void
   setParamValue: (value: number) => void
   setParamValue2: (value: number) => void
   setAutoTourActive: (active: boolean) => void
   setAutoRotate: (active: boolean) => void
+  setOverlayDragging: (dragging: boolean) => void
   toggleFavorite: (mode: LabMode) => void
   hydrateFavorites: () => void
   showTooltip: (data: TooltipData) => void
@@ -104,6 +106,7 @@ export const useLabStore = create<LabState>((set) => ({
   autoTourActive: false,
   autoRotate: true,
   tooltip: null,
+  overlayDragging: false,
   setMode: (mode) => {
     const info = modeInfo[mode]
     set((state) => {
@@ -121,6 +124,7 @@ export const useLabStore = create<LabState>((set) => ({
   setParamValue2: (paramValue2) => set({ paramValue2 }),
   setAutoTourActive: (autoTourActive) => set({ autoTourActive }),
   setAutoRotate: (autoRotate) => set({ autoRotate }),
+  setOverlayDragging: (overlayDragging) => set({ overlayDragging }),
   toggleFavorite: (mode) => {
     set((state) => {
       const next = new Set(state.favorites)

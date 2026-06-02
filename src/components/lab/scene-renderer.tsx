@@ -39,7 +39,7 @@ import {
   findMeanValueIntegralPoint,
 } from '@/lib/math-computations'
 
-// --- Draggable Overlay for 2D scene info cards ---
+// --- Draggable Overlay for 3D scene info cards ---
 function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
   children: React.ReactNode; defaultX?: number; defaultY?: number
 }) {
@@ -47,18 +47,32 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posLeft: 0, posTop: 0 })
 
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
+  const startDrag = useCallback((clientX: number, clientY: number) => {
     setDragging(true)
+    useLabStore.getState().setOverlayDragging(true)
     dragStart.current = {
-      x: e.clientX, y: e.clientY,
+      x: clientX, y: clientY,
       posLeft: pos.x, posTop: pos.y
     }
   }, [pos])
 
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    startDrag(e.clientX, e.clientY)
+  }, [startDrag])
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
+    if (e.touches.length === 1) {
+      startDrag(e.touches[0].clientX, e.touches[0].clientY)
+    }
+  }, [startDrag])
+
   useEffect(() => {
     if (!dragging) return
     const onMouseMove = (e: MouseEvent) => {
+      e.preventDefault()
       const dx = e.clientX - dragStart.current.x
       const dy = e.clientY - dragStart.current.y
       setPos({
@@ -66,23 +80,51 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
         y: Math.max(0, dragStart.current.posTop + dy)
       })
     }
-    const onMouseUp = () => setDragging(false)
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - dragStart.current.x
+        const dy = e.touches[0].clientY - dragStart.current.y
+        setPos({
+          x: Math.max(0, dragStart.current.posLeft + dx),
+          y: Math.max(0, dragStart.current.posTop + dy)
+        })
+      }
+    }
+    const stopDrag = () => {
+      setDragging(false)
+      useLabStore.getState().setOverlayDragging(false)
+    }
     document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('mouseup', stopDrag)
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
+    document.addEventListener('touchend', stopDrag)
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener('mouseup', stopDrag)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('touchend', stopDrag)
     }
   }, [dragging])
 
   return (
     <div
-      style={{ position: 'absolute', left: pos.x, top: pos.y, cursor: dragging ? 'grabbing' : 'default' }}
+      style={{
+        position: 'absolute',
+        left: pos.x,
+        top: pos.y,
+        cursor: dragging ? 'grabbing' : 'default',
+        pointerEvents: 'auto',
+        touchAction: 'none',
+        userSelect: 'none',
+      }}
       className={dragging ? 'select-none' : ''}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       {/* Drag handle */}
       <div
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         className="flex justify-center py-1 cursor-grab active:cursor-grabbing"
       >
         <div className="w-8 h-1 rounded-full bg-emerald-400/60" />
@@ -281,6 +323,38 @@ function XYGrid({ size = 4, divisions = 8, color = '#888888' }: { size?: number;
       </bufferGeometry>
       <lineBasicMaterial color={color} transparent opacity={0.3} />
     </lineSegments>
+  )
+}
+
+// --- Grid cell fills for step2 (subdivision visualization) ---
+function GridCellFills({ size = 2, divisions = 5 }: { size?: number; divisions?: number }) {
+  const meshes = useMemo(() => {
+    const result: { x: number; z: number; w: number; d: number }[] = []
+    const step = (2 * size) / divisions
+    for (let i = 0; i < divisions; i++) {
+      for (let j = 0; j < divisions; j++) {
+        const x = -size + (i + 0.5) * step
+        const z = -size + (j + 0.5) * step
+        result.push({ x, z, w: step, d: step })
+      }
+    }
+    return result
+  }, [size, divisions])
+
+  return (
+    <group>
+      {meshes.map((cell, idx) => (
+        <mesh key={idx} position={[cell.x, 0.005, cell.z]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[cell.w * 0.95, cell.d * 0.95]} />
+          <meshBasicMaterial
+            color={idx % 2 === 0 ? '#10b981' : '#34d399'}
+            transparent
+            opacity={0.12}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
   )
 }
 
@@ -6300,11 +6374,19 @@ export function SceneRenderer() {
       <hemisphereLight args={['#b1e1ff', '#b97a20', 0.3]} />
 
       {/* Common elements - only show 3D axes/grid for 3D modes */}
-      {modeInfo[mode]?.viewType !== '2d' && (
+      {/* step2 has its own custom grid, skip the common grid to avoid visual confusion */}
+      {modeInfo[mode]?.viewType !== '2d' && mode !== 'step2' && (
         <>
           <Axes length={axisLength} />
           <AxisLabels length={axisLength} />
           <XYGrid />
+        </>
+      )}
+      {/* step2: show axes and labels but with custom range matching region D */}
+      {mode === 'step2' && (
+        <>
+          <Axes length={3} />
+          <AxisLabels length={3} />
         </>
       )}
 
@@ -6321,6 +6403,8 @@ export function SceneRenderer() {
           <FlatPlane width={4} height={4} color="#10b981" opacity={0.2} />
           <RegionOutline size={2} />
           <XYGrid size={2} divisions={Math.round(paramValue)} color="#10b981" />
+          {/* Filled grid cells to show subdivision of region D */}
+          <GridCellFills size={2} divisions={Math.round(paramValue)} />
         </group>
       )}
 
@@ -6435,13 +6519,6 @@ export function SceneRenderer() {
           <CartesianStrips n={Math.round(paramValue)} type="y" />
           <Surface func={(x, y) => fCartesian((x + 2) / 4, (y + 2) / 4)} xRange={[-2, 2]} yRange={[-2, 2]} color="#f59e0b" opacity={0.3} resolution={30} />
           <CartesianRegion type="y" />
-        </AutoRotate>
-      )}
-
-      {mode === 'rect_approx' && (
-        <AutoRotate speed={0.001}>
-          <RectApproxBars n={Math.round(paramValue)} />
-          <RectApproxCurve />
         </AutoRotate>
       )}
 
