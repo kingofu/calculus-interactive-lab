@@ -34,15 +34,15 @@ import { cn } from '@/lib/utils'
 
 // All mode keys in order for keyboard navigation
 const allModes: LabMode[] = [
-  'limit1', 'limit2', 'continuity1', 'discontinuity1', 'important_limits1',
-  'derivative1', 'derivative2', 'derivative3', 'higher_derivative1', 'lhopital1',
+  'limit1', 'limit2', 'continuity1', 'discontinuity1',
+  'derivative1', 'derivative2', 'derivative3',
   'rolle1', 'lagrange1',
   'monotonicity1', 'extrema1', 'concavity1', 'curvature1',
-  'indef_integral1', 'substitution1', 'integration_by_parts1',
+  'indef_integral1',
   'rect_approx', 'ftc1', 'mean_value_integral1', 'improper_integral1',
   'area1', 'volume_rev1', 'polar_area1',
   'step1', 'step2', 'step3', 'step4',
-  'prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7',
+  'prop3', 'prop6', 'prop7',
   'parity1', 'parity2',
   'cartesian1', 'cartesian2',
   'polar1', 'polar2',
@@ -50,7 +50,7 @@ const allModes: LabMode[] = [
   'fubini1',
   'surface_area1',
   'sphere_cyl1', 'sphere_cyl2',
-  'convergence1', 'convergence2',
+  'convergence1',
   'triple1',
   'cylindrical1', 'spherical1',
   'green1',

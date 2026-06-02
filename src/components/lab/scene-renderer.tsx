@@ -6766,55 +6766,10 @@ export function SceneRenderer() {
         </AutoRotate>
       )}
 
-      {mode === 'prop1' && (
-        <AutoRotate speed={0.003}>
-          <Surface func={f} color="#10b981" opacity={0.5} resolution={30} />
-          <Surface func={(x, y) => paramValue * f(x, y)} color="#f59e0b" opacity={0.4} resolution={30} />
-        </AutoRotate>
-      )}
-
-      {mode === 'prop2' && (
-        <AutoRotate speed={0.003}>
-          <Surface func={f} color="#10b981" opacity={0.35} resolution={30} />
-          <Surface func={g} color="#6366f1" opacity={0.35} resolution={30} />
-          <Surface func={(x, y) => (1 - paramValue) * f(x, y) + paramValue * g(x, y)} color="#f59e0b" opacity={0.6} resolution={30} />
-        </AutoRotate>
-      )}
-
       {mode === 'prop3' && (
         <AutoRotate speed={0.003}>
           <SurfaceSplit func={f} splitX={paramValue} color1="#10b981" color2="#f59e0b" resolution={30} />
           <DividingPlane x={paramValue} height={5} />
-        </AutoRotate>
-      )}
-
-      {mode === 'prop4' && (
-        <AutoRotate speed={0.003}>
-          <FlatPlane width={4} height={4} y={paramValue} color="#10b981" opacity={0.5} />
-          {/* Side walls to show it's a flat-topped solid */}
-          <mesh position={[0, paramValue / 2, -2]}>
-            <planeGeometry args={[4, paramValue]} />
-            <meshPhongMaterial color="#10b981" transparent opacity={0.3} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[0, paramValue / 2, 2]} rotation={[0, Math.PI, 0]}>
-            <planeGeometry args={[4, paramValue]} />
-            <meshPhongMaterial color="#10b981" transparent opacity={0.3} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[-2, paramValue / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <planeGeometry args={[4, paramValue]} />
-            <meshPhongMaterial color="#10b981" transparent opacity={0.3} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[2, paramValue / 2, 0]} rotation={[0, -Math.PI / 2, 0]}>
-            <planeGeometry args={[4, paramValue]} />
-            <meshPhongMaterial color="#10b981" transparent opacity={0.3} side={THREE.DoubleSide} />
-          </mesh>
-        </AutoRotate>
-      )}
-
-      {mode === 'prop5' && (
-        <AutoRotate speed={0.003}>
-          <Surface func={f} color="#3b82f6" opacity={0.6} resolution={30} />
-          <Surface func={(x, y) => f(x, y) + paramValue} color="#22c55e" opacity={0.4} resolution={30} />
         </AutoRotate>
       )}
 
@@ -6947,10 +6902,6 @@ export function SceneRenderer() {
 
       {mode === 'convergence1' && (
         <ConvergenceScene />
-      )}
-
-      {mode === 'convergence2' && (
-        <ErrorAnalysisScene />
       )}
 
       {mode === 'triple1' && (

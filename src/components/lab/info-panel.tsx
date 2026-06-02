@@ -312,10 +312,7 @@ const relatedFormulas: Record<string, { formula: string; label: string }[]> = {
     { formula: '|S_n - I| \\to 0', label: '收敛定义' },
     { formula: 'S_n = \\sum f(x_i,y_j)\\Delta\\sigma_{ij}', label: '黎曼和' },
   ],
-  convergence2: [
-    { formula: 'E_n = O(1/n^2)\\text{(中点法)}', label: '中点法误差阶' },
-    { formula: 'E_n = O(1/n)\\text{(左端点法)}', label: '左端点误差阶' },
-  ],
+
   triple1: [
     { formula: '\\Delta V = \\Delta x \\Delta y \\Delta z', label: '体积元素' },
     { formula: 'f(x,y,z) = x^2+y^2+z^2', label: '被积函数' },
@@ -414,13 +411,13 @@ function getSectionColor(section: string) {
 // Map of modes in the same section for "related modes" feature
 const sectionModes: Record<string, LabMode[]> = {
   '二重积分概念步骤': ['step1', 'step2', 'step3', 'step4'],
-  '二重积分基本性质': ['prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7'],
+  '二重积分基本性质': ['prop3', 'prop6', 'prop7'],
   '二重积分与奇偶性': ['parity1', 'parity2'],
   '直角坐标系计算': ['cartesian1', 'cartesian2'],
   '极坐标系计算': ['polar1', 'polar2'],
   '矩形近似面积演示': ['rect_approx'],
   '球体与圆柱面相交': ['sphere_cyl1', 'sphere_cyl2'],
-  '数值积分收敛演示': ['convergence1', 'convergence2'],
+  '数值积分收敛演示': ['convergence1'],
   '三重积分概念': ['triple1'],
   '变量代换': ['jacobian1'],
   '格林公式与线积分': ['green1'],

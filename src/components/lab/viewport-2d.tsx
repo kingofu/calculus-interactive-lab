@@ -184,11 +184,8 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   if (mode === 'area1') return 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/20'
   if (mode === 'volume_rev1') return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
-  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
-  if (mode === 'lhopital1') return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+  if (mode === 'continuity1' || mode === 'discontinuity1') return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
   if (mode === 'monotonicity1' || mode === 'extrema1' || mode === 'concavity1' || mode === 'curvature1') return 'from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/20'
-  if (mode === 'higher_derivative1') return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
-  if (mode === 'substitution1' || mode === 'integration_by_parts1') return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
   if (mode === 'improper_integral1') return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   if (mode === 'polar_area1') return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
   if (mode.startsWith('step')) return 'from-emerald-50 to-slate-100 dark:from-emerald-950/50 dark:to-slate-900'
@@ -234,12 +231,9 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'bg-emerald-500'
   if (mode === 'area1') return 'bg-sky-500'
   if (mode === 'volume_rev1') return 'bg-sky-500'
-  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') return 'bg-rose-500'
-  if (mode === 'lhopital1') return 'bg-amber-500'
+  if (mode === 'continuity1' || mode === 'discontinuity1') return 'bg-rose-500'
   if (mode === 'monotonicity1' || mode === 'extrema1') return 'bg-teal-500'
   if (mode === 'concavity1' || mode === 'curvature1') return 'bg-cyan-500'
-  if (mode === 'higher_derivative1') return 'bg-amber-500'
-  if (mode === 'substitution1' || mode === 'integration_by_parts1') return 'bg-purple-500'
   if (mode === 'improper_integral1') return 'bg-emerald-500'
   if (mode === 'polar_area1') return 'bg-sky-500'
   if (mode.startsWith('step')) return 'bg-emerald-500'
@@ -841,73 +835,6 @@ function Discontinuity1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX
   )
 }
 
-// --- 14. important_limits1 (两个重要极限) ---
-function ImportantLimits1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
-  const { paramValue: xVal } = useLabStore()
-
-  const sinXPath = useMemo(() => curveToPath(
-    (x) => x > 0.001 ? Math.sin(x) / x + 4 : 5,
-    0.01, 10, 300, scale, offsetX, offsetY
-  ), [scale, offsetX, offsetY])
-
-  const expLimitPath = useMemo(() => curveToPath(
-    (x) => x > 0.1 ? Math.pow(1 + 1 / x, x) - 1.5 : Math.E - 1.5,
-    0.1, 10, 300, scale, offsetX, offsetY
-  ), [scale, offsetX, offsetY])
-
-  const sinVal = xVal > 0.001 ? Math.sin(xVal) / xVal : 1
-  const expVal = xVal > 0.1 ? Math.pow(1 + 1 / xVal, xVal) : Math.E
-
-  return (
-    <g>
-      <SVGAxes xRange={[-0.5, 11]} yRange={[-2, 6]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
-      {/* sin(x)/x → 1 curve (shifted up 4) */}
-      <path d={sinXPath} fill="none" stroke="#3b82f6" strokeWidth={2} />
-      <line x1={sx(0, scale, offsetX)} y1={sy(5, scale, offsetY)} x2={sx(10, scale, offsetX)} y2={sy(5, scale, offsetY)} stroke="#ef4444" strokeWidth={1} opacity={0.5} strokeDasharray="5,5" />
-      <text x={sx(10, scale, offsetX) + 5} y={sy(5, scale, offsetY)} fontSize={11} fill="#ef4444">y=1</text>
-      {/* (1+1/x)^x → e curve (shifted down 1.5) */}
-      <path d={expLimitPath} fill="none" stroke="#f59e0b" strokeWidth={2} />
-      <line x1={sx(0, scale, offsetX)} y1={sy(Math.E - 1.5, scale, offsetY)} x2={sx(10, scale, offsetX)} y2={sy(Math.E - 1.5, scale, offsetY)} stroke="#ef4444" strokeWidth={1} opacity={0.5} strokeDasharray="5,5" />
-      <text x={sx(10, scale, offsetX) + 5} y={sy(Math.E - 1.5, scale, offsetY)} fontSize={11} fill="#ef4444">y=e</text>
-      {/* Indicator dots */}
-      <circle cx={sx(xVal, scale, offsetX)} cy={sy(sinVal + 4, scale, offsetY)} r={5} fill="#3b82f6" />
-      <circle cx={sx(xVal, scale, offsetX)} cy={sy(expVal - 1.5, scale, offsetY)} r={5} fill="#f59e0b" />
-    </g>
-  )
-}
-
-// --- 15. lhopital1 (洛必达法则) ---
-function Lhopital1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
-  const { paramValue: eps } = useLabStore()
-
-  const fOverGPath = useMemo(() => {
-    const xMax = eps * 4
-    return curveToPath((x) => x > 0.001 ? Math.sin(x) / x : 1, 0.01, xMax, 200, scale, offsetX, offsetY)
-  }, [eps, scale, offsetX, offsetY])
-
-  const fPrimeOverGPrimePath = useMemo(() => {
-    const xMax = eps * 4
-    return curveToPath((x) => Math.cos(x), 0.01, xMax, 200, scale, offsetX, offsetY)
-  }, [eps, scale, offsetX, offsetY])
-
-  const fOverGVal = eps > 0.001 ? Math.sin(eps) / eps : 1
-  const fPrimeOverGPrimeVal = Math.cos(eps)
-
-  return (
-    <g>
-      <SVGAxes xRange={[-0.5, 3.5]} yRange={[-0.5, 2]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
-      <path d={fOverGPath} fill="none" stroke="#3b82f6" strokeWidth={2} />
-      <path d={fPrimeOverGPrimePath} fill="none" stroke="#ef4444" strokeWidth={2} />
-      {/* Limit line y=1 */}
-      <line x1={sx(0, scale, offsetX)} y1={sy(1, scale, offsetY)} x2={sx(3, scale, offsetX)} y2={sy(1, scale, offsetY)} stroke="#22c55e" strokeWidth={1} opacity={0.5} strokeDasharray="5,5" />
-      <text x={sx(3.1, scale, offsetX)} y={sy(1, scale, offsetY)} fontSize={11} fill="#22c55e">L=1</text>
-      {/* Indicator dots */}
-      <circle cx={sx(eps, scale, offsetX)} cy={sy(fOverGVal, scale, offsetY)} r={5} fill="#3b82f6" />
-      <circle cx={sx(eps, scale, offsetX)} cy={sy(fPrimeOverGPrimeVal, scale, offsetY)} r={5} fill="#ef4444" />
-    </g>
-  )
-}
-
 // --- 16. monotonicity1 (函数单调性) ---
 function Monotonicity1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
   const { paramValue: a } = useLabStore()
@@ -1031,96 +958,6 @@ function Curvature1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: nu
   )
 }
 
-// --- 20. higher_derivative1 (高阶导数) ---
-function HigherDerivative1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
-  const { paramValue } = useLabStore()
-  const n = Math.round(paramValue)
-  const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4']
-  const labels = ['f(x)=sin(x)', "f'(x)=cos(x)", "f''(x)=-sin(x)", "f'''(x)=-cos(x)", "f⁽⁴⁾(x)=sin(x)", "f⁽⁵⁾(x)=cos(x)"]
-
-  const allCurves = useMemo(() => {
-    const curves: string[] = []
-    for (let d = 0; d <= 5; d++) {
-      const phase = -d * Math.PI / 2
-      curves.push(curveToPath((x) => Math.sin(x + phase), -5, 5, 300, scale, offsetX, offsetY))
-    }
-    return curves
-  }, [scale, offsetX, offsetY])
-
-  return (
-    <g>
-      <SVGAxes xRange={[-5.5, 5.5]} yRange={[-2, 2]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
-      {allCurves.map((path, idx) => idx <= n ? (
-        <path key={idx} d={path} fill="none" stroke={colors[idx]} strokeWidth={idx === n ? 2.5 : 1.5} opacity={idx === n ? 1 : 0.35} />
-      ) : null)}
-      {/* Legend */}
-      {labels.slice(0, n + 1).map((label, i) => (
-        <text key={i} x={sx(4, scale, offsetX)} y={sy(1.5 - i * 0.5, scale, offsetY)} fontSize={10} fill={colors[i]} fontWeight={i === n ? 'bold' : 'normal'} opacity={i === n ? 1 : 0.7}>{label}</text>
-      ))}
-    </g>
-  )
-}
-
-// --- 21. substitution1 (换元积分法) ---
-function Substitution1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
-  const { paramValue: subType } = useLabStore()
-  const st = Math.round(subType)
-
-  const origPath = useMemo(() => {
-    const fn = st === 1
-      ? (x: number) => 2 * x * Math.cos(x * x)
-      : st === 2
-        ? (x: number) => 2 * x * Math.exp(-x * x * 0.3)
-        : (x: number) => Math.abs(x) < 1 ? x / Math.sqrt(Math.max(0.001, 1 - x * x)) : 0
-    return curveToPath((x) => { const y = fn(x); return Math.abs(y) < 5 ? y : NaN }, -2.5, 2.5, 300, scale, offsetX, offsetY)
-  }, [st, scale, offsetX, offsetY])
-
-  const subPath = useMemo(() => {
-    const fn = st === 1
-      ? (u: number) => Math.cos(u)
-      : st === 2
-        ? (u: number) => Math.exp(-u * 0.3)
-        : (u: number) => -1 / (2 * Math.sqrt(Math.max(0.001, u)))
-    return curveToPath((u) => { const y = fn(u); return Math.abs(y) < 5 ? y + 4 : NaN }, 0.01, 5, 300, scale, offsetX, offsetY)
-  }, [st, scale, offsetX, offsetY])
-
-  return (
-    <g>
-      <SVGAxes xRange={[-3, 5.5]} yRange={[-3, 6]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
-      <path d={origPath} fill="none" stroke="#3b82f6" strokeWidth={2} />
-      <path d={subPath} fill="none" stroke="#ef4444" strokeWidth={2} />
-      <text x={sx(-2.5, scale, offsetX)} y={sy(-2, scale, offsetY)} fontSize={11} fill="#3b82f6">原函数 f(g(x))g&apos;(x)</text>
-      <text x={sx(0, scale, offsetX)} y={sy(6, scale, offsetY)} fontSize={11} fill="#ef4444">换元后 f(u)</text>
-    </g>
-  )
-}
-
-// --- 22. integration_by_parts1 (分部积分法) ---
-function IntegrationByParts1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
-  const { paramValue: uType } = useLabStore()
-  const ut = Math.round(uType)
-
-  const uPath = useMemo(() => {
-    const fn = ut === 1 ? (x: number) => x : ut === 2 ? (x: number) => x * x : (x: number) => x > 0.01 ? Math.log(x) : -5
-    return curveToPath((x) => { const y = fn(x); return Math.abs(y) < 5 ? y : NaN }, -3, 3, 300, scale, offsetX, offsetY)
-  }, [ut, scale, offsetX, offsetY])
-
-  const vPath = useMemo(() => {
-    const fn = ut === 1 || ut === 2 ? (x: number) => Math.exp(x * 0.5) : (x: number) => x
-    return curveToPath((x) => { const y = fn(x); return Math.abs(y) < 5 ? y + 3 : NaN }, -3, 3, 300, scale, offsetX, offsetY)
-  }, [ut, scale, offsetX, offsetY])
-
-  return (
-    <g>
-      <SVGAxes xRange={[-3, 3]} yRange={[-4, 7]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
-      <path d={uPath} fill="none" stroke="#3b82f6" strokeWidth={2} />
-      <path d={vPath} fill="none" stroke="#ef4444" strokeWidth={2} />
-      <text x={sx(-2.5, scale, offsetX)} y={sy(2, scale, offsetY)} fontSize={12} fill="#3b82f6">u(x)</text>
-      <text x={sx(-2.5, scale, offsetX)} y={sy(5, scale, offsetY)} fontSize={12} fill="#ef4444">v(x)</text>
-    </g>
-  )
-}
-
 // --- 23. improper_integral1 (反常积分) ---
 function ImproperIntegral1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
   const { paramValue: p } = useLabStore()
@@ -1217,15 +1054,10 @@ function Scene2D({ mode, scale, offsetX, offsetY }: Scene2DProps) {
     case 'area1': return <Area1SVG {...props} />
     case 'continuity1': return <Continuity1SVG {...props} />
     case 'discontinuity1': return <Discontinuity1SVG {...props} />
-    case 'important_limits1': return <ImportantLimits1SVG {...props} />
-    case 'lhopital1': return <Lhopital1SVG {...props} />
     case 'monotonicity1': return <Monotonicity1SVG {...props} />
     case 'extrema1': return <Extrema1SVG {...props} />
     case 'concavity1': return <Concavity1SVG {...props} />
     case 'curvature1': return <Curvature1SVG {...props} />
-    case 'higher_derivative1': return <HigherDerivative1SVG {...props} />
-    case 'substitution1': return <Substitution1SVG {...props} />
-    case 'integration_by_parts1': return <IntegrationByParts1SVG {...props} />
     case 'improper_integral1': return <ImproperIntegral1SVG {...props} />
     case 'polar_area1': return <PolarArea1SVG {...props} />
     default:
@@ -1436,30 +1268,6 @@ function getOverlayContent(mode: LabMode): ReactNode {
         </div>
       )
     }
-    case 'important_limits1': {
-      const xVal = paramValue
-      const sinVal = xVal > 0.001 ? Math.sin(xVal) / xVal : 1
-      const expVal = xVal > 0.1 ? Math.pow(1 + 1 / xVal, xVal) : Math.E
-      return (
-        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x → 1：x={xVal.toFixed(2)} 时 = {sinVal.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400 font-semibold">(1+1/x)^x → e：x={xVal.toFixed(2)} 时 = {expVal.toFixed(4)}</div>
-          <div className="text-muted-foreground">e ≈ {Math.E.toFixed(6)}</div>
-        </div>
-      )
-    }
-    case 'lhopital1': {
-      const eps = paramValue
-      const fOverGVal = eps > 0.001 ? Math.sin(eps) / eps : 1
-      const fPrimeOverGPrimeVal = Math.cos(eps)
-      return (
-        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x = {fOverGVal.toFixed(4)}</div>
-          <div className="text-red-600 dark:text-red-400 font-semibold">cos(x)/1 = {fPrimeOverGPrimeVal.toFixed(4)}</div>
-          <div className="text-green-600 dark:text-green-400 mt-1">极限值 L = 1</div>
-        </div>
-      )
-    }
     case 'monotonicity1': {
       const a = paramValue
       return (
@@ -1505,42 +1313,6 @@ function getOverlayContent(mode: LabMode): ReactNode {
           <div className="text-red-600">曲率 κ = {kappa.toFixed(4)}</div>
           <div className="text-amber-600">曲率半径 R = {R.toFixed(4)}</div>
           <div className="text-muted-foreground">观察点 x₀ = {x0.toFixed(2)}</div>
-        </div>
-      )
-    }
-    case 'higher_derivative1': {
-      const n = Math.round(paramValue)
-      const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4']
-      const labels = ['f(x)=sin(x)', "f'(x)=cos(x)", "f''(x)=-sin(x)", "f'''(x)=-cos(x)", "f⁽⁴⁾(x)=sin(x)", "f⁽⁵⁾(x)=cos(x)"]
-      return (
-        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
-          {Array.from({ length: n + 1 }, (_, i) => (
-            <div key={i} style={{ color: colors[i] }} className={i === n ? 'font-semibold' : 'opacity-70'}>{labels[i]}</div>
-          ))}
-          <div className="text-muted-foreground mt-1">当前阶数: n = {n}</div>
-        </div>
-      )
-    }
-    case 'substitution1': {
-      const st = Math.round(paramValue)
-      const subLabels = ['u=x², ∫cos(u)du', 'u=x², ∫e^u du', 'u=1-x², -∫1/(2√u)du']
-      return (
-        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">原积分变量 x</div>
-          <div className="text-red-600 dark:text-red-400 font-semibold">换元: {subLabels[st - 1]}</div>
-          <div className="text-muted-foreground">类型 {st}/3</div>
-        </div>
-      )
-    }
-    case 'integration_by_parts1': {
-      const ut = Math.round(paramValue)
-      const uvLabel = ut === 1 ? 'u=x, dv=e^x dx' : ut === 2 ? 'u=x², dv=e^x dx' : 'u=ln(x), dv=x dx'
-      return (
-        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
-          <div className="font-semibold text-emerald-600">∫u dv = uv - ∫v du</div>
-          <div className="text-blue-600 dark:text-blue-400">u(x) (蓝色)</div>
-          <div className="text-red-600 dark:text-red-400">v(x) (红色)</div>
-          <div className="text-muted-foreground">{uvLabel}</div>
         </div>
       )
     }

@@ -83,11 +83,6 @@ export const modePresets: Partial<Record<LabMode, Preset[]>> = {
     { name: '中等', param1: 25, emoji: '📊' },
     { name: '精细', param1: 45, emoji: '📈' },
   ],
-  prop1: [
-    { name: '缩小', param1: 0.5, emoji: '🔍' },
-    { name: '标准', param1: 1.5, emoji: '⚖️' },
-    { name: '放大', param1: 2.8, emoji: '🔎' },
-  ],
   convergence1: [
     { name: '粗糙', param1: 5, emoji: '1️⃣' },
     { name: '中等', param1: 30, emoji: '5️⃣' },

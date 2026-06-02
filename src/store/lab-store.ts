@@ -3,27 +3,23 @@ import { create } from 'zustand'
 export type LabMode =
   // 一元微积分 - 函数与极限
   | 'limit1' | 'limit2'
-  | 'continuity1' | 'discontinuity1' | 'important_limits1'
+  | 'continuity1' | 'discontinuity1'
   // 一元微积分 - 导数与微分
   | 'derivative1' | 'derivative2' | 'derivative3'
-  | 'higher_derivative1'
   // 一元微积分 - 微分中值定理
   | 'rolle1' | 'lagrange1'
   // 一元微积分 - 导数的应用
   | 'monotonicity1' | 'extrema1' | 'concavity1' | 'curvature1'
   // 一元微积分 - 不定积分
   | 'indef_integral1'
-  | 'substitution1' | 'integration_by_parts1'
   // 一元微积分 - 定积分
   | 'ftc1' | 'mean_value_integral1'
   // 一元微积分 - 定积分应用
   | 'area1' | 'volume_rev1'
   | 'improper_integral1' | 'polar_area1'
-  // 一元微积分 - 洛必达法则
-  | 'lhopital1'
   // 多元微积分 - 二重积分基础
   | 'step1' | 'step2' | 'step3' | 'step4'
-  | 'prop1' | 'prop2' | 'prop3' | 'prop4' | 'prop5' | 'prop6' | 'prop7'
+  | 'prop3' | 'prop6' | 'prop7'
   | 'parity1' | 'parity2'
   // 多元微积分 - 积分计算方法
   | 'cartesian1' | 'cartesian2'
@@ -49,7 +45,7 @@ export type LabMode =
   | 'conservative1'
   | 'laplace1'
   // 级数与逼近
-  | 'convergence1' | 'convergence2'
+  | 'convergence1'
   | 'fourier1'
   | 'isosurface1'
   | 'surface_integral1'
@@ -305,24 +301,7 @@ export const modeInfo: Record<LabMode, {
     paramMin: 1, paramMax: 4, paramStep: 1, paramDefault: 1,
     viewType: '2d',
   },
-  important_limits1: {
-    title: '两个重要极限',
-    section: '函数与极限',
-    math: '\\lim_{x \\to 0}\\frac{\\sin x}{x} = 1, \\quad \\lim_{x \\to \\infty}(1+\\frac{1}{x})^x = e',
-    description: '两个重要极限是微积分的基础：第一个 lim(sin(x)/x)=1 揭示了三角函数与线性的关系，第二个 lim(1+1/x)^x=e 定义了自然常数。图中同时展示两个极限的收敛过程。调整参数观察不同 x 值下的逼近。',
-    paramLabel: 'x 值',
-    paramMin: 0.01, paramMax: 10, paramStep: 0.1, paramDefault: 1,
-    viewType: '2d',
-  },
-  lhopital1: {
-    title: '洛必达法则',
-    section: '导数与微分',
-    math: "\\lim_{x \\to a} \\frac{f(x)}{g(x)} = \\lim_{x \\to a} \\frac{f'(x)}{g'(x)}",
-    description: "洛必达法则：对于 0/0 或 ∞/∞ 型未定式，lim f(x)/g(x) = lim f'(x)/g'(x)。图中展示原函数之比 f(x)/g(x)（蓝色）和导数之比 f'(x)/g'(x)（红色），两者在极限点趋于相同的值。调整参数观察不同函数的洛必达法则应用。",
-    paramLabel: '逼近程度',
-    paramMin: 0.1, paramMax: 2, paramStep: 0.05, paramDefault: 0.5,
-    viewType: '2d',
-  },
+
   monotonicity1: {
     title: '函数单调性',
     section: '导数的应用',
@@ -359,33 +338,7 @@ export const modeInfo: Record<LabMode, {
     paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 0,
     viewType: '2d',
   },
-  higher_derivative1: {
-    title: '高阶导数',
-    section: '导数与微分',
-    math: "f^{(n)}(x) = \\frac{d^n f}{dx^n}",
-    description: '高阶导数是导数的导数。图中展示 f(x)=sin(x) 的各阶导数：f(x)（蓝色）、f\'(x)=cos(x)（红色）、f\'\'(x)=-sin(x)（绿色）、f\'\'\'(x)=-cos(x)（橙色）。每求导一次，正弦函数相移 π/2。调整参数观察不同阶数。',
-    paramLabel: '导数阶数 n',
-    paramMin: 0, paramMax: 5, paramStep: 1, paramDefault: 0,
-    viewType: '2d',
-  },
-  substitution1: {
-    title: '换元积分法',
-    section: '不定积分',
-    math: '\\int f(g(x))g\'(x)\\,dx = \\int f(u)\\,du, \\quad u = g(x)',
-    description: '换元积分法（第一类）：令 u=g(x)，则 ∫f(g(x))g\'(x)dx = ∫f(u)du。图中展示原积分变量 x 下的函数（蓝色）和换元后 u 变量下的函数（红色），换元使积分变得简单。调整参数观察不同换元方式。',
-    paramLabel: '换元函数类型',
-    paramMin: 1, paramMax: 3, paramStep: 1, paramDefault: 1,
-    viewType: '2d',
-  },
-  integration_by_parts1: {
-    title: '分部积分法',
-    section: '不定积分',
-    math: '\\int u\\,dv = uv - \\int v\\,du',
-    description: '分部积分公式 ∫u dv = uv - ∫v du 将复杂积分转化为简单积分。图中展示分部积分的几何意义：矩形面积 uv 减去 ∫v du 的面积等于 ∫u dv 的面积。调整参数观察 u 和 dv 的选择对积分的影响。',
-    paramLabel: 'u 的选择',
-    paramMin: 1, paramMax: 3, paramStep: 1, paramDefault: 1,
-    viewType: '2d',
-  },
+
   improper_integral1: {
     title: '反常积分',
     section: '定积分',
@@ -439,22 +392,6 @@ export const modeInfo: Record<LabMode, {
     paramLabel: '细分程度',
     paramMin: 5, paramMax: 50, paramStep: 1, paramDefault: 30,
   },
-  prop1: {
-    title: '线性性质 - 常数倍',
-    section: '二重积分基本性质',
-    math: '\\iint_D kf(x,y)\\,d\\sigma = k\\iint_D f(x,y)\\,d\\sigma',
-    description: '被积函数的常数因子可以提到积分号外面。图中展示了 f(x,y) 与 kf(x,y) 的曲面关系，后者高度是前者的 k 倍。',
-    paramLabel: '常数 k',
-    paramMin: 0.1, paramMax: 3, paramStep: 0.1, paramDefault: 2,
-  },
-  prop2: {
-    title: '线性性质 - 加减',
-    section: '二重积分基本性质',
-    math: '\\iint_D [f(x,y) \\pm g(x,y)]\\,d\\sigma = \\iint_D f\\,d\\sigma \\pm \\iint_D g\\,d\\sigma',
-    description: '两个函数代数和的积分等于各个函数积分的代数和。图中分别展示了 f、g 和 f+g 的曲面。',
-    paramLabel: '混合系数',
-    paramMin: 0, paramMax: 1, paramStep: 0.05, paramDefault: 0.5,
-  },
   prop3: {
     title: '区域可加性',
     section: '二重积分基本性质',
@@ -462,22 +399,6 @@ export const modeInfo: Record<LabMode, {
     description: '若 D = D₁ ∪ D₂ 且 D₁、D₂ 无公共内点，则整个区域上的积分等于各子区域积分之和。拖动分隔线观察区域划分。',
     paramLabel: '分割位置',
     paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 0,
-  },
-  prop4: {
-    title: '常函数与面积',
-    section: '二重积分基本性质',
-    math: '\\iint_D c\\,d\\sigma = c \\cdot S_D',
-    description: '当被积函数为常数 c 时，二重积分等于常数乘以区域 D 的面积 S_D。图中展示的是一个高度恒为 c 的平顶柱体。',
-    paramLabel: '常数 c',
-    paramMin: 0.5, paramMax: 4, paramStep: 0.1, paramDefault: 2,
-  },
-  prop5: {
-    title: '比较性质',
-    section: '二重积分基本性质',
-    math: 'f(x,y) \\le g(x,y) \\Rightarrow \\iint_D f\\,d\\sigma \\le \\iint_D g\\,d\\sigma',
-    description: '若在 D 上 f(x,y) ≤ g(x,y)，则 f 的积分不大于 g 的积分。图中蓝色曲面始终在绿色曲面之下。',
-    paramLabel: '曲面间距',
-    paramMin: 0.5, paramMax: 3, paramStep: 0.1, paramDefault: 1.5,
   },
   prop6: {
     title: '估值定理',
@@ -581,14 +502,7 @@ export const modeInfo: Record<LabMode, {
     paramLabel: '分割数 n',
     paramMin: 2, paramMax: 100, paramStep: 1, paramDefault: 10,
   },
-  convergence2: {
-    title: '误差分析',
-    section: '数值积分收敛演示',
-    math: '|S_n - I| = O(1/n^2)\\quad\\text{(中点法)}',
-    description: '在双对数坐标下观察误差随 n 的变化。中点法误差呈 O(1/n²) 收敛，斜率约为 -2；左端点法收敛较慢。',
-    paramLabel: '最大 n',
-    paramMin: 10, paramMax: 200, paramStep: 5, paramDefault: 50,
-  },
+
   triple1: {
     title: '三重积分可视化',
     section: '三重积分概念',

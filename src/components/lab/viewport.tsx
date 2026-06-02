@@ -98,21 +98,13 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'volume_rev1') {
     return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
   }
-  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') {
+  if (mode === 'continuity1' || mode === 'discontinuity1') {
     return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
-  }
-  if (mode === 'lhopital1') {
-    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
   }
   if (mode === 'monotonicity1' || mode === 'extrema1' || mode === 'concavity1' || mode === 'curvature1') {
     return 'from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/20'
   }
-  if (mode === 'higher_derivative1') {
-    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
-  }
-  if (mode === 'substitution1' || mode === 'integration_by_parts1') {
-    return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
-  }
+
   if (mode === 'improper_integral1') {
     return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   }
@@ -220,12 +212,10 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'bg-emerald-500'
   if (mode === 'area1') return 'bg-sky-500'
   if (mode === 'volume_rev1') return 'bg-sky-500'
-  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') return 'bg-rose-500'
-  if (mode === 'lhopital1') return 'bg-amber-500'
+  if (mode === 'continuity1' || mode === 'discontinuity1') return 'bg-rose-500'
   if (mode === 'monotonicity1' || mode === 'extrema1') return 'bg-teal-500'
   if (mode === 'concavity1' || mode === 'curvature1') return 'bg-cyan-500'
-  if (mode === 'higher_derivative1') return 'bg-amber-500'
-  if (mode === 'substitution1' || mode === 'integration_by_parts1') return 'bg-purple-500'
+
   if (mode === 'improper_integral1') return 'bg-emerald-500'
   if (mode === 'polar_area1') return 'bg-sky-500'
   // 多元微积分 accent colors
@@ -236,7 +226,7 @@ function getModeAccentColor(mode: string): string {
   if (mode.startsWith('polar')) return 'bg-rose-500'
   if (mode === 'rect_approx') return 'bg-emerald-500'
   if (mode.startsWith('sphere_cyl')) return 'bg-violet-500'
-  if (mode.startsWith('convergence')) return 'bg-cyan-500'
+  if (mode === 'convergence1') return 'bg-cyan-500'
   if (mode.startsWith('triple')) return 'bg-purple-500'
   if (mode === 'jacobian1') return 'bg-lime-500'
   if (mode === 'green1') return 'bg-red-500'

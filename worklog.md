@@ -2716,3 +2716,45 @@ Stage Summary:
 - **13 computed values added**: All 2D modes now have dynamic computed values
 - **Code audit clean**: Lint passes, TypeScript clean, no orphaned references
 - Remaining risk: agent-browser connectivity issues prevented full visual regression testing of all modes
+
+---
+Task ID: Mode-Deletion
+Agent: Main
+Task: 分析69个模式的几何表示适合性，删除10个不适合的模式
+
+Work Log:
+- 分析了全部69个模式的核心定理/性质/结论的几何可表示性
+- 评判标准：核心结论是否具有清晰的几何直觉？能否通过交互式可视化让用户获得"几何上的领悟"？
+- 识别出10个不适合几何表示的模式：
+  1. lhopital1 (洛必达法则) — 计算规则，非几何定理
+  2. substitution1 (换元积分法) — 代数变形技巧
+  3. integration_by_parts1 (分部积分法) — 代数分拆技巧
+  4. higher_derivative1 (高阶导数) — 结论是三角恒等式
+  5. important_limits1 (两个重要极限) — e的定义是代数性的
+  6. convergence2 (误差分析) — 数值分析结论
+  7. prop1 (线性性质-常数倍) — 结论过于平凡
+  8. prop2 (线性性质-加减) — 结论过于平凡
+  9. prop4 (常函数与面积) — 结论过于平凡
+  10. prop5 (比较性质) — 几何上显而易见
+- 从8个文件中执行删除：
+  - lab-store.ts: 删除类型定义和modeInfo条目
+  - sidebar.tsx: 删除目录项和空章节("高阶导数与洛必达"整个section删除)
+  - viewport-2d.tsx: 删除5个2D SVG场景组件 + 渲染分支 + 背景颜色
+  - scene-renderer.tsx: 删除5个3D场景case分支
+  - info-panel.tsx: 删除公式列表和sectionModes映射
+  - viewport.tsx: 删除背景颜色和强调颜色
+  - use-computed-values.ts: 删除10个case分支
+  - scene-error-boundary.tsx: 删除allModes列表中的引用
+  - page.tsx: 删除allModes列表中的引用
+  - presets.ts: 删除prop1预设
+- Lint检查通过，无错误
+- 浏览器验证通过：所有删除正确反映在侧边栏中，保留的模式正常工作
+
+Stage Summary:
+- **模式数量从69减少到59**
+- 删除了10个核心结论不具几何性的模式
+- "导数与微分"章节的"高阶导数与洛必达"子章节被完全移除
+- "不定积分"章节的"积分方法"子章节重命名为"原函数"，只保留原函数族
+- "二重积分基本性质"从7个减少到3个（区域可加、估值、中值）
+- "收敛演示"从2个减少到1个（保留收敛动画）
+- 所有修改通过lint和浏览器验证

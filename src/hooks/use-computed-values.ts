@@ -325,52 +325,6 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
-      case 'prop1': {
-        // Constant multiple property
-        const k = paramValue
-        const intF = numericalIntegral2D(f, -3, 3, -3, 3)
-        const intKF = numericalIntegral2D((x, y) => k * f(x, y), -3, 3, -3, 3)
-        return {
-          mainValue: formatValue(intKF),
-          approxValue: formatValue(k * intF),
-          exactValue: `${k.toFixed(1)} × ${formatValue(intF)}`,
-          error: formatValue(Math.abs(intKF - k * intF)),
-          label: 'k·∫f = ∫(kf)',
-        }
-      }
-
-      case 'prop2': {
-        // Additivity property
-        const t = paramValue
-        const intF = numericalIntegral2D(f, -3, 3, -3, 3)
-        const intG = numericalIntegral2D(g, -3, 3, -3, 3)
-        const intComb = numericalIntegral2D(
-          (x, y) => (1 - t) * f(x, y) + t * g(x, y),
-          -3, 3, -3, 3
-        )
-        const expected = (1 - t) * intF + t * intG
-        return {
-          mainValue: formatValue(intComb),
-          approxValue: formatValue(expected),
-          exactValue: `${(1 - t).toFixed(2)}·∫f + ${t.toFixed(2)}·∫g`,
-          error: formatValue(Math.abs(intComb - expected)),
-          label: '线性组合性质',
-        }
-      }
-
-      case 'prop4': {
-        // Constant function integral = c * area
-        const c = paramValue
-        const area = 4 * 4 // [-2,2]×[-2,2]
-        return {
-          mainValue: formatValue(c * area),
-          approxValue: formatValue(c * area),
-          exactValue: `${c.toFixed(1)} × ${area}`,
-          error: '0',
-          label: 'c × S_D',
-        }
-      }
-
       case 'polar1': {
         // Polar integral
         const R = paramValue
@@ -413,20 +367,6 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: formatValue(exact),
           error: formatValue(Math.abs(approx - exact)),
           label: `n=${n} 时收敛情况`,
-        }
-      }
-
-      case 'convergence2': {
-        // Error analysis summary
-        const maxN = Math.round(paramValue)
-        const exact = numericalIntegral2D(f, -3, 3, -3, 3)
-        const approx = riemannSum2D(f, 3, 3, maxN)
-        return {
-          mainValue: formatValue(Math.abs(approx - exact)),
-          approxValue: formatValue(Math.abs(approx - exact)),
-          exactValue: `O(1/${maxN}²)`,
-          error: formatValue(Math.abs(approx - exact)),
-          label: `n=${maxN} 时中点法误差`,
         }
       }
 
@@ -836,34 +776,6 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
-      case 'important_limits1': {
-        const x = paramValue
-        const val1 = Math.sin(x) / x
-        const val2 = Math.pow(1 + 1 / x, x)
-        return {
-          mainValue: formatValue(val1),
-          approxValue: `sin(x)/x = ${formatValue(val1)}`,
-          exactValue: `(1+1/x)^x = ${formatValue(val2)}`,
-          error: formatValue(Math.abs(val1 - 1)),
-          label: `x=${formatValue(x)}`,
-        }
-      }
-
-      case 'lhopital1': {
-        const x = paramValue
-        const num = Math.sin(x) - x
-        const den = x * x * x
-        const ratio = den !== 0 ? num / den : 0
-        const limit = -1 / 6
-        return {
-          mainValue: formatValue(ratio),
-          approxValue: `(sin(x)-x)/x³`,
-          exactValue: `极限 = ${formatValue(limit)}`,
-          error: formatValue(Math.abs(ratio - limit)),
-          label: `x=${formatValue(x)} | 误差=${formatValue(Math.abs(ratio - limit))}`,
-        }
-      }
-
       case 'monotonicity1': {
         const x = paramValue
         const f = (t: number) => t * t * t - 3 * t
@@ -919,43 +831,6 @@ export function useComputedValues(): ComputedValues | null {
           exactValue: `R = ${kappa > 0 ? formatValue(1 / kappa) : '∞'}`,
           error: formatValue(fp),
           label: `曲率 = ${formatValue(kappa)}`,
-        }
-      }
-
-      case 'higher_derivative1': {
-        const n = Math.round(paramValue)
-        const x = 1
-        let val = Math.exp(x)
-        return {
-          mainValue: formatValue(val),
-          approxValue: `f^(${n})(1)`,
-          exactValue: `f(x) = eˣ`,
-          error: formatValue(val),
-          label: `eˣ 的 ${n} 阶导数 = e`,
-        }
-      }
-
-      case 'substitution1': {
-        const a = paramValue
-        const integral = Math.log(Math.abs(a + 1)) - Math.log(Math.abs(a))
-        return {
-          mainValue: formatValue(integral),
-          approxValue: `∫₁^a 1/(x+1) dx`,
-          exactValue: `ln|a+1| - ln|a|`,
-          error: formatValue(Math.abs(integral - (Math.log(Math.abs(a + 1)) - Math.log(Math.abs(a))))),
-          label: `换元积分 ≈ ${formatValue(integral)}`,
-        }
-      }
-
-      case 'integration_by_parts1': {
-        const a = paramValue
-        const integral = a * Math.exp(a) - Math.exp(a) + 1
-        return {
-          mainValue: formatValue(integral),
-          approxValue: `∫₀^a x·eˣ dx`,
-          exactValue: `xeˣ - eˣ + C`,
-          error: formatValue(Math.abs(integral - (a * Math.exp(a) - Math.exp(a) + 1))),
-          label: `分部积分 ≈ ${formatValue(integral)}`,
         }
       }
 

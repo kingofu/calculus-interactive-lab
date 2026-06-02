@@ -99,7 +99,7 @@ const chapters: ChapterEntry[] = [
         modes: [
           { mode: 'limit1' as LabMode, label: '数列极限', icon: Target },
           { mode: 'limit2' as LabMode, label: '函数极限ε-δ', icon: Crosshair },
-          { mode: 'important_limits1' as LabMode, label: '两个重要极限', icon: Star },
+
         ],
       },
       {
@@ -115,7 +115,7 @@ const chapters: ChapterEntry[] = [
   },
   {
     title: '导数与微分',
-    subtitle: '导数定义、高阶导数与洛必达',
+    subtitle: '导数定义与几何意义',
     icon: TrendingUp,
     color: 'amber',
     sections: [
@@ -127,15 +127,6 @@ const chapters: ChapterEntry[] = [
           { mode: 'derivative1' as LabMode, label: '导数定义', icon: Spline },
           { mode: 'derivative2' as LabMode, label: '切线与导函数', icon: Navigation },
           { mode: 'derivative3' as LabMode, label: '微分与线性近似', icon: ArrowRightLeft },
-        ],
-      },
-      {
-        title: '高阶导数与洛必达',
-        subtitle: '高阶导数与未定式极限',
-        color: 'orange',
-        modes: [
-          { mode: 'higher_derivative1' as LabMode, label: '高阶导数', icon: Layers },
-          { mode: 'lhopital1' as LabMode, label: '洛必达法则', icon: Compass },
         ],
       },
     ],
@@ -185,18 +176,16 @@ const chapters: ChapterEntry[] = [
   },
   {
     title: '不定积分',
-    subtitle: '原函数、换元与分部积分',
+    subtitle: '原函数族',
     icon: Sigma,
     color: 'purple',
     sections: [
       {
-        title: '积分方法',
-        subtitle: '原函数、换元与分部积分',
+        title: '原函数',
+        subtitle: '原函数族与不定积分',
         color: 'purple',
         modes: [
           { mode: 'indef_integral1' as LabMode, label: '原函数族', icon: Layers },
-          { mode: 'substitution1' as LabMode, label: '换元积分法', icon: RefreshCw },
-          { mode: 'integration_by_parts1' as LabMode, label: '分部积分法', icon: Split },
         ],
       },
     ],
@@ -268,11 +257,7 @@ const chapters: ChapterEntry[] = [
         subtitle: '线性、可加性、比较等',
         color: 'sky',
         modes: [
-          { mode: 'prop1' as LabMode, label: '常数倍', icon: ArrowRightLeft },
-          { mode: 'prop2' as LabMode, label: '加减', icon: Plus },
           { mode: 'prop3' as LabMode, label: '区域可加', icon: Split },
-          { mode: 'prop4' as LabMode, label: '常函数', icon: Square },
-          { mode: 'prop5' as LabMode, label: '比较', icon: ArrowUpDown },
           { mode: 'prop6' as LabMode, label: '估值', icon: Gauge },
           { mode: 'prop7' as LabMode, label: '中值', icon: Target },
         ],
@@ -486,11 +471,10 @@ const chapters: ChapterEntry[] = [
     sections: [
       {
         title: '收敛演示',
-        subtitle: '数值积分收敛分析',
+        subtitle: '数值积分收敛过程',
         color: 'cyan',
         modes: [
           { mode: 'convergence1' as LabMode, label: '收敛动画', icon: TrendingUp },
-          { mode: 'convergence2' as LabMode, label: '误差分析', icon: LineChart },
         ],
       },
       {
