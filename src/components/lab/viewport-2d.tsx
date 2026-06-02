@@ -288,38 +288,69 @@ interface SVGAxesProps {
 function SVGAxes({ xRange = [-6, 6], yRange = [-4, 4], scale, offsetX, offsetY }: SVGAxesProps) {
   const toSvgX = (mathX: number) => mathX * scale + offsetX
   const toSvgY = (mathY: number) => -mathY * scale + offsetY
+  const toMathX = (svgX: number) => (svgX - offsetX) / scale
+  const toMathY = (svgY: number) => -(svgY - offsetY) / scale
 
+  // Compute visible math range (large area to cover viewport after pan/zoom)
+  const svgW = typeof window !== 'undefined' ? window.innerWidth : 1200
+  const svgH = typeof window !== 'undefined' ? window.innerHeight : 800
+  const visXMin = Math.floor(toMathX(-200))
+  const visXMax = Math.ceil(toMathX(svgW + 200))
+  const visYMin = Math.floor(toMathY(svgH + 200))
+  const visYMax = Math.ceil(toMathY(-200))
+
+  // Grid line range: cover entire visible area
+  const gridXMin = visXMin
+  const gridXMax = visXMax
+  const gridYMin = visYMin
+  const gridYMax = visYMax
+
+  // Tick positions: only within a reasonable range around the scene content
   const xTicks: number[] = []
   const yTicks: number[] = []
-  const xStart = Math.ceil(xRange[0])
-  const xEnd = Math.floor(xRange[1])
+  const xStart = Math.max(Math.ceil(visXMin), Math.ceil(xRange[0] - 5))
+  const xEnd = Math.min(Math.floor(visXMax), Math.floor(xRange[1] + 5))
   for (let i = xStart; i <= xEnd; i++) xTicks.push(i)
-  const yStart = Math.ceil(yRange[0])
-  const yEnd = Math.floor(yRange[1])
+  const yStart = Math.max(Math.ceil(visYMin), Math.ceil(yRange[0] - 5))
+  const yEnd = Math.min(Math.floor(visYMax), Math.floor(yRange[1] + 5))
   for (let i = yStart; i <= yEnd; i++) yTicks.push(i)
 
   const tickLen = 4
   const axisOriginX = toSvgX(0)
   const axisOriginY = toSvgY(0)
 
+  // Axis line endpoints — extend across the entire visible area
+  const axisXStart = toSvgX(gridXMin)
+  const axisXEnd = toSvgX(gridXMax)
+  const axisYStart = toSvgY(gridYMax)
+  const axisYEnd = toSvgY(gridYMin)
+
   return (
     <g className="svg-axes">
+      {/* Vertical grid lines — span full visible Y range */}
       {xTicks.map((x) => (
-        <line key={`grid-x-${x}`} x1={toSvgX(x)} y1={toSvgY(yRange[0])} x2={toSvgX(x)} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
+        <line key={`grid-x-${x}`} x1={toSvgX(x)} y1={toSvgY(gridYMax)} x2={toSvgX(x)} y2={toSvgY(gridYMin)} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
       ))}
+      {/* Horizontal grid lines — span full visible X range */}
       {yTicks.map((y) => (
-        <line key={`grid-y-${y}`} x1={toSvgX(xRange[0])} y1={toSvgY(y)} x2={toSvgX(xRange[1])} y2={toSvgY(y)} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
+        <line key={`grid-y-${y}`} x1={toSvgX(gridXMin)} y1={toSvgY(y)} x2={toSvgX(gridXMax)} y2={toSvgY(y)} stroke="currentColor" strokeWidth={0.5} opacity={0.18} className="text-foreground" />
       ))}
-      <line x1={toSvgX(xRange[0])} y1={axisOriginY} x2={toSvgX(xRange[1])} y2={axisOriginY} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
-      <line x1={axisOriginX} y1={toSvgY(yRange[0])} x2={axisOriginX} y2={toSvgY(yRange[1])} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
-      <polygon points={`${toSvgX(xRange[1])},${axisOriginY} ${toSvgX(xRange[1]) - 8},${axisOriginY - 4} ${toSvgX(xRange[1]) - 8},${axisOriginY + 4}`} fill="currentColor" opacity={0.5} className="text-foreground" />
-      <polygon points={`${axisOriginX},${toSvgY(yRange[1])} ${axisOriginX - 4},${toSvgY(yRange[1]) + 8} ${axisOriginX + 4},${toSvgY(yRange[1]) + 8}`} fill="currentColor" opacity={0.5} className="text-foreground" />
+      {/* X axis — full visible width */}
+      <line x1={axisXStart} y1={axisOriginY} x2={axisXEnd} y2={axisOriginY} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
+      {/* Y axis — full visible height */}
+      <line x1={axisOriginX} y1={axisYStart} x2={axisOriginX} y2={axisYEnd} stroke="currentColor" strokeWidth={1.5} opacity={0.5} className="text-foreground" />
+      {/* Arrow at positive X end */}
+      <polygon points={`${axisXEnd},${axisOriginY} ${axisXEnd - 8},${axisOriginY - 4} ${axisXEnd - 8},${axisOriginY + 4}`} fill="currentColor" opacity={0.5} className="text-foreground" />
+      {/* Arrow at positive Y end */}
+      <polygon points={`${axisOriginX},${axisYStart} ${axisOriginX - 4},${axisYStart + 8} ${axisOriginX + 4},${axisYStart + 8}`} fill="currentColor" opacity={0.5} className="text-foreground" />
+      {/* X tick marks and labels */}
       {xTicks.filter(x => x !== 0).map((x) => (
         <g key={`xtick-${x}`}>
           <line x1={toSvgX(x)} y1={axisOriginY - tickLen} x2={toSvgX(x)} y2={axisOriginY + tickLen} stroke="currentColor" strokeWidth={1} opacity={0.4} className="text-foreground" />
           <text x={toSvgX(x)} y={axisOriginY + tickLen + 12} textAnchor="middle" fontSize={10} fill="currentColor" opacity={0.55} className="text-foreground">{x}</text>
         </g>
       ))}
+      {/* Y tick marks and labels */}
       {yTicks.filter(y => y !== 0).map((y) => (
         <g key={`ytick-${y}`}>
           <line x1={axisOriginX - tickLen} y1={toSvgY(y)} x2={axisOriginX + tickLen} y2={toSvgY(y)} stroke="currentColor" strokeWidth={1} opacity={0.4} className="text-foreground" />
@@ -327,8 +358,8 @@ function SVGAxes({ xRange = [-6, 6], yRange = [-4, 4], scale, offsetX, offsetY }
         </g>
       ))}
       <text x={axisOriginX - 8} y={axisOriginY + 14} textAnchor="end" fontSize={10} fill="currentColor" opacity={0.55} className="text-foreground">O</text>
-      <text x={toSvgX(xRange[1]) - 4} y={axisOriginY + 22} textAnchor="end" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">x</text>
-      <text x={axisOriginX + 16} y={toSvgY(yRange[1]) + 6} textAnchor="start" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">y</text>
+      <text x={axisXEnd - 4} y={axisOriginY + 22} textAnchor="end" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">x</text>
+      <text x={axisOriginX + 16} y={axisYStart + 6} textAnchor="start" fontSize={13} fontStyle="italic" fill="currentColor" opacity={0.6} className="text-foreground">y</text>
     </g>
   )
 }
