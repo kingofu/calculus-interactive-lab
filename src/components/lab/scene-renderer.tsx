@@ -4742,7 +4742,7 @@ function Limit1Scene() {
   }, [c, L])
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* ε-band (horizontal planes at L±ε) */}
       <mesh position={[3, L + eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 2]} />
@@ -4804,7 +4804,7 @@ function Limit1Scene() {
           <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -4847,7 +4847,7 @@ function Limit2Scene() {
   }, [])
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) = sin(x)+1 */}
       <line>
         <bufferGeometry>
@@ -4920,7 +4920,7 @@ function Limit2Scene() {
           <div className="text-amber-600 dark:text-amber-400">L = f(x₀) = {L.toFixed(2)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -4946,7 +4946,7 @@ function Derivative1Scene() {
   const secantSlope = (fAt(x0 + deltaX) - fAt(x0)) / deltaX
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) = sin(x)+0.5x */}
       <line>
         <bufferGeometry>
@@ -5001,7 +5001,7 @@ function Derivative1Scene() {
           <div className="text-amber-600 dark:text-amber-400">|差值| = {Math.abs(tangentSlope - secantSlope).toFixed(4)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5036,7 +5036,7 @@ function Derivative2Scene() {
   const tangentLen = 1.5
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* f(x) = x³-3x (blue, offset z=-0.5) */}
       <line>
         <bufferGeometry>
@@ -5087,7 +5087,7 @@ function Derivative2Scene() {
           <div className="text-red-500 dark:text-red-400">f&apos;(x₀) = {dfAt(x0).toFixed(3)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5112,7 +5112,7 @@ function Derivative3Scene() {
   const deltaY = fAt(x0 + deltaX) - fAt(x0)
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) = x² */}
       <line>
         <bufferGeometry>
@@ -5168,7 +5168,7 @@ function Derivative3Scene() {
           <div className="text-amber-600 dark:text-amber-400">误差 = {Math.abs(deltaY - dy).toFixed(4)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5191,7 +5191,7 @@ function Rolle1Scene() {
   const { xi1, xi2, fXi1, fXi2 } = useMemo(() => findRollePoint(a), [a])
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5246,7 +5246,7 @@ function Rolle1Scene() {
           <div className="text-red-500 dark:text-red-400">ξ₂ ≈ {xi2.toFixed(3)}, f(ξ₂) ≈ {fXi2.toFixed(3)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5254,9 +5254,9 @@ function Rolle1Scene() {
 function Lagrange1Scene() {
   const { paramValue: a } = useLabStore()
   // f(x) = a*(x³-6x²+11x) on [0,4]
+  const fAt = (x: number) => a * (x * x * x - 6 * x * x + 11 * x)
 
   const curvePoints = useMemo(() => {
-    const fAt = (x: number) => a * (x * x * x - 6 * x * x + 11 * x)
     const pts: number[] = []
     for (let i = 0; i <= 200; i++) {
       const x = (i / 200) * 5
@@ -5264,7 +5264,7 @@ function Lagrange1Scene() {
       pts.push(x - 2, y, 0)
     }
     return new Float32Array(pts)
-  }, [a])
+  }, [a, fAt])
 
   const { xi, secantSlope, tangentSlope } = useMemo(() => findLagrangePoint(a), [a])
 
@@ -5273,7 +5273,7 @@ function Lagrange1Scene() {
   const f4 = a * (64 - 96 + 44)
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5318,7 +5318,7 @@ function Lagrange1Scene() {
           <div>ξ ≈ {xi.toFixed(4)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5356,7 +5356,7 @@ function IndefIntegral1Scene() {
   }, [])
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Family of curves F(x) = x² + C */}
       {curves.map((curve, idx) => (
         <line key={idx}>
@@ -5383,7 +5383,7 @@ function IndefIntegral1Scene() {
           <div>C ∈ [{(-4).toFixed(1)}, {(4).toFixed(1)}]</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5454,7 +5454,7 @@ function Ftc1Scene() {
   const phiAtX = -Math.cos(upperLimit) + upperLimit - (-Math.cos(-2) + (-2))
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* f(x) curve at z=-1 */}
       <line>
         <bufferGeometry>
@@ -5504,7 +5504,7 @@ function Ftc1Scene() {
           <div>Φ&apos;(x) = f(x) ✓</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5565,7 +5565,7 @@ function MeanValueIntegral1Scene() {
   const rectW = 2 * Math.PI
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* Curve f(x) */}
       <line>
         <bufferGeometry>
@@ -5604,7 +5604,7 @@ function MeanValueIntegral1Scene() {
           <div>f(ξ) = {(a * Math.sin(xi) + 1).toFixed(4)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
@@ -5673,7 +5673,7 @@ function Area1Scene() {
   }, [a])
 
   return (
-    <AutoRotate speed={0.002}>
+    <>
       {/* f(x) = a+cos(x) */}
       <line>
         <bufferGeometry>
@@ -5702,7 +5702,7 @@ function Area1Scene() {
           <div>间距 a = {a.toFixed(1)}</div>
         </div>
       </Html>
-    </AutoRotate>
+    </>
   )
 }
 
