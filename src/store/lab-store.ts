@@ -1,25 +1,49 @@
 import { create } from 'zustand'
 
 export type LabMode =
+  // 一元微积分 - 函数与极限
+  | 'limit1' | 'limit2'
+  // 一元微积分 - 导数与微分
+  | 'derivative1' | 'derivative2' | 'derivative3'
+  // 一元微积分 - 微分中值定理
+  | 'rolle1' | 'lagrange1'
+  // 一元微积分 - 不定积分
+  | 'indef_integral1'
+  // 一元微积分 - 定积分
+  | 'ftc1' | 'mean_value_integral1'
+  // 一元微积分 - 定积分应用
+  | 'area1' | 'volume_rev1'
+  // 多元微积分 - 二重积分基础
   | 'step1' | 'step2' | 'step3' | 'step4'
   | 'prop1' | 'prop2' | 'prop3' | 'prop4' | 'prop5' | 'prop6' | 'prop7'
   | 'parity1' | 'parity2'
+  // 多元微积分 - 积分计算方法
   | 'cartesian1' | 'cartesian2'
-  | 'rect_approx'
-  | 'sphere_cyl1' | 'sphere_cyl2'
   | 'polar1' | 'polar2'
-  | 'convergence1' | 'convergence2'
-  | 'triple1'
   | 'jacobian1'
+  | 'fubini1'
+  // 多元微积分 - 积分应用
+  | 'rect_approx'
+  | 'surface_area1'
+  | 'arc_length1'
+  | 'mass_center1' | 'moment_of_inertia1'
+  | 'sphere_cyl1' | 'sphere_cyl2'
+  // 多元微积分 - 三重积分
+  | 'triple1'
+  | 'cylindrical1' | 'spherical1'
+  // 多元微积分 - 积分定理
   | 'green1'
-  | 'surface_area1' | 'fubini1'
   | 'stokes1' | 'divergence1'
-  | 'arc_length1' | 'mass_center1'
-  | 'moment_of_inertia1' | 'cylindrical1'
-  | 'gradient1' | 'spherical1' | 'laplace1'
-  | 'fourier1' | 'vector_field1' | 'isosurface1' | 'directional1'
+  // 多元微积分 - 向量场与微分算子
+  | 'gradient1' | 'directional1'
+  | 'vector_field1'
   | 'curl1' | 'divergence_field1'
-  | 'conservative1' | 'taylor1'
+  | 'conservative1'
+  | 'laplace1'
+  // 级数与逼近
+  | 'convergence1' | 'convergence2'
+  | 'fourier1' | 'taylor1'
+  | 'isosurface1'
   | 'surface_integral1'
 
 export interface TooltipData {
@@ -136,6 +160,114 @@ export const modeInfo: Record<LabMode, {
   paramStep2?: number
   paramDefault2?: number
 }> = {
+  // ═══════════════════════════════════════════════════════════
+  // 一元微积分 (Single-Variable Calculus)
+  // ═══════════════════════════════════════════════════════════
+  limit1: {
+    title: '数列极限',
+    section: '函数与极限',
+    math: '\\lim_{n \\to \\infty} a_n = L \\Leftrightarrow \\forall \\varepsilon > 0, \\exists N, n > N \\Rightarrow |a_n - L| < \\varepsilon',
+    description: '数列极限描述数列 {aₙ} 当 n→∞ 时趋近于某个确定值 L 的过程。图中展示数列 aₙ = L + c/n 的收敛过程，带有 ε-带标注。调整参数观察收敛速度的变化。',
+    paramLabel: '收敛速度 c',
+    paramMin: 0.5, paramMax: 5, paramStep: 0.1, paramDefault: 2,
+    paramLabel2: '极限值 L',
+    paramMin2: 0, paramMax2: 3, paramStep2: 0.1, paramDefault2: 1,
+  },
+  limit2: {
+    title: '函数极限 ε-δ',
+    section: '函数与极限',
+    math: '\\lim_{x \\to x_0} f(x) = L \\Leftrightarrow \\forall \\varepsilon > 0, \\exists \\delta > 0, 0<|x-x_0|<\\delta \\Rightarrow |f(x)-L|<\\varepsilon',
+    description: '函数极限的 ε-δ 定义：对于任意 ε>0，存在 δ>0，当 0<|x-x₀|<δ 时，|f(x)-L|<ε。图中展示函数曲线、ε-带（水平绿色带）和对应的 δ-区间（垂直橙色带）。调整 ε 观察 δ 的变化。',
+    paramLabel: 'ε 大小',
+    paramMin: 0.1, paramMax: 1.5, paramStep: 0.05, paramDefault: 0.5,
+  },
+  derivative1: {
+    title: '导数定义 (割线→切线)',
+    section: '导数与微分',
+    math: "f'(x_0) = \\lim_{\\Delta x \\to 0} \\frac{f(x_0+\\Delta x) - f(x_0)}{\\Delta x}",
+    description: '导数是割线斜率的极限，当 Δx→0 时割线变为切线。图中展示曲线 f(x)=sin(x)+0.5x，随着参数减小，割线（蓝色虚线）逐渐逼近切线（红色实线）。动画演示从割线到切线的过渡过程。',
+    paramLabel: 'Δx 大小',
+    paramMin: 0.05, paramMax: 2, paramStep: 0.05, paramDefault: 1,
+  },
+  derivative2: {
+    title: '切线与导函数',
+    section: '导数与微分',
+    math: "y - f(x_0) = f'(x_0)(x - x_0)",
+    description: '在曲线 f(x) 上某点 x₀ 处的切线方程为 y-f(x₀)=f\'(x₀)(x-x₀)。图中同时展示原函数 f(x)=x³-3x（蓝色）和其导函数 f\'(x)=3x²-3（红色），移动点观察切线斜率与导数值的对应关系。',
+    paramLabel: '切点位置 x₀',
+    paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 0,
+  },
+  derivative3: {
+    title: '微分与线性近似',
+    section: '导数与微分',
+    math: 'dy = f\'(x)\\,dx, \\quad \\Delta y \\approx dy',
+    description: '微分 dy=f\'(x)dx 是函数增量的线性主部。当 Δx 很小时，Δy≈dy。图中展示曲线 f(x)=x² 在点 x₀ 处，Δy（实际增量，蓝色）与 dy（微分近似，红色）的对比。调整 Δx 观察两者差异。',
+    paramLabel: 'x₀ 位置',
+    paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
+    paramLabel2: 'Δx 大小',
+    paramMin2: 0.1, paramMax2: 1.5, paramStep2: 0.05, paramDefault2: 0.5,
+  },
+  rolle1: {
+    title: '罗尔定理',
+    section: '微分中值定理',
+    math: "f(a)=f(b) \\Rightarrow \\exists \\xi \\in (a,b), f'(\\xi)=0",
+    description: '罗尔定理：若 f 在 [a,b] 上连续、(a,b) 内可导，且 f(a)=f(b)，则存在 ξ∈(a,b) 使 f\'(ξ)=0。图中展示满足条件的曲线 f(x)=(x-1)(x-3)(x-5) 上的水平切线点 ξ。调整参数改变曲线形状。',
+    paramLabel: '曲线变形 a',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  lagrange1: {
+    title: '拉格朗日中值定理',
+    section: '微分中值定理',
+    math: "f(b)-f(a) = f'(\\xi)(b-a), \\quad \\xi \\in (a,b)",
+    description: '拉格朗日中值定理：若 f 在 [a,b] 上连续、(a,b) 内可导，则存在 ξ∈(a,b) 使割线斜率等于切线斜率。图中展示割线（蓝色虚线）和与割线平行的切线（红色实线）。调整参数观察不同函数和区间。',
+    paramLabel: '曲线变形 a',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  indef_integral1: {
+    title: '原函数族',
+    section: '不定积分',
+    math: '\\int f(x)\\,dx = F(x) + C',
+    description: '不定积分 ∫f(x)dx 是 f(x) 的全体原函数 F(x)+C。不同的常数 C 对应曲线族中不同的曲线，它们沿 y 轴方向平移。图中展示 f(x)=2x 的原函数族 F(x)=x²+C，多条曲线以不同颜色显示。调整 C 的范围观察曲线族变化。',
+    paramLabel: '曲线数量',
+    paramMin: 3, paramMax: 12, paramStep: 1, paramDefault: 7,
+  },
+  ftc1: {
+    title: '微积分基本定理',
+    section: '定积分',
+    math: '\\frac{d}{dx}\\int_a^x f(t)\\,dt = f(x), \\quad \\int_a^b f(x)\\,dx = F(b) - F(a)',
+    description: '微积分基本定理（牛顿-莱布尼茨公式）将微分与积分联系起来。第一部分：变上限积分的导数等于被积函数；第二部分：定积分等于原函数在端点的差值。图中展示 f(x) 的面积函数 Φ(x)=∫ₐˣf(t)dt 和其导数 Φ\'(x)=f(x) 的关系。',
+    paramLabel: '上限 x 位置',
+    paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  mean_value_integral1: {
+    title: '积分中值定理',
+    section: '定积分',
+    math: '\\int_a^b f(x)\\,dx = f(\\xi)(b-a), \\quad \\xi \\in [a,b]',
+    description: '积分中值定理：存在 ξ∈[a,b] 使 f(ξ) 等于函数在 [a,b] 上的平均值。图中展示曲线 f(x) 下的面积与同底等高的矩形面积相等，矩形高度为平均值 f(ξ)。调整参数观察不同函数的平均值位置。',
+    paramLabel: '曲线振幅',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  area1: {
+    title: '曲线间面积',
+    section: '定积分的应用',
+    math: 'S = \\int_a^b [f(x) - g(x)]\\,dx, \\quad f(x) \\ge g(x)',
+    description: '两曲线 y=f(x) 和 y=g(x) 之间的面积可通过定积分 S=∫ₐᵇ[f(x)-g(x)]dx 计算。图中展示两条曲线之间的区域（高亮填充），面积值实时显示。调整参数观察不同曲线围成的区域。',
+    paramLabel: '曲线间距',
+    paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+  },
+  volume_rev1: {
+    title: '旋转体体积',
+    section: '定积分的应用',
+    math: 'V = \\pi \\int_a^b [f(x)]^2\\,dx',
+    description: '旋转体体积公式：将曲线 y=f(x) 绕 x 轴旋转一周所得的立体体积 V=π∫ₐᵇ[f(x)]²dx。图中展示曲线绕 x 轴旋转生成的3D旋转体，以及圆盘截面。调整参数观察不同函数生成的旋转体。',
+    paramLabel: '曲线高度 a',
+    paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
+    paramLabel2: '截面数',
+    paramMin2: 3, paramMax2: 20, paramStep2: 1, paramDefault2: 8,
+  },
+  // ═══════════════════════════════════════════════════════════
+  // 多元微积分 (Multivariable Calculus)
+  // ═══════════════════════════════════════════════════════════
   step1: {
     title: '区域划分 (D)',
     section: '二重积分概念步骤',
@@ -498,7 +630,7 @@ export const modeInfo: Record<LabMode, {
   },
   taylor1: {
     title: '泰勒展开逼近',
-    section: '泰勒展开与逼近',
+    section: '微分中值定理',
     math: 'f(x) = \\sum_{n=0}^{N} \\frac{f^{(n)}(a)}{n!}(x-a)^n',
     description: '泰勒展开将函数在某点附近用多项式逼近。随着阶数N增加，逼近范围逐渐扩大。图中展示目标函数sin(x)及其N阶泰勒多项式，观察逼近精度随N的变化。同时展示3D视角下的函数曲面和泰勒多项式曲面。',
     paramLabel: '展开阶数 N',

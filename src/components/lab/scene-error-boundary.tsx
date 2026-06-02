@@ -17,6 +17,12 @@ interface State {
 
 // All mode keys for "switch to next" navigation
 const allModes: LabMode[] = [
+  'limit1', 'limit2',
+  'derivative1', 'derivative2', 'derivative3',
+  'rolle1', 'lagrange1',
+  'indef_integral1',
+  'ftc1', 'mean_value_integral1',
+  'area1', 'volume_rev1',
   'step1', 'step2', 'step3', 'step4',
   'prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7',
   'parity1', 'parity2',
@@ -40,6 +46,7 @@ const allModes: LabMode[] = [
   'divergence_field1',
   'conservative1',
   'taylor1',
+  'surface_integral1',
 ]
 
 export class SceneErrorBoundary extends Component<Props, State> {

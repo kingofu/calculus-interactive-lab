@@ -8,6 +8,66 @@ export interface Preset {
 }
 
 export const modePresets: Partial<Record<LabMode, Preset[]>> = {
+  limit1: [
+    { name: '慢收敛', param1: 0.5, emoji: '🐢' },
+    { name: '标准', param1: 2, emoji: '🐇' },
+    { name: '快收敛', param1: 5, emoji: '🚀' },
+  ],
+  limit2: [
+    { name: '小ε', param1: 0.1, emoji: '🔍' },
+    { name: '中等ε', param1: 0.5, emoji: '🔭' },
+    { name: '大ε', param1: 1.0, emoji: '🌐' },
+  ],
+  derivative1: [
+    { name: '近似切线', param1: 0.05, emoji: '📍' },
+    { name: '割线', param1: 0.5, emoji: '📏' },
+    { name: '远割线', param1: 2, emoji: '📐' },
+  ],
+  derivative2: [
+    { name: '左侧', param1: -1.5, emoji: '◀️' },
+    { name: '原点', param1: 0, emoji: '⭕' },
+    { name: '右侧', param1: 1.5, emoji: '▶️' },
+  ],
+  derivative3: [
+    { name: '小增量', param1: 1.5, param2: 0.1, emoji: '🔬' },
+    { name: '标准', param1: 1.5, param2: 0.5, emoji: '📐' },
+    { name: '大增量', param1: 1.5, param2: 1.5, emoji: '📏' },
+  ],
+  rolle1: [
+    { name: '扁平', param1: 0.3, emoji: '〰️' },
+    { name: '标准', param1: 1, emoji: '📈' },
+    { name: '陡峭', param1: 2, emoji: '🏔️' },
+  ],
+  lagrange1: [
+    { name: '扁平', param1: 0.3, emoji: '〰️' },
+    { name: '标准', param1: 1, emoji: '📈' },
+    { name: '陡峭', param1: 2, emoji: '🏔️' },
+  ],
+  indef_integral1: [
+    { name: '少曲线', param1: 3, emoji: '🔵' },
+    { name: '中等', param1: 7, emoji: '🟢' },
+    { name: '多曲线', param1: 12, emoji: '🔴' },
+  ],
+  ftc1: [
+    { name: '左侧', param1: -1.5, emoji: '◀️' },
+    { name: '中间', param1: 0.5, emoji: '⭕' },
+    { name: '右侧', param1: 2, emoji: '▶️' },
+  ],
+  mean_value_integral1: [
+    { name: '平坦', param1: 0.3, emoji: '〰️' },
+    { name: '标准', param1: 1, emoji: '📊' },
+    { name: '陡峭', param1: 2, emoji: '📈' },
+  ],
+  area1: [
+    { name: '靠近', param1: 0.3, emoji: '🤏' },
+    { name: '标准', param1: 1, emoji: '📐' },
+    { name: '远离', param1: 2, emoji: '↔️' },
+  ],
+  volume_rev1: [
+    { name: '矮小', param1: 0.5, param2: 5, emoji: '🥫' },
+    { name: '标准', param1: 1.5, param2: 8, emoji: '🏺' },
+    { name: '高大', param1: 2.5, param2: 15, emoji: '🗼' },
+  ],
   step1: [
     { name: '小区域', param1: 1.5, emoji: '🔹' },
     { name: '中区域', param1: 2, emoji: '🔷' },

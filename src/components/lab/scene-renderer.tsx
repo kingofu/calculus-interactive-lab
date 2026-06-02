@@ -33,6 +33,11 @@ import {
   massCenterComputation,
   momentOfInertia,
   cylindricalVolume,
+  findRollePoint,
+  findLagrangePoint,
+  volumeOfRevolution,
+  areaBetweenCurves,
+  findMeanValueIntegralPoint,
 } from '@/lib/math-computations'
 
 // --- Tooltip helper ---
@@ -4708,6 +4713,1108 @@ function SurfaceIntegralScene() {
   )
 }
 
+// ═══════════════════════════════════════════════════════════
+// 一元微积分场景组件 (Single-Variable Calculus Scenes)
+// ═══════════════════════════════════════════════════════════
+
+// --- 1. 数列极限 (limit1) ---
+function Limit1Scene() {
+  const { paramValue: c, paramValue2: L } = useLabStore()
+  const eps = 0.3
+
+  const sequencePoints = useMemo(() => {
+    const pts: [number, number, number][] = []
+    for (let n = 1; n <= 40; n++) {
+      const an = L + c / n
+      pts.push([n * 0.15, an, 0])
+    }
+    return pts
+  }, [c, L])
+
+  const curvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let n = 1; n <= 400; n++) {
+      const x = n * 0.015
+      const an = L + c / (n * 0.1)
+      pts.push(x, an, 0)
+    }
+    return new Float32Array(pts)
+  }, [c, L])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* ε-band (horizontal planes at L±ε) */}
+      <mesh position={[3, L + eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[8, 2]} />
+        <meshPhongMaterial color="#10b981" transparent opacity={0.12} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[3, L - eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[8, 2]} />
+        <meshPhongMaterial color="#10b981" transparent opacity={0.12} side={THREE.DoubleSide} />
+      </mesh>
+      {/* ε-band edge lines */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, L + eps, -1, 6, L + eps, -1, 6, L + eps, 1, 0, L + eps, 1]), 3]} count={4} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#10b981" opacity={0.5} transparent />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, L - eps, -1, 6, L - eps, -1, 6, L - eps, 1, 0, L - eps, 1]), 3]} count={4} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#10b981" opacity={0.5} transparent />
+      </line>
+      {/* Limit line y = L */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, L, -1, 6, L, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Convergence curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Sequence scatter points (spheres) */}
+      {sequencePoints.map((pt, idx) => (
+        <mesh key={idx} position={pt}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshPhongMaterial color={Math.abs(pt[1] - L) < eps ? '#10b981' : '#ef4444'} />
+        </mesh>
+      ))}
+      {/* Convergence indicator: drop lines from points to L */}
+      {sequencePoints.slice(0, 20).map((pt, idx) => (
+        <line key={`drop-${idx}`}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[new Float32Array([pt[0], pt[1], 0, pt[0], L, 0]), 3]} count={2} />
+          </bufferGeometry>
+          <lineBasicMaterial color={Math.abs(pt[1] - L) < eps ? '#10b981' : '#ef4444'} opacity={0.4} transparent />
+        </line>
+      ))}
+      <Html position={[3, L + 1.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">数列极限</div>
+          <div>aₙ = {L.toFixed(1)} + {c.toFixed(1)}/n</div>
+          <div className="text-amber-600 dark:text-amber-400">L = {L.toFixed(2)}</div>
+          <div>ε = {eps.toFixed(2)}</div>
+          <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 2. 函数极限 ε-δ (limit2) ---
+function Limit2Scene() {
+  const { paramValue: eps } = useLabStore()
+  // f(x) = sin(x) + 1, x₀ = π/2, L = 2
+  const x0 = Math.PI / 2
+  const L = 2
+  const fAt = (x: number) => Math.sin(x) + 1
+
+  // Find δ such that |f(x)-L| < ε when |x-x₀| < δ
+  const delta = useMemo(() => {
+    // Search for δ by finding where |f(x)-L| = ε
+    const searchDelta = () => {
+      const n = 1000
+      const maxD = 2
+      const dd = maxD / n
+      for (let i = n; i >= 1; i--) {
+        const d = i * dd
+        const x1 = x0 - d
+        const x2 = x0 + d
+        if (Math.abs(fAt(x1) - L) <= eps && Math.abs(fAt(x2) - L) <= eps) {
+          return d
+        }
+      }
+      return 0.01
+    }
+    return searchDelta()
+  }, [eps])
+
+  const curvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -300; i <= 300; i++) {
+      const x = (i / 100) * Math.PI
+      const y = fAt(x)
+      pts.push(x, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) = sin(x)+1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* ε-band (green horizontal planes at L±ε) */}
+      <mesh position={[0, L + eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[8, 2]} />
+        <meshPhongMaterial color="#10b981" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, L - eps, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[8, 2]} />
+        <meshPhongMaterial color="#10b981" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      {/* ε-band edge lines */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-3, L + eps, -1, 3, L + eps, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#10b981" linewidth={2} />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-3, L - eps, -1, 3, L - eps, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#10b981" linewidth={2} />
+      </line>
+      {/* δ-interval (orange vertical planes at x₀±δ) */}
+      <mesh position={[x0 - delta, L / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[L + 1, 2]} />
+        <meshPhongMaterial color="#f97316" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[x0 + delta, L / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[L + 1, 2]} />
+        <meshPhongMaterial color="#f97316" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      {/* δ-interval edge lines */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 - delta, -0.5, -1, x0 - delta, L + 1, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f97316" linewidth={2} />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 + delta, -0.5, -1, x0 + delta, L + 1, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f97316" linewidth={2} />
+      </line>
+      {/* Point (x₀, L) */}
+      <mesh position={[x0, L, 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Horizontal line at L */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-3, L, -1, 3, L, -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" opacity={0.5} transparent />
+      </line>
+      <Html position={[0, 3.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">函数极限 ε-δ</div>
+          <div>f(x) = sin(x)+1, x₀ = π/2</div>
+          <div className="text-emerald-600 dark:text-emerald-400">ε = {eps.toFixed(2)}</div>
+          <div className="text-orange-500 dark:text-orange-400">δ ≈ {delta.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400">L = f(x₀) = {L.toFixed(2)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 3. 导数定义 割线→切线 (derivative1) ---
+function Derivative1Scene() {
+  const { paramValue: deltaX } = useLabStore()
+  // f(x) = sin(x) + 0.5x, x₀ = 1
+  const x0 = 1
+  const fAt = (x: number) => Math.sin(x) + 0.5 * x
+
+  const curvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -300; i <= 300; i++) {
+      const x = (i / 100) * 3
+      const y = fAt(x)
+      pts.push(x, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const tangentSlope = Math.cos(x0) + 0.5
+  const tangentY = fAt(x0) + tangentSlope * 2
+  const secantSlope = (fAt(x0 + deltaX) - fAt(x0)) / deltaX
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) = sin(x)+0.5x */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Tangent line (red) at x₀ */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 - 2, fAt(x0) - tangentSlope * 2, 0, x0 + 2, fAt(x0) + tangentSlope * 2, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* Secant line (blue) from x₀ to x₀+Δx */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 - 1, fAt(x0) - secantSlope * 1, 0, x0 + deltaX + 1, fAt(x0) + secantSlope * (deltaX + 1), 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* Point at x₀ */}
+      <mesh position={[x0, fAt(x0), 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Point at x₀+Δx */}
+      <mesh position={[x0 + deltaX, fAt(x0 + deltaX), 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#3b82f6" />
+      </mesh>
+      {/* Δx indicator */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0, fAt(x0), 0.5, x0 + deltaX, fAt(x0), 0.5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 + deltaX, fAt(x0), 0.5, x0 + deltaX, fAt(x0 + deltaX), 0.5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
+      </line>
+      <Html position={[0, 3.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">导数定义 (割线→切线)</div>
+          <div>f(x) = sin(x)+0.5x, x₀ = 1</div>
+          <div className="text-red-500 dark:text-red-400">切线斜率 f&apos;(1) = {tangentSlope.toFixed(4)}</div>
+          <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
+          <div>Δx = {deltaX.toFixed(2)}</div>
+          <div className="text-amber-600 dark:text-amber-400">|差值| = {Math.abs(tangentSlope - secantSlope).toFixed(4)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 4. 切线与导函数 (derivative2) ---
+function Derivative2Scene() {
+  const { paramValue: x0 } = useLabStore()
+  // f(x) = x³-3x, f'(x) = 3x²-3
+  const fAt = (x: number) => x * x * x - 3 * x
+  const dfAt = (x: number) => 3 * x * x - 3
+
+  const fCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -250; i <= 250; i++) {
+      const x = (i / 100) * 2.5
+      const y = fAt(x)
+      pts.push(x, y, -0.5)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const dfCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -250; i <= 250; i++) {
+      const x = (i / 100) * 2.5
+      const y = dfAt(x)
+      pts.push(x, y, 0.5)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const tangentSlope = dfAt(x0)
+  const tangentLen = 1.5
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* f(x) = x³-3x (blue, offset z=-0.5) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* f'(x) = 3x²-3 (red, offset z=+0.5) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[dfCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* Tangent line at x₀ on f curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 - tangentLen, fAt(x0) - tangentSlope * tangentLen, -0.5, x0 + tangentLen, fAt(x0) + tangentSlope * tangentLen, -0.5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Point on f curve */}
+      <mesh position={[x0, fAt(x0), -0.5]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#3b82f6" />
+      </mesh>
+      {/* Point on f' curve */}
+      <mesh position={[x0, dfAt(x0), 0.5]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Vertical connecting line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0, fAt(x0), -0.5, x0, dfAt(x0), 0.5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" opacity={0.4} transparent />
+      </line>
+      {/* Labels */}
+      <Text position={[-2.5, 4, -0.5]} fontSize={0.2} color="#3b82f6">f(x)</Text>
+      <Text position={[-2.5, 4, 0.5]} fontSize={0.2} color="#ef4444">f&apos;(x)</Text>
+      <Html position={[0, 5.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">切线与导函数</div>
+          <div>f(x) = x³-3x, f&apos;(x) = 3x²-3</div>
+          <div className="text-blue-500 dark:text-blue-400">x₀ = {x0.toFixed(1)}</div>
+          <div className="text-blue-500 dark:text-blue-400">f(x₀) = {fAt(x0).toFixed(3)}</div>
+          <div className="text-red-500 dark:text-red-400">f&apos;(x₀) = {dfAt(x0).toFixed(3)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 5. 微分与线性近似 (derivative3) ---
+function Derivative3Scene() {
+  const { paramValue: x0, paramValue2: deltaX } = useLabStore()
+  // f(x) = x², f'(x) = 2x
+  const fAt = (x: number) => x * x
+  const dfAt = (x: number) => 2 * x
+
+  const curvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 0; i <= 300; i++) {
+      const x = (i / 100) * 3
+      const y = fAt(x)
+      pts.push(x, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const dy = dfAt(x0) * deltaX
+  const deltaY = fAt(x0 + deltaX) - fAt(x0)
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) = x² */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Point at x₀ */}
+      <mesh position={[x0, fAt(x0), 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#14b8a6" />
+      </mesh>
+      {/* Point at x₀+Δx */}
+      <mesh position={[x0 + deltaX, fAt(x0 + deltaX), 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Δy (actual change, blue vertical line) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 + deltaX, fAt(x0), 0.2, x0 + deltaX, fAt(x0 + deltaX), 0.2]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* dy (differential approximation, red line along tangent) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 + deltaX, fAt(x0), 0.3, x0 + deltaX, fAt(x0) + dy, 0.3]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* Tangent line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0 - 0.5, fAt(x0) - dfAt(x0) * 0.5, 0, x0 + deltaX + 0.5, fAt(x0) + dfAt(x0) * (deltaX + 0.5), 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" opacity={0.6} transparent />
+      </line>
+      {/* Δx horizontal indicator */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([x0, fAt(x0), 0.3, x0 + deltaX, fAt(x0), 0.3]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" opacity={0.6} transparent />
+      </line>
+      <Html position={[1.5, 7, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">微分与线性近似</div>
+          <div>f(x) = x²</div>
+          <div>x₀ = {x0.toFixed(1)}, Δx = {deltaX.toFixed(2)}</div>
+          <div className="text-blue-500 dark:text-blue-400">Δy = {deltaY.toFixed(4)}</div>
+          <div className="text-red-500 dark:text-red-400">dy = {dy.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400">误差 = {Math.abs(deltaY - dy).toFixed(4)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 6. 罗尔定理 (rolle1) ---
+function Rolle1Scene() {
+  const { paramValue: a } = useLabStore()
+  // f(x) = a*(x-1)*(x-3)*(x-5) on [1,5]
+
+  const curvePoints = useMemo(() => {
+    const fAt = (x: number) => a * (x - 1) * (x - 3) * (x - 5)
+    const pts: number[] = []
+    for (let i = 0; i <= 200; i++) {
+      const x = 0.5 + (i / 200) * 5.5
+      const y = fAt(x)
+      pts.push(x - 3, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  const { xi1, xi2, fXi1, fXi2 } = useMemo(() => findRollePoint(a), [a])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Endpoints f(1)=0, f(5)=0 */}
+      <mesh position={[-2, 0, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#f59e0b" />
+      </mesh>
+      <mesh position={[2, 0, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#f59e0b" />
+      </mesh>
+      {/* Horizontal line y=0 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-2.5, 0, 0, 2.5, 0, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" opacity={0.5} transparent />
+      </line>
+      {/* ξ1 point with horizontal tangent */}
+      <mesh position={[xi1 - 3, fXi1, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([xi1 - 3 - 1, fXi1, 0, xi1 - 3 + 1, fXi1, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* ξ2 point with horizontal tangent */}
+      <mesh position={[xi2 - 3, fXi2, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([xi2 - 3 - 1, fXi2, 0, xi2 - 3 + 1, fXi2, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      <Html position={[0, 4, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">罗尔定理</div>
+          <div>f(x) = {a.toFixed(1)}·(x-1)(x-3)(x-5)</div>
+          <div className="text-amber-600 dark:text-amber-400">f(1) = f(5) = 0</div>
+          <div className="text-red-500 dark:text-red-400">ξ₁ ≈ {xi1.toFixed(3)}, f(ξ₁) ≈ {fXi1.toFixed(3)}</div>
+          <div className="text-red-500 dark:text-red-400">ξ₂ ≈ {xi2.toFixed(3)}, f(ξ₂) ≈ {fXi2.toFixed(3)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 7. 拉格朗日中值定理 (lagrange1) ---
+function Lagrange1Scene() {
+  const { paramValue: a } = useLabStore()
+  // f(x) = a*(x³-6x²+11x) on [0,4]
+
+  const curvePoints = useMemo(() => {
+    const fAt = (x: number) => a * (x * x * x - 6 * x * x + 11 * x)
+    const pts: number[] = []
+    for (let i = 0; i <= 200; i++) {
+      const x = (i / 200) * 5
+      const y = fAt(x)
+      pts.push(x - 2, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  const { xi, secantSlope, tangentSlope } = useMemo(() => findLagrangePoint(a), [a])
+
+  // Secant line from (0, f(0)) to (4, f(4))
+  const f0 = 0
+  const f4 = a * (64 - 96 + 44)
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Secant line (blue) from (0,f(0)) to (4,f(4)) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0 - 2, f0, 0.1, 4 - 2, f4, 0.1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* Parallel tangent line (red) at ξ */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([xi - 2 - 1.5, fAt(xi) - tangentSlope * 1.5, 0.1, xi - 2 + 1.5, fAt(xi) + tangentSlope * 1.5, 0.1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* Point at ξ */}
+      <mesh position={[xi - 2, fAt(xi), 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Endpoints */}
+      <mesh position={[0 - 2, f0, 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#3b82f6" />
+      </mesh>
+      <mesh position={[4 - 2, f4, 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#3b82f6" />
+      </mesh>
+      <Html position={[0, 5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">拉格朗日中值定理</div>
+          <div>f(x) = {a.toFixed(1)}·(x³-6x²+11x)</div>
+          <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
+          <div className="text-red-500 dark:text-red-400">f&apos;(ξ) = {tangentSlope.toFixed(4)}</div>
+          <div>ξ ≈ {xi.toFixed(4)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 8. 原函数族 (indef_integral1) ---
+function IndefIntegral1Scene() {
+  const { paramValue: count } = useLabStore()
+  const numCurves = Math.round(count)
+
+  const curves = useMemo(() => {
+    const result: { points: Float32Array; color: string; C: number }[] = []
+    const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899']
+    const cRange = 4
+    for (let k = 0; k < numCurves; k++) {
+      const C = -cRange + (2 * cRange * k) / (numCurves - 1)
+      const pts: number[] = []
+      for (let i = -200; i <= 200; i++) {
+        const x = (i / 100) * 2.5
+        const y = x * x + C
+        pts.push(x, y, 0)
+      }
+      result.push({ points: new Float32Array(pts), color: colors[k % colors.length], C })
+    }
+    return result
+  }, [numCurves])
+
+  // f(x) = 2x curve (the derivative)
+  const fLinePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 2.5
+      const y = 2 * x
+      pts.push(x, y, -1)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Family of curves F(x) = x² + C */}
+      {curves.map((curve, idx) => (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[curve.points, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color={curve.color} linewidth={2} />
+        </line>
+      ))}
+      {/* f(x) = 2x (derivative, shown at z=-1) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fLinePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#94a3b8" opacity={0.5} transparent linewidth={1} />
+      </line>
+      <Text position={[-2.5, -5, -1]} fontSize={0.2} color="#94a3b8">f(x)=2x</Text>
+      <Text position={[-2.5, 5, 0]} fontSize={0.2} color="#14b8a6">F(x)=x²+C</Text>
+      <Html position={[0, 7, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">原函数族</div>
+          <div>∫2x dx = x² + C</div>
+          <div>曲线数量: {numCurves}</div>
+          <div>C ∈ [{(-4).toFixed(1)}, {(4).toFixed(1)}]</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 9. 微积分基本定理 (ftc1) ---
+function Ftc1Scene() {
+  const { paramValue: upperLimit } = useLabStore()
+  // f(x) = sin(x)+1, Φ(x) = ∫₋₂ˣ f(t)dt
+  const fAt = (x: number) => Math.sin(x) + 1
+
+  const fCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -300; i <= 300; i++) {
+      const x = (i / 100) * 3
+      const y = fAt(x)
+      pts.push(x, y, -1)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // Area under curve from -2 to upperLimit
+  const areaValue = useMemo(() => numericalIntegral1D(fAt, -2, upperLimit), [upperLimit])
+
+  // Φ(x) curve = ∫₋₂ˣ f(t)dt = [-cos(t)+t]₋₂ˣ
+  const phiCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      const phiX = -Math.cos(x) + x - (-Math.cos(-2) + (-2))
+      pts.push(x, phiX, 1)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // Shaded area fill (triangulated mesh between curve and x-axis)
+  const areaGeom = useMemo(() => {
+    if (upperLimit <= -2) return null
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const res = 60
+    const xMin = -2
+    const xMax = upperLimit
+    const dx = (xMax - xMin) / res
+    const col = new THREE.Color('#14b8a6')
+
+    for (let i = 0; i <= res; i++) {
+      const x = xMin + i * dx
+      vertices.push(x, fAt(x), -1)
+      colors.push(col.r, col.g, col.b)
+      vertices.push(x, 0, -1)
+      colors.push(col.r * 0.5, col.g * 0.5, col.b * 0.5)
+    }
+    for (let i = 0; i < res; i++) {
+      const a = i * 2
+      const b = a + 1
+      const c = a + 2
+      const d = a + 3
+      indices.push(a, c, b, b, c, d)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [upperLimit])
+
+  const phiAtX = -Math.cos(upperLimit) + upperLimit - (-Math.cos(-2) + (-2))
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* f(x) curve at z=-1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Φ(x) curve at z=+1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[phiCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Shaded area */}
+      {areaGeom && (
+        <mesh geometry={areaGeom}>
+          <meshPhongMaterial vertexColors transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+      {/* Upper limit indicator on f curve */}
+      <mesh position={[upperLimit, fAt(upperLimit), -1]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      {/* Corresponding point on Φ curve */}
+      <mesh position={[upperLimit, phiAtX, 1]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshPhongMaterial color="#f59e0b" />
+      </mesh>
+      {/* Vertical line at upper limit */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([upperLimit, 0, -1, upperLimit, fAt(upperLimit), -1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" opacity={0.6} transparent />
+      </line>
+      <Text position={[-3, 2, -1]} fontSize={0.2} color="#14b8a6">f(x)</Text>
+      <Text position={[-3, 2, 1]} fontSize={0.2} color="#f59e0b">Φ(x)</Text>
+      <Html position={[0, 5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">微积分基本定理</div>
+          <div>f(x) = sin(x)+1</div>
+          <div>Φ(x) = ∫₋₂ˣ f(t)dt</div>
+          <div className="text-emerald-600 dark:text-emerald-400">面积 = {areaValue.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400">Φ({upperLimit.toFixed(1)}) = {phiAtX.toFixed(4)}</div>
+          <div>Φ&apos;(x) = f(x) ✓</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 10. 积分中值定理 (mean_value_integral1) ---
+function MeanValueIntegral1Scene() {
+  const { paramValue: a } = useLabStore()
+  // f(x) = a*sin(x)+1 on [0, 2π]
+
+  const { xi, avgValue, integral } = useMemo(
+    () => {
+      const fAt = (x: number) => a * Math.sin(x) + 1
+      return findMeanValueIntegralPoint(fAt, 0, 2 * Math.PI)
+    },
+    [a]
+  )
+
+  const curvePoints = useMemo(() => {
+    const fAt = (x: number) => a * Math.sin(x) + 1
+    const pts: number[] = []
+    for (let i = 0; i <= 300; i++) {
+      const x = (i / 300) * 2 * Math.PI
+      const y = fAt(x)
+      pts.push(x - Math.PI, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  // Area fill
+  const areaGeom = useMemo(() => {
+    const fAt = (x: number) => a * Math.sin(x) + 1
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const res = 60
+    const dx = (2 * Math.PI) / res
+    const col = new THREE.Color('#14b8a6')
+
+    for (let i = 0; i <= res; i++) {
+      const x = i * dx
+      vertices.push(x - Math.PI, fAt(x), 0)
+      colors.push(col.r, col.g, col.b)
+      vertices.push(x - Math.PI, 0, 0)
+      colors.push(col.r * 0.5, col.g * 0.5, col.b * 0.5)
+    }
+    for (let i = 0; i < res; i++) {
+      const ai = i * 2
+      indices.push(ai, ai + 2, ai + 1, ai + 1, ai + 2, ai + 3)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Average value rectangle
+  const rectW = 2 * Math.PI
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* Curve f(x) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* Area fill */}
+      <mesh geometry={areaGeom}>
+        <meshPhongMaterial vertexColors transparent opacity={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Average value rectangle f(ξ)·(b-a) */}
+      <mesh position={[0, avgValue / 2, 0.3]}>
+        <boxGeometry args={[rectW, avgValue, 0.02]} />
+        <meshPhongMaterial color="#f59e0b" transparent opacity={0.3} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Average value line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-Math.PI, avgValue, 0.3, Math.PI, avgValue, 0.3]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* ξ point */}
+      <mesh position={[xi - Math.PI, a * Math.sin(xi) + 1, 0]}>
+        <sphereGeometry args={[0.12, 12, 12]} />
+        <meshPhongMaterial color="#ef4444" />
+      </mesh>
+      <Html position={[0, 3, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">积分中值定理</div>
+          <div>f(x) = {a.toFixed(1)}·sin(x)+1</div>
+          <div className="text-emerald-600 dark:text-emerald-400">∫f dx = {integral.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400">平均值 = {avgValue.toFixed(4)}</div>
+          <div className="text-red-500 dark:text-red-400">ξ ≈ {xi.toFixed(4)}</div>
+          <div>f(ξ) = {(a * Math.sin(xi) + 1).toFixed(4)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 11. 曲线间面积 (area1) ---
+function Area1Scene() {
+  const { paramValue: a } = useLabStore()
+  // f(x) = a+cos(x), g(x) = sin(x) on [-π, π]
+
+  const fCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * Math.PI
+      const y = a + Math.cos(x)
+      pts.push(x, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  const gCurvePoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * Math.PI
+      const y = Math.sin(x)
+      pts.push(x, y, 0)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const area = useMemo(() => areaBetweenCurves(
+    (x: number) => a + Math.cos(x),
+    (x: number) => Math.sin(x),
+    -Math.PI, Math.PI
+  ), [a])
+
+  // Filled area between curves
+  const areaGeom = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const res = 80
+    const xMin = -Math.PI
+    const xMax = Math.PI
+    const dx = (xMax - xMin) / res
+    const col1 = new THREE.Color('#14b8a6')
+    const col2 = new THREE.Color('#f59e0b')
+
+    for (let i = 0; i <= res; i++) {
+      const x = xMin + i * dx
+      const fv = a + Math.cos(x)
+      const gv = Math.sin(x)
+      vertices.push(x, fv, 0.1)
+      colors.push(col1.r, col1.g, col1.b)
+      vertices.push(x, gv, 0.1)
+      colors.push(col2.r, col2.g, col2.b)
+    }
+    for (let i = 0; i < res; i++) {
+      const ai = i * 2
+      indices.push(ai, ai + 2, ai + 1, ai + 1, ai + 2, ai + 3)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  return (
+    <AutoRotate speed={0.002}>
+      {/* f(x) = a+cos(x) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#14b8a6" linewidth={2} />
+      </line>
+      {/* g(x) = sin(x) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[gCurvePoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Filled area between curves */}
+      <mesh geometry={areaGeom}>
+        <meshPhongMaterial vertexColors transparent opacity={0.4} side={THREE.DoubleSide} />
+      </mesh>
+      <Text position={[-3.5, a + 1, 0]} fontSize={0.18} color="#14b8a6" anchorX="left">f(x)={a.toFixed(1)}+cos(x)</Text>
+      <Text position={[-3.5, -1.5, 0]} fontSize={0.18} color="#f59e0b" anchorX="left">g(x)=sin(x)</Text>
+      <Html position={[0, 3.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">曲线间面积</div>
+          <div>S = ∫|f(x)-g(x)|dx</div>
+          <div className="text-emerald-600 dark:text-emerald-400">面积 = {area.toFixed(4)}</div>
+          <div>间距 a = {a.toFixed(1)}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
+// --- 12. 旋转体体积 (volume_rev1) ---
+function VolumeRev1Scene() {
+  const { paramValue: a, paramValue2: numDiscs } = useLabStore()
+  const nDiscs = Math.round(numDiscs)
+  // f(x) = a*sin(x)+1.5 on [0, 2π]
+
+  const vol = useMemo(() => volumeOfRevolution(
+    (x: number) => a * Math.sin(x) + 1.5, 0, 2 * Math.PI
+  ), [a])
+
+  // Generate surface of revolution
+  const surfaceGeom = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const colors: number[] = []
+    const xRes = 60
+    const thetaRes = 40
+    const col = new THREE.Color('#14b8a6')
+
+    for (let i = 0; i <= xRes; i++) {
+      const x = (i / xRes) * 2 * Math.PI
+      const r = a * Math.sin(x) + 1.5
+      for (let j = 0; j <= thetaRes; j++) {
+        const theta = (j / thetaRes) * 2 * Math.PI
+        const px = x - Math.PI
+        const py = r * Math.cos(theta)
+        const pz = r * Math.sin(theta)
+        vertices.push(px, py, pz)
+        colors.push(col.r, col.g, col.b)
+      }
+    }
+    for (let i = 0; i < xRes; i++) {
+      for (let j = 0; j < thetaRes; j++) {
+        const a1 = i * (thetaRes + 1) + j
+        const b1 = a1 + 1
+        const c1 = (i + 1) * (thetaRes + 1) + j
+        const d1 = c1 + 1
+        indices.push(a1, c1, b1, b1, c1, d1)
+      }
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Disc cross-sections
+  const discData = useMemo(() => {
+    const discs: { x: number; r: number }[] = []
+    for (let i = 0; i < nDiscs; i++) {
+      const x = (i + 0.5) / nDiscs * 2 * Math.PI
+      const r = a * Math.sin(x) + 1.5
+      discs.push({ x: x - Math.PI, r })
+    }
+    return discs
+  }, [a, nDiscs])
+
+  return (
+    <AutoRotate speed={0.003}>
+      {/* Surface of revolution */}
+      <mesh geometry={surfaceGeom}>
+        <meshPhongMaterial vertexColors transparent opacity={0.35} side={THREE.DoubleSide} shininess={60} />
+      </mesh>
+      {/* Disc cross-sections */}
+      {discData.map((disc, idx) => (
+        <mesh key={idx} position={[disc.x, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[disc.r, disc.r, 0.03, 24]} />
+          <meshPhongMaterial color={idx % 2 === 0 ? '#f59e0b' : '#fbbf24'} transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+      {/* Central axis (x-axis) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-Math.PI, 0, 0, Math.PI, 0, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" opacity={0.6} transparent />
+      </line>
+      {/* Curve profile (f(x) at z=0) */}
+      {useMemo(() => {
+        const pts: number[] = []
+        for (let i = 0; i <= 200; i++) {
+          const x = (i / 200) * 2 * Math.PI
+          const y = a * Math.sin(x) + 1.5
+          pts.push(x - Math.PI, y, 0)
+        }
+        return (
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[new Float32Array(pts), 3]} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#14b8a6" linewidth={2} />
+          </line>
+        )
+      }, [a])}
+      <Html position={[0, 3.5, 0]} center>
+        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">旋转体体积</div>
+          <div>f(x) = {a.toFixed(1)}·sin(x)+1.5</div>
+          <div>V = π∫[f(x)]²dx</div>
+          <div className="text-emerald-600 dark:text-emerald-400">V ≈ {vol.toFixed(4)}</div>
+          <div>截面数: {nDiscs}</div>
+        </div>
+      </Html>
+    </AutoRotate>
+  )
+}
+
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
 
@@ -5034,6 +6141,55 @@ export function SceneRenderer() {
 
       {mode === 'surface_integral1' && (
         <SurfaceIntegralScene />
+      )}
+
+      {/* 一元微积分模式 */}
+      {mode === 'limit1' && (
+        <Limit1Scene />
+      )}
+
+      {mode === 'limit2' && (
+        <Limit2Scene />
+      )}
+
+      {mode === 'derivative1' && (
+        <Derivative1Scene />
+      )}
+
+      {mode === 'derivative2' && (
+        <Derivative2Scene />
+      )}
+
+      {mode === 'derivative3' && (
+        <Derivative3Scene />
+      )}
+
+      {mode === 'rolle1' && (
+        <Rolle1Scene />
+      )}
+
+      {mode === 'lagrange1' && (
+        <Lagrange1Scene />
+      )}
+
+      {mode === 'indef_integral1' && (
+        <IndefIntegral1Scene />
+      )}
+
+      {mode === 'ftc1' && (
+        <Ftc1Scene />
+      )}
+
+      {mode === 'mean_value_integral1' && (
+        <MeanValueIntegral1Scene />
+      )}
+
+      {mode === 'area1' && (
+        <Area1Scene />
+      )}
+
+      {mode === 'volume_rev1' && (
+        <VolumeRev1Scene />
       )}
     </>
   )

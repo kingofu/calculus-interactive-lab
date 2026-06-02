@@ -47,6 +47,193 @@ export function useComputedValues(): ComputedValues | null {
     const n = Math.round(paramValue)
 
     switch (mode as LabMode) {
+      // ═══════════════════════════════════════════════════════════
+      // 一元微积分 computed values
+      // ═══════════════════════════════════════════════════════════
+      case 'limit1': {
+        const c = paramValue
+        const L = paramValue2
+        // Sequence a_n = L + c/n, converges to L
+        const n10 = L + c / 10
+        const n100 = L + c / 100
+        return {
+          mainValue: formatValue(L),
+          approxValue: `a₁₀ = ${formatValue(n10)}`,
+          exactValue: `a₁₀₀ = ${formatValue(n100)}`,
+          error: formatValue(c / 100),
+          label: `极限 L = ${formatValue(L)}, 收敛速度 c = ${c.toFixed(1)}`,
+        }
+      }
+
+      case 'limit2': {
+        const eps = paramValue
+        // For f(x) = sin(x) + x near x₀=0, limit L=0
+        // δ ≈ ε (since derivative at 0 is cos(0)+1 = 2, δ ≈ ε/2)
+        const delta = eps / 2
+        return {
+          mainValue: formatValue(eps),
+          approxValue: `δ ≈ ${formatValue(delta)}`,
+          exactValue: `|f(x)-L| < ε`,
+          error: formatValue(delta),
+          label: `ε = ${formatValue(eps)}, δ ≈ ${formatValue(delta)}`,
+        }
+      }
+
+      case 'derivative1': {
+        const dx = paramValue
+        const x0 = 0 // reference point
+        // f(x) = sin(x) + 0.5*x
+        const fx0 = Math.sin(x0) + 0.5 * x0
+        const fx1 = Math.sin(x0 + dx) + 0.5 * (x0 + dx)
+        const secantSlope = (fx1 - fx0) / dx
+        const tangentSlope = Math.cos(x0) + 0.5
+        return {
+          mainValue: formatValue(tangentSlope),
+          approxValue: `割线斜率 = ${formatValue(secantSlope)}`,
+          exactValue: `切线斜率 = ${formatValue(tangentSlope)}`,
+          error: formatValue(Math.abs(secantSlope - tangentSlope)),
+          label: `Δx = ${dx.toFixed(2)}, 割线→切线`,
+        }
+      }
+
+      case 'derivative2': {
+        const x0 = paramValue
+        // f(x) = x³ - 3x, f'(x) = 3x² - 3
+        const fPrime = 3 * x0 * x0 - 3
+        const fValue = x0 * x0 * x0 - 3 * x0
+        return {
+          mainValue: formatValue(fPrime),
+          approxValue: `f(x₀) = ${formatValue(fValue)}`,
+          exactValue: `f'(x₀) = 3x₀²-3`,
+          error: formatValue(fPrime),
+          label: `x₀ = ${x0.toFixed(1)}, 切线斜率 = ${formatValue(fPrime)}`,
+        }
+      }
+
+      case 'derivative3': {
+        const x0 = paramValue
+        const dxVal = paramValue2
+        // f(x) = x², f'(x) = 2x
+        const dy = 2 * x0 * dxVal
+        const deltaY = (x0 + dxVal) * (x0 + dxVal) - x0 * x0
+        return {
+          mainValue: formatValue(dy),
+          approxValue: `Δy = ${formatValue(deltaY)}`,
+          exactValue: `dy = ${formatValue(dy)}`,
+          error: formatValue(Math.abs(deltaY - dy)),
+          label: `dy = ${formatValue(dy)}, Δy = ${formatValue(deltaY)}`,
+        }
+      }
+
+      case 'rolle1': {
+        const a = paramValue
+        // f(x) = a*(x-1)*(x-3)*(x-5), f'(x) = a*(3x²-18x+23)
+        // Critical points: x = (18 ± √(324-276))/6 = (18 ± √48)/6 = 3 ± 2√3/3
+        const xi1 = 3 - 2 * Math.sqrt(3) / 3
+        const xi2 = 3 + 2 * Math.sqrt(3) / 3
+        const fPrimeXi1 = 0
+        return {
+          mainValue: formatValue(xi1),
+          approxValue: `ξ₁ ≈ ${formatValue(xi1)}`,
+          exactValue: `ξ₂ ≈ ${formatValue(xi2)}`,
+          error: formatValue(fPrimeXi1),
+          label: `罗尔定理: f'(ξ)=0, ξ₁≈${xi1.toFixed(2)}, ξ₂≈${xi2.toFixed(2)}`,
+        }
+      }
+
+      case 'lagrange1': {
+        const a = paramValue
+        // f(x) = a*(x-1)*(x-3)*(x-5) on [1,5], f(1)=f(5)=0
+        // secant slope = (f(5)-f(1))/(5-1) = 0
+        // f'(ξ) = a*(3ξ²-18ξ+23) = 0 → same as Rolle
+        const xi1 = 3 - 2 * Math.sqrt(3) / 3
+        const xi2 = 3 + 2 * Math.sqrt(3) / 3
+        const secantSlope = 0 // f(1)=f(5)=0
+        return {
+          mainValue: formatValue(secantSlope),
+          approxValue: `割线斜率 = ${formatValue(secantSlope)}`,
+          exactValue: `f'(ξ₁)=0, f'(ξ₂)=0`,
+          error: formatValue(0),
+          label: `拉格朗日: ξ₁≈${xi1.toFixed(2)}, ξ₂≈${xi2.toFixed(2)}, 割线=f'(ξ)`,
+        }
+      }
+
+      case 'indef_integral1': {
+        const numCurves = Math.round(paramValue)
+        // f(x) = 2x, F(x) = x² + C
+        const CValues = Array.from({ length: numCurves }, (_, i) => i - Math.floor(numCurves / 2))
+        const rangeStr = `C ∈ [${CValues[0]}, ${CValues[CValues.length - 1]}]`
+        return {
+          mainValue: `${numCurves}`,
+          approxValue: `F(x) = x² + C`,
+          exactValue: rangeStr,
+          error: '0',
+          label: `${numCurves}条原函数曲线, ${rangeStr}`,
+        }
+      }
+
+      case 'ftc1': {
+        const xUpper = paramValue
+        // f(x) = sin(x) + 1, Φ(x) = ∫₀ˣ (sin(t)+1) dt = 1 - cos(x) + x
+        const integralValue = 1 - Math.cos(xUpper) + xUpper
+        const derivativeValue = Math.sin(xUpper) + 1 // Φ'(x) = f(x)
+        return {
+          mainValue: formatValue(integralValue),
+          approxValue: `Φ'(x) = f(x) = ${formatValue(derivativeValue)}`,
+          exactValue: `Φ(x) = ${formatValue(integralValue)}`,
+          error: formatValue(Math.abs(derivativeValue - (Math.sin(xUpper) + 1))),
+          label: `∫₀ˣf(t)dt = ${formatValue(integralValue)}, Φ'(x) = ${formatValue(derivativeValue)}`,
+        }
+      }
+
+      case 'mean_value_integral1': {
+        const a = paramValue
+        // f(x) = a*sin(x) + 2 on [0, π]
+        // avg = (1/π) * ∫₀^π (a*sin(x)+2) dx = (1/π)*(2a + 2π) = 2a/π + 2
+        const avgValue = 2 * a / Math.PI + 2
+        // f(ξ) = avg → a*sin(ξ) + 2 = avg → sin(ξ) = 2/(π)
+        const xi = Math.asin(2 / Math.PI)
+        return {
+          mainValue: formatValue(avgValue),
+          approxValue: `ξ ≈ ${formatValue(xi)}`,
+          exactValue: `f(ξ) = ${formatValue(avgValue)}`,
+          error: formatValue(Math.abs(a * Math.sin(xi) + 2 - avgValue)),
+          label: `平均值 = ${formatValue(avgValue)}, ξ ≈ ${xi.toFixed(3)}`,
+        }
+      }
+
+      case 'area1': {
+        const d = paramValue
+        // f(x) = d + sin(x), g(x) = sin(x) on [0, 2π]
+        // Area = ∫₀²π d dx = 2πd
+        const area = 2 * Math.PI * d
+        return {
+          mainValue: formatValue(area),
+          approxValue: `S = 2πd = ${formatValue(area)}`,
+          exactValue: `∫[f(x)-g(x)]dx`,
+          error: formatValue(0),
+          label: `面积 S = ${formatValue(area)} (间距 d = ${d.toFixed(1)})`,
+        }
+      }
+
+      case 'volume_rev1': {
+        const a = paramValue
+        const n = Math.round(paramValue2)
+        // f(x) = a*sin(x)+1 on [0, π], revolved around x-axis
+        // V = π ∫₀^π (a*sin(x)+1)² dx = π * (a²π/2 + 2a*2 + π)
+        const volume = Math.PI * (a * a * Math.PI / 2 + 4 * a + Math.PI)
+        return {
+          mainValue: formatValue(volume),
+          approxValue: `${n}个圆盘近似`,
+          exactValue: `V = π∫[f(x)]²dx`,
+          error: formatValue(volume),
+          label: `体积 V ≈ ${formatValue(volume)} (${n}个圆盘)`,
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════
+      // 多元微积分 computed values
+      // ═══════════════════════════════════════════════════════════
       case 'step3': {
         // Riemann sum vs exact integral for f(x,y) over [-3,3]×[-3,3]
         const approx = riemannSum2D(f, 3, 3, n)

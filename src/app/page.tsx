@@ -34,6 +34,12 @@ import { cn } from '@/lib/utils'
 
 // All mode keys in order for keyboard navigation
 const allModes: LabMode[] = [
+  'limit1', 'limit2',
+  'derivative1', 'derivative2', 'derivative3',
+  'rolle1', 'lagrange1',
+  'indef_integral1',
+  'ftc1', 'mean_value_integral1',
+  'area1', 'volume_rev1',
   'step1', 'step2', 'step3', 'step4',
   'prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7',
   'parity1', 'parity2',
@@ -326,13 +332,13 @@ function HomeContent() {
             </div>
             <div className="flex flex-col">
               <h1 className="text-xs sm:text-sm font-bold tracking-tight leading-none">
-                多元微积分互动实验室
+                微积分互动实验室
               </h1>
               <span
                 key={mode}
                 className="text-[7px] sm:text-[8px] text-muted-foreground/60 font-medium tracking-wider mt-0.5 hidden sm:block animate-[subtitle-swap_0.4s_ease-out]"
               >
-                MULTIVARIABLE CALCULUS INTERACTIVE LAB
+                CALCULUS INTERACTIVE LAB
               </span>
             </div>
           </div>
@@ -499,7 +505,7 @@ function HomeContent() {
               <div className="absolute -bottom-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <span className="text-[9px] text-muted-foreground hidden sm:inline">
-              多元微积分互动实验室
+              微积分互动实验室
             </span>
             <span className="text-[9px] text-muted-foreground sm:hidden">
               微积分实验室
@@ -581,7 +587,7 @@ function HomeContent() {
               <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
               <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[260px]">
                 <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                  欢迎使用多元微积分互动实验室！← 侧边栏选择可视化模式，滑块调整参数，拖拽旋转3D场景
+                  欢迎使用微积分互动实验室！← 侧边栏选择可视化模式，滑块调整参数，拖拽旋转3D场景
                 </p>
                 <Button
                   variant="outline"
@@ -601,7 +607,7 @@ function HomeContent() {
               <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-emerald-200 dark:border-r-emerald-800" />
               <div className="bg-emerald-50 dark:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800 rounded-lg shadow-lg backdrop-blur-sm p-3 max-w-[220px]">
                 <p className="text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                  欢迎使用多元微积分互动实验室！点击菜单按钮选择模式，滑块调整参数，拖拽旋转3D场景
+                  欢迎使用微积分互动实验室！点击菜单按钮选择模式，滑块调整参数，拖拽旋转3D场景
                 </p>
                 <Button
                   variant="outline"

@@ -16,6 +16,27 @@ import { useToast } from './toast-provider'
 // Camera presets for different modes
 function getCameraForMode(mode: string): { position: [number, number, number]; fov: number } {
   switch (mode) {
+    // 一元微积分 modes
+    case 'limit1':
+    case 'limit2':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'derivative1':
+    case 'derivative2':
+    case 'derivative3':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'rolle1':
+    case 'lagrange1':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'indef_integral1':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'ftc1':
+    case 'mean_value_integral1':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'area1':
+      return { position: [5, 5, 5], fov: 50 }
+    case 'volume_rev1':
+      return { position: [6, 5, 6], fov: 50 }
+    // 多元微积分 modes
     case 'rect_approx':
       return { position: [6, 4, 6], fov: 50 }
     case 'sphere_cyl1':
@@ -61,6 +82,29 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
 
 // Background class based on mode
 function getBackgroundForMode(mode: string): string {
+  // 一元微积分 backgrounds
+  if (mode === 'limit1' || mode === 'limit2') {
+    return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
+  }
+  if (mode === 'derivative1' || mode === 'derivative2' || mode === 'derivative3') {
+    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+  }
+  if (mode === 'rolle1' || mode === 'lagrange1') {
+    return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
+  }
+  if (mode === 'indef_integral1') {
+    return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
+  }
+  if (mode === 'ftc1' || mode === 'mean_value_integral1') {
+    return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
+  }
+  if (mode === 'area1') {
+    return 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/20'
+  }
+  if (mode === 'volume_rev1') {
+    return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
+  }
+  // 多元微积分 backgrounds
   if (mode.startsWith('step')) {
     return 'from-emerald-50 to-slate-100 dark:from-emerald-950/50 dark:to-slate-900'
   }
@@ -146,7 +190,7 @@ function getBackgroundForMode(mode: string): string {
     return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   }
   if (mode === 'taylor1') {
-    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+    return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
   }
   if (mode === 'surface_integral1') {
     return 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20'
@@ -156,22 +200,31 @@ function getBackgroundForMode(mode: string): string {
 
 // Mode indicator color
 function getModeAccentColor(mode: string): string {
+  // 一元微积分 accent colors
+  if (mode === 'limit1' || mode === 'limit2') return 'bg-rose-500'
+  if (mode === 'derivative1' || mode === 'derivative2' || mode === 'derivative3') return 'bg-amber-500'
+  if (mode === 'rolle1' || mode === 'lagrange1') return 'bg-red-500'
+  if (mode === 'indef_integral1') return 'bg-purple-500'
+  if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'bg-emerald-500'
+  if (mode === 'area1') return 'bg-sky-500'
+  if (mode === 'volume_rev1') return 'bg-sky-500'
+  // 多元微积分 accent colors
   if (mode.startsWith('step')) return 'bg-emerald-500'
   if (mode.startsWith('prop')) return 'bg-sky-500'
   if (mode.startsWith('parity')) return 'bg-orange-500'
   if (mode.startsWith('cartesian')) return 'bg-amber-500'
   if (mode.startsWith('polar')) return 'bg-rose-500'
-  if (mode === 'rect_approx') return 'bg-teal-500'
+  if (mode === 'rect_approx') return 'bg-emerald-500'
   if (mode.startsWith('sphere_cyl')) return 'bg-violet-500'
   if (mode.startsWith('convergence')) return 'bg-cyan-500'
   if (mode.startsWith('triple')) return 'bg-purple-500'
   if (mode === 'jacobian1') return 'bg-lime-500'
   if (mode === 'green1') return 'bg-red-500'
-  if (mode === 'surface_area1') return 'bg-teal-500'
-  if (mode === 'fubini1') return 'bg-slate-500'
+  if (mode === 'surface_area1') return 'bg-indigo-500'
+  if (mode === 'fubini1') return 'bg-fuchsia-500'
   if (mode === 'stokes1') return 'bg-violet-500'
   if (mode === 'divergence1') return 'bg-orange-500'
-  if (mode === 'arc_length1') return 'bg-pink-500'
+  if (mode === 'arc_length1') return 'bg-sky-500'
   if (mode === 'mass_center1' || mode === 'moment_of_inertia1') return 'bg-cyan-500'
   if (mode === 'cylindrical1') return 'bg-sky-500'
   if (mode === 'gradient1') return 'bg-yellow-500'
@@ -184,7 +237,7 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'curl1') return 'bg-rose-500'
   if (mode === 'divergence_field1') return 'bg-pink-500'
   if (mode === 'conservative1') return 'bg-emerald-500'
-  if (mode === 'taylor1') return 'bg-amber-500'
+  if (mode === 'taylor1') return 'bg-red-500'
   if (mode === 'surface_integral1') return 'bg-violet-500'
   return 'bg-slate-500'
 }

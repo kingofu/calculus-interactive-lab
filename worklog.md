@@ -1,4 +1,4 @@
-# 多元微积分互动实验室 - Worklog
+# 微积分互动实验室 - Worklog
 
 ---
 Task ID: 1
@@ -2021,3 +2021,105 @@ Stage Summary:
 - **Screen reader support**: Live region announces mode changes
 - **No breaking changes**: Auto-rotate defaults to `true` (same behavior as before)
 - Cron job (180471) created for 15-minute webDevReview
+
+---
+Task ID: 4+6+7
+Agent: Infrastructure Agent
+Task: Update sidebar, viewport, page.tsx, presets, error boundary for new modes
+
+Work Log:
+- Read worklog.md to understand project status (45+ existing modes, stable)
+- Read all target files: sidebar.tsx, viewport.tsx, page.tsx, presets.ts, scene-error-boundary.tsx, use-computed-values.ts, lab-store.ts
+- Confirmed LabMode type in lab-store.ts already includes all 12 new modes (limit1, limit2, derivative1-3, rolle1, lagrange1, indef_integral1, ftc1, mean_value_integral1, area1, volume_rev1) and taylor1 section already changed to '微分中值定理'
+- **Updated sidebar.tsx**: Completely restructured `chapters` array from 7 chapters to 13 chapters following standard 高等数学 textbook arrangement:
+  - Ch1: 函数与极限 (Target, rose) → 数列极限 section with limit1, limit2
+  - Ch2: 导数与微分 (TrendingUp, amber) → 导数概念 section with derivative1-3
+  - Ch3: 微分中值定理 (BookOpen, red) → 中值定理 section with rolle1, lagrange1, taylor1
+  - Ch4: 不定积分 (Sigma, purple) → 不定积分 section with indef_integral1
+  - Ch5: 定积分 (BarChart3, emerald) → 定积分概念与性质 section with rect_approx, ftc1, mean_value_integral1
+  - Ch6: 定积分的应用 (FlaskConical, sky) → 面积与体积 section with area1, volume_rev1, arc_length1
+  - Ch7-13: Kept existing 二重积分基础 through 级数与逼近 chapters, with reorganization:
+    - rect_approx moved from 积分应用 to 定积分 (Ch5)
+    - arc_length1 moved from 积分应用 to 定积分的应用 (Ch6)
+    - taylor1 moved from 数值分析与逼近 to 微分中值定理 (Ch3)
+    - 积分应用 (Ch9) now has only 曲面面积, 质心与转动惯量, 球柱相交
+    - 级数与逼近 (Ch13) no longer has taylor1, removed 泰勒展开与逼近 section
+- **Updated viewport.tsx**:
+  - Added camera presets for all 12 new modes (position [5,5,5] fov 50 for most, [6,5,6] fov 50 for volume_rev1)
+  - Added gradient backgrounds for new modes matching chapter colors
+  - Updated accent colors for new modes and adjusted existing mode accent colors to match new chapter assignments
+  - Changed taylor1 background from amber to red (now in 微分中值定理 chapter)
+  - Changed rect_approx accent from teal to emerald (now in 定积分 chapter)
+  - Changed arc_length1 accent from pink to sky (now in 定积分的应用 chapter)
+- **Updated page.tsx**: Added 12 new modes to beginning of allModes array (一元微积分 modes first)
+- **Updated presets.ts**: Added presets for all 12 new modes with descriptive names and emojis
+- **Updated scene-error-boundary.tsx**: Added 12 new mode keys to allModes list + added surface_integral1
+- **Updated use-computed-values.ts**: Added computed values cases for all 12 new modes:
+  - limit1: Sequence convergence values a₁₀, a₁₀₀, L
+  - limit2: ε-δ relationship, δ ≈ ε/2
+  - derivative1: Secant slope vs tangent slope for f(x)=sin(x)+0.5x
+  - derivative2: f'(x₀)=3x₀²-3, f(x₀)=x₀³-3x₀
+  - derivative3: dy vs Δy for f(x)=x²
+  - rolle1: Critical points ξ₁≈1.85, ξ₂≈4.15
+  - lagrange1: Secant slope = f'(ξ) verification
+  - indef_integral1: Number of curves, C range
+  - ftc1: Integral value Φ(x), derivative Φ'(x)=f(x)
+  - mean_value_integral1: Average value, ξ point
+  - area1: Area = 2πd
+  - volume_rev1: Volume via disc method
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **Sidebar restructured**: 13 chapters following standard 高等数学 textbook order
+- **12 new modes integrated**: sidebar navigation, viewport camera/background/accent, page allModes, presets, error boundary, computed values
+- **taylor1 reassigned**: from '泰勒展开与逼近' section to '微分中值定理' section
+- **rect_approx moved**: from 积分应用 to 定积分 chapter
+- **arc_length1 moved**: from 积分应用 to 定积分的应用 chapter
+- All lint checks pass, no compilation errors
+
+---
+Task ID: 5
+Agent: Scene Renderer Agent
+Task: Implement scene renderers for 12 new single-variable calculus modes
+
+Work Log:
+- Read worklog.md to understand project status (existing modes with scene renderers)
+- Read scene-renderer.tsx to understand existing scene component patterns (AutoRotate, Axes, Html overlays, BufferGeometry)
+- Read lab-store.ts to confirm all 12 mode definitions already exist (limit1, limit2, derivative1-3, rolle1, lagrange1, indef_integral1, ftc1, mean_value_integral1, area1, volume_rev1)
+- Read math-computations.ts to understand existing numerical computation helpers
+- Added new math helper functions to math-computations.ts:
+  - `bisectRoot`: bisection method for root finding
+  - `findRollePoint`: find ξ₁, ξ₂ where f'(ξ)=0 for Rolle's theorem (analytical solution)
+  - `findLagrangePoint`: find ξ where f'(ξ)=secant slope for Lagrange MVT (analytical solution)
+  - `volumeOfRevolution`: V = π∫[f(x)]²dx using Simpson's rule
+  - `areaBetweenCurves`: ∫|f(x)-g(x)|dx using Simpson's rule
+  - `findMeanValueIntegralPoint`: find ξ where f(ξ)=average value using bisection
+- Added 5 new imports to scene-renderer.tsx (findRollePoint, findLagrangePoint, volumeOfRevolution, areaBetweenCurves, findMeanValueIntegralPoint)
+- Implemented 12 new scene components in scene-renderer.tsx (before SceneRenderer):
+  1. **Limit1Scene (数列极限)**: Scatter points aₙ=L+c/n, ε-band planes, convergence curve, drop lines, color-coded spheres (green=within ε, red=outside)
+  2. **Limit2Scene (函数极限 ε-δ)**: Curve f(x)=sin(x)+1, ε-band (green horizontal planes), δ-interval (orange vertical planes), point (x₀,L), numerical δ computation
+  3. **Derivative1Scene (导数定义 割线→切线)**: Curve f(x)=sin(x)+0.5x, tangent line (red) at x₀=1, secant line (blue) from x₀ to x₀+Δx, Δx/Δy indicators
+  4. **Derivative2Scene (切线与导函数)**: Dual curves f(x)=x³-3x (blue, z=-0.5) and f'(x)=3x²-3 (red, z=+0.5), tangent line at x₀, connecting line between points
+  5. **Derivative3Scene (微分与线性近似)**: Curve f(x)=x², Δy (blue vertical) vs dy (red vertical), tangent line, Δx indicator
+  6. **Rolle1Scene (罗尔定理)**: Curve f(x)=a(x-1)(x-3)(x-5), endpoints f(1)=f(5)=0, two ξ points with horizontal tangents (red)
+  7. **Lagrange1Scene (拉格朗日中值定理)**: Curve f(x)=a(x³-6x²+11x), secant line (blue) from (0,f(0)) to (4,f(4)), parallel tangent line (red) at ξ
+  8. **IndefIntegral1Scene (原函数族)**: Family of curves F(x)=x²+C with rainbow colors, derivative f(x)=2x shown at z=-1
+  9. **Ftc1Scene (微积分基本定理)**: f(x)=sin(x)+1 curve at z=-1, Φ(x) area function at z=+1, shaded area fill, moving upper limit indicator
+  10. **MeanValueIntegral1Scene (积分中值定理)**: f(x)=a·sin(x)+1, area fill, average value rectangle (amber), ξ point marker
+  11. **Area1Scene (曲线间面积)**: f(x)=a+cos(x) and g(x)=sin(x), filled area between curves (teal+amber gradient), area value display
+  12. **VolumeRev1Scene (旋转体体积)**: Surface of revolution f(x)=a·sin(x)+1.5, disc cross-sections (amber), central axis, profile curve
+- Added 12 SceneRenderer mode cases for all new modes
+- Fixed parsing error: `{4.toFixed(1)}` → `{(4).toFixed(1)}` (numeric literal access)
+- Fixed parsing error: `pts.push(x, phiX, 1])` → `pts.push(x, phiX, 1)` (stray bracket)
+- Fixed 14 React Compiler memoization errors: inlined `fAt` function definitions inside `useMemo` callbacks instead of referencing external closures, to match dependency arrays
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **12 new scene renderers implemented** for all single-variable calculus modes
+- All scenes use emerald/teal color scheme consistent with 一元微积分 modes
+- Each scene includes: AutoRotate, Axes, Html overlay with numerical values, interactive parameters
+- Math computations: analytical solutions for Rolle/Lagrange points, numerical integration for volume/area/mean value
+- All React Compiler memoization requirements satisfied
+- Zero lint errors, dev server compiles successfully

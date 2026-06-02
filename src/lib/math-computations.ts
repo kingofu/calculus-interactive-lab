@@ -1,4 +1,4 @@
-// 数值计算辅助函数 - 多元微积分互动实验室
+// 数值计算辅助函数 - 微积分互动实验室
 
 // 数学函数定义
 export const f = (x: number, y: number) => Math.max(0, 3 - (x * x + y * y) / 1.5)
@@ -437,4 +437,107 @@ export function momentOfInertia(a: number): { Ix: number; Iy: number; mass: numb
 // 柱坐标体积计算：V = πr²h
 export function cylindricalVolume(r: number, h: number): number {
   return Math.PI * r * r * h
+}
+
+// ═══════════════════════════════════════════════════════════
+// 一元微积分辅助函数 (Single-Variable Calculus Helpers)
+// ═══════════════════════════════════════════════════════════
+
+// 二分法求根：在 [a,b] 上找 func(x)=0 的根
+export function bisectRoot(
+  func: (x: number) => number,
+  a: number,
+  b: number,
+  tol: number = 1e-8,
+  maxIter: number = 100
+): number {
+  let lo = a, hi = b
+  for (let i = 0; i < maxIter; i++) {
+    const mid = (lo + hi) / 2
+    const fMid = func(mid)
+    if (Math.abs(fMid) < tol || (hi - lo) / 2 < tol) return mid
+    if (func(lo) * fMid < 0) {
+      hi = mid
+    } else {
+      lo = mid
+    }
+  }
+  return (lo + hi) / 2
+}
+
+// 罗尔定理：f(x) = a*(x-1)*(x-3)*(x-5) on [1,5]
+// f'(x) = a*(3x²-18x+23), 求导数为0的ξ
+export function findRollePoint(a: number): { xi1: number; xi2: number; fXi1: number; fXi2: number } {
+  const df = (x: number) => a * (3 * x * x - 18 * x + 23)
+  // f'(x)=0: 3x²-18x+23=0, x = (18±√(324-276))/6 = (18±√48)/6 = 3±2√3/3
+  const xi1 = 3 - (2 * Math.sqrt(3)) / 3  // ≈ 1.845
+  const xi2 = 3 + (2 * Math.sqrt(3)) / 3  // ≈ 4.155
+  const fAt = (x: number) => a * (x - 1) * (x - 3) * (x - 5)
+  return { xi1, xi2, fXi1: fAt(xi1), fXi2: fAt(xi2) }
+}
+
+// 拉格朗日中值定理：f(x) = a*(x³-6x²+11x) on [0,4]
+// 割线斜率 = (f(4)-f(0))/(4-0) = a*12/4 = 3a
+// f'(x) = a*(3x²-12x+11), 设 f'(ξ)=3a: 3x²-12x+11=3, 3x²-12x+8=0
+export function findLagrangePoint(a: number): { xi: number; secantSlope: number; tangentSlope: number } {
+  const fAt = (x: number) => a * (x * x * x - 6 * x * x + 11 * x)
+  const secantSlope = (fAt(4) - fAt(0)) / 4
+  // 3x²-12x+8=0, x = (12±√(144-96))/6 = (12±√48)/6 = 2±2√3/3
+  const xi1 = 2 - (2 * Math.sqrt(3)) / 3  // ≈ 0.845
+  const xi2 = 2 + (2 * Math.sqrt(3)) / 3  // ≈ 3.155
+  // Pick the one that's more interior (xi2 ≈ 3.155)
+  const xi = xi2
+  const df = (x: number) => a * (3 * x * x - 12 * x + 11)
+  return { xi, secantSlope, tangentSlope: df(xi) }
+}
+
+// 旋转体体积：V = π∫ₐᵇ [f(x)]² dx
+export function volumeOfRevolution(
+  func: (x: number) => number,
+  a: number,
+  b: number
+): number {
+  const squared = (x: number) => {
+    const v = func(x)
+    return v * v
+  }
+  return Math.PI * numericalIntegral1D(squared, a, b)
+}
+
+// 两曲线间面积：∫ₐᵇ |f(x)-g(x)| dx
+export function areaBetweenCurves(
+  f1: (x: number) => number,
+  f2: (x: number) => number,
+  a: number,
+  b: number
+): number {
+  const diff = (x: number) => Math.abs(f1(x) - f2(x))
+  return numericalIntegral1D(diff, a, b)
+}
+
+// 积分中值定理：找 ξ 使 f(ξ) = 平均值
+export function findMeanValueIntegralPoint(
+  func: (x: number) => number,
+  a: number,
+  b: number
+): { xi: number; avgValue: number; integral: number } {
+  const integral = numericalIntegral1D(func, a, b)
+  const avgValue = integral / (b - a)
+  // Find ξ where f(ξ) = avgValue using bisection
+  const search = (lo: number, hi: number): number => {
+    return bisectRoot((x: number) => func(x) - avgValue, lo, hi)
+  }
+  // Try multiple intervals to find a root
+  const n = 50
+  const dx = (b - a) / n
+  let xi = (a + b) / 2
+  for (let i = 0; i < n; i++) {
+    const lo = a + i * dx
+    const hi = a + (i + 1) * dx
+    if ((func(lo) - avgValue) * (func(hi) - avgValue) <= 0) {
+      xi = search(lo, hi)
+      break
+    }
+  }
+  return { xi, avgValue, integral }
 }

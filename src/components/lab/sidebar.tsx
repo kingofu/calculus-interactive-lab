@@ -87,6 +87,111 @@ interface ChapterEntry {
 
 const chapters: ChapterEntry[] = [
   {
+    title: '函数与极限',
+    subtitle: '数列极限与函数极限',
+    icon: Target,
+    color: 'rose',
+    sections: [
+      {
+        title: '数列极限',
+        subtitle: '数列收敛与ε-N定义',
+        color: 'rose',
+        modes: [
+          { mode: 'limit1' as LabMode, label: '数列极限', icon: Target },
+          { mode: 'limit2' as LabMode, label: '函数极限ε-δ', icon: Crosshair },
+        ],
+      },
+    ],
+  },
+  {
+    title: '导数与微分',
+    subtitle: '导数定义、切线与微分',
+    icon: TrendingUp,
+    color: 'amber',
+    sections: [
+      {
+        title: '导数概念',
+        subtitle: '导数定义与几何意义',
+        color: 'amber',
+        modes: [
+          { mode: 'derivative1' as LabMode, label: '导数定义', icon: Spline },
+          { mode: 'derivative2' as LabMode, label: '切线与导函数', icon: Navigation },
+          { mode: 'derivative3' as LabMode, label: '微分与线性近似', icon: ArrowRightLeft },
+        ],
+      },
+    ],
+  },
+  {
+    title: '微分中值定理',
+    subtitle: '罗尔、拉格朗日与泰勒',
+    icon: BookOpen,
+    color: 'red',
+    sections: [
+      {
+        title: '中值定理',
+        subtitle: '罗尔定理与拉格朗日中值定理',
+        color: 'red',
+        modes: [
+          { mode: 'rolle1' as LabMode, label: '罗尔定理', icon: Target },
+          { mode: 'lagrange1' as LabMode, label: '拉格朗日中值定理', icon: Waypoints },
+          { mode: 'taylor1' as LabMode, label: '泰勒展开', icon: TrendingUp },
+        ],
+      },
+    ],
+  },
+  {
+    title: '不定积分',
+    subtitle: '原函数与不定积分',
+    icon: Sigma,
+    color: 'purple',
+    sections: [
+      {
+        title: '不定积分',
+        subtitle: '原函数族与积分常数',
+        color: 'purple',
+        modes: [
+          { mode: 'indef_integral1' as LabMode, label: '原函数族', icon: Layers },
+        ],
+      },
+    ],
+  },
+  {
+    title: '定积分',
+    subtitle: '定积分概念、性质与计算',
+    icon: BarChart3,
+    color: 'emerald',
+    sections: [
+      {
+        title: '定积分概念与性质',
+        subtitle: '微积分基本定理与积分中值',
+        color: 'emerald',
+        modes: [
+          { mode: 'rect_approx' as LabMode, label: '矩形近似', icon: BoxSelect },
+          { mode: 'ftc1' as LabMode, label: '微积分基本定理', icon: GitMerge },
+          { mode: 'mean_value_integral1' as LabMode, label: '积分中值定理', icon: Target },
+        ],
+      },
+    ],
+  },
+  {
+    title: '定积分的应用',
+    subtitle: '面积、体积与弧长',
+    icon: FlaskConical,
+    color: 'sky',
+    sections: [
+      {
+        title: '面积与体积',
+        subtitle: '曲线间面积与旋转体体积',
+        color: 'sky',
+        modes: [
+          { mode: 'area1' as LabMode, label: '曲线间面积', icon: BoxSelect },
+          { mode: 'volume_rev1' as LabMode, label: '旋转体体积', icon: Cylinder },
+          { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
+        ],
+      },
+    ],
+  },
+  {
     title: '二重积分基础',
     subtitle: '定义、性质与对称性',
     icon: BookOpen,
@@ -172,32 +277,16 @@ const chapters: ChapterEntry[] = [
   },
   {
     title: '积分应用',
-    subtitle: '面积、弧长与物理应用',
+    subtitle: '曲面面积、质心与球柱相交',
     icon: FlaskConical,
     color: 'amber',
     sections: [
-      {
-        title: '矩形近似',
-        subtitle: '一维定积分近似',
-        color: 'teal',
-        modes: [
-          { mode: 'rect_approx' as LabMode, label: '矩形近似面积', icon: BoxSelect },
-        ],
-      },
       {
         title: '曲面面积',
         subtitle: '曲面面积与弧长',
         color: 'indigo',
         modes: [
           { mode: 'surface_area1' as LabMode, label: '曲面面积计算', icon: Mountain },
-        ],
-      },
-      {
-        title: '弧长与曲线积分',
-        subtitle: '弧长近似与精确计算',
-        color: 'pink',
-        modes: [
-          { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
         ],
       },
       {
@@ -300,7 +389,7 @@ const chapters: ChapterEntry[] = [
         ],
       },
       {
-        title: '向量场与线积分',
+        title: '向量场线积分',
         subtitle: '向量场线积分计算',
         color: 'teal',
         modes: [
@@ -335,8 +424,8 @@ const chapters: ChapterEntry[] = [
     ],
   },
   {
-    title: '数值分析与逼近',
-    subtitle: '收敛、级数与等值面',
+    title: '级数与逼近',
+    subtitle: '收敛、傅里叶与等值面',
     icon: TrendingUp,
     color: 'orange',
     sections: [
@@ -355,14 +444,6 @@ const chapters: ChapterEntry[] = [
         color: 'orange',
         modes: [
           { mode: 'fourier1' as LabMode, label: '傅里叶级数逼近', icon: Activity },
-        ],
-      },
-      {
-        title: '泰勒展开与逼近',
-        subtitle: '泰勒展开与多项式逼近',
-        color: 'amber',
-        modes: [
-          { mode: 'taylor1' as LabMode, label: '泰勒展开逼近', icon: TrendingUp },
         ],
       },
       {

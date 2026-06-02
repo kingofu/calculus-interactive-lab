@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "多元微积分互动实验室",
-  description: "交互式多元微积分学习工具 - 3D可视化数学概念",
+  title: "微积分互动实验室",
+  description: "交互式微积分学习工具 - 一元与多元微积分3D可视化",
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
