@@ -2311,3 +2311,32 @@ Stage Summary:
 - **7 single-variable calculus chapters** restructured per standard textbook
 - Single-variable modes default to 2D view with no auto-rotation
 
+
+---
+Task ID: Bug-Fix-2D-Pan
+Agent: Main
+Task: 修复一元微积分拖拽平移不起作用的bug
+
+Work Log:
+- 用户报告一元微积分模式的拖拽平移不起作用
+- 分析根本原因：OrbitControls 默认左键=ROTATE，当 enableRotate=false（2D模式）时左键完全失效，不会fallback到PAN
+- 正交相机的 minDistance/maxDistance 不控制缩放，需要 minZoom/maxZoom
+- 修复 viewport.tsx 中的 OrbitControls 配置：
+  - 添加 `import * as THREE from 'three'` 用于 MOUSE 常量
+  - 2D模式下将左键映射为 PAN：`mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}`
+  - 为正交相机添加 `minZoom={10}` 和 `maxZoom={200}`
+  - 2D模式下调整 minDistance/maxDistance 范围 (1-50 vs 3-25)
+  - 添加 `enablePan={true}` 和 `panSpeed={1.2}` (2D模式)
+  - 设置 `target={[0, 0, 0]}` 确保初始视角正确
+- 使用 agent-browser 对所有23个2D模式和15个3D模式进行QA测试
+- 所有模式加载正常，0个控制台错误
+- 2D模式显示"拖拽平移 · 滚轮缩放"提示
+- 3D模式显示"拖拽旋转 · 滚轮缩放"提示
+- Lint 通过，dev server 正常运行
+
+Stage Summary:
+- **关键Bug修复**: 一元微积分2D模式拖拽平移现在正常工作
+- **根因**: OrbitControls 左键默认ROTATE，enableRotate=false时左键不fallback到PAN
+- **修复**: mouseButtons重映射 + 正交相机zoom控制 + 2D模式panSpeed优化
+- 所有38个模式QA测试通过
+

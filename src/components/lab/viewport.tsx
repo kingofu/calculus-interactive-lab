@@ -2,6 +2,7 @@
 
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, OrthographicCamera } from '@react-three/drei'
+import * as THREE from 'three'
 import { SceneRenderer } from './scene-renderer'
 import { SceneErrorBoundary } from './scene-error-boundary'
 import { SceneTooltip } from './scene-tooltip'
@@ -452,9 +453,19 @@ export function Viewport() {
               enableDamping
               dampingFactor={0.1}
               rotateSpeed={0.5}
-              minDistance={3}
-              maxDistance={25}
+              minDistance={cameraConfig.is2D ? 1 : 3}
+              maxDistance={cameraConfig.is2D ? 50 : 25}
+              minZoom={cameraConfig.is2D ? 10 : undefined}
+              maxZoom={cameraConfig.is2D ? 200 : undefined}
               enableRotate={!cameraConfig.is2D}
+              enablePan={true}
+              panSpeed={cameraConfig.is2D ? 1.2 : 1}
+              mouseButtons={
+                cameraConfig.is2D
+                  ? { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }
+                  : undefined
+              }
+              target={[0, 0, 0]}
             />
           </Canvas>
         </Suspense>
