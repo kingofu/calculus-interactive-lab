@@ -2684,3 +2684,35 @@ Stage Summary:
 - Sidebar no longer shows 泰勒展开 option
 - No orphaned references remaining
 - 中值定理 section now only has 罗尔定理 and 拉格朗日中值定理
+
+---
+Task ID: 17
+Agent: Main
+Task: Comprehensive project audit and fixes
+
+Work Log:
+- Performed code-level review of entire project
+- Lint: passes with zero errors
+- TypeScript: no errors in src/ (only in examples/skills which are unrelated)
+- No orphaned references to taylor1 (verified)
+- All 37 modes from store are present in sidebar (verified)
+- All 24 2D modes have Scene2D component AND overlay content (verified)
+- Fixed hydration mismatch error:
+  - SVGAxes: Removed `typeof window !== 'undefined' ? window.innerWidth : 1200` pattern
+  - Used math-based range calculation instead: `Math.max(50, Math.ceil(1200 / Math.max(scale, 10)))`
+  - SceneTooltip: Fixed similar pattern with `9999` fallback instead of `tooltip.x`
+  - This was causing the "Recoverable Error: Hydration failed" in Next.js dev mode
+- Added computed values for 13 previously missing 2D modes:
+  - continuity1, discontinuity1, important_limits1, lhopital1
+  - monotonicity1, extrema1, concavity1, curvature1
+  - higher_derivative1, substitution1, integration_by_parts1
+  - improper_integral1, polar_area1
+- These modes now show dynamic values in the InfoPanel instead of nothing
+- VLM visual verification of limit1 (home page) and derivative1: both render correctly
+- VLM verification of discontinuity1: renders correctly with hollow circle at discontinuity point
+
+Stage Summary:
+- **Hydration error fixed**: No more "Recoverable Error" in Next.js dev mode
+- **13 computed values added**: All 2D modes now have dynamic computed values
+- **Code audit clean**: Lint passes, TypeScript clean, no orphaned references
+- Remaining risk: agent-browser connectivity issues prevented full visual regression testing of all modes

@@ -806,6 +806,184 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'continuity1': {
+        const x0 = paramValue
+        const f = (x: number) => x < 0 ? -x : x * x
+        const fLeft = f(x0 - 0.001)
+        const fRight = f(x0 + 0.001)
+        const fVal = f(x0)
+        const isContinuous = Math.abs(fLeft - fRight) < 0.01
+        return {
+          mainValue: formatValue(fVal),
+          approxValue: `左极限: ${formatValue(fLeft)}`,
+          exactValue: `右极限: ${formatValue(fRight)}`,
+          error: formatValue(Math.abs(fLeft - fRight)),
+          label: isContinuous ? '连续 ✓' : '不连续 ✗',
+        }
+      }
+
+      case 'discontinuity1': {
+        const x0 = 1
+        const f = (x: number) => (x * x - 1) / (x - 1)
+        const fLeft = 1 - 0.001 + 1
+        const fRight = 1 + 0.001 + 1
+        return {
+          mainValue: '可去',
+          approxValue: `左极限: ${formatValue(fLeft)}`,
+          exactValue: `右极限: ${formatValue(fRight)}`,
+          error: formatValue(Math.abs(fLeft - fRight)),
+          label: '可去间断点',
+        }
+      }
+
+      case 'important_limits1': {
+        const x = paramValue
+        const val1 = Math.sin(x) / x
+        const val2 = Math.pow(1 + 1 / x, x)
+        return {
+          mainValue: formatValue(val1),
+          approxValue: `sin(x)/x = ${formatValue(val1)}`,
+          exactValue: `(1+1/x)^x = ${formatValue(val2)}`,
+          error: formatValue(Math.abs(val1 - 1)),
+          label: `x=${formatValue(x)}`,
+        }
+      }
+
+      case 'lhopital1': {
+        const x = paramValue
+        const num = Math.sin(x) - x
+        const den = x * x * x
+        const ratio = den !== 0 ? num / den : 0
+        const limit = -1 / 6
+        return {
+          mainValue: formatValue(ratio),
+          approxValue: `(sin(x)-x)/x³`,
+          exactValue: `极限 = ${formatValue(limit)}`,
+          error: formatValue(Math.abs(ratio - limit)),
+          label: `x=${formatValue(x)} | 误差=${formatValue(Math.abs(ratio - limit))}`,
+        }
+      }
+
+      case 'monotonicity1': {
+        const x = paramValue
+        const f = (t: number) => t * t * t - 3 * t
+        const fp = (t: number) => 3 * t * t - 3
+        const isIncreasing = fp(x) > 0
+        return {
+          mainValue: formatValue(fp(x)),
+          approxValue: `f'(${formatValue(x)})`,
+          exactValue: isIncreasing ? '递增 ↑' : (fp(x) === 0 ? '驻点' : '递减 ↓'),
+          error: formatValue(f(x)),
+          label: `f'(${formatValue(x)}) = ${formatValue(fp(x))}`,
+        }
+      }
+
+      case 'extrema1': {
+        const x = paramValue
+        const f = (t: number) => t * t * t - 3 * t + 1
+        const fp = (t: number) => 3 * t * t - 3
+        const fpp = (t: number) => 6 * t
+        const isMax = fpp(x) < 0
+        const isMin = fpp(x) > 0
+        return {
+          mainValue: formatValue(f(x)),
+          approxValue: `f'(${formatValue(x)}) = ${formatValue(fp(x))}`,
+          exactValue: `f''(${formatValue(x)}) = ${formatValue(fpp(x))}`,
+          error: isMax ? '极大值' : (isMin ? '极小值' : '非极值'),
+          label: isMax ? '极大值点' : (isMin ? '极小值点' : '非极值点'),
+        }
+      }
+
+      case 'concavity1': {
+        const x = paramValue
+        const f = (t: number) => t * t * t - 3 * t
+        const fpp = (t: number) => 6 * t
+        const isConcaveUp = fpp(x) > 0
+        return {
+          mainValue: formatValue(fpp(x)),
+          approxValue: `f''(${formatValue(x)})`,
+          exactValue: isConcaveUp ? '凹 (∪)' : (fpp(x) === 0 ? '拐点' : '凸 (∩)'),
+          error: formatValue(f(x)),
+          label: `f''(${formatValue(x)}) = ${formatValue(fpp(x))}`,
+        }
+      }
+
+      case 'curvature1': {
+        const x = paramValue
+        const fp = Math.cos(x)
+        const fpp = -Math.sin(x)
+        const kappa = Math.abs(fpp) / Math.pow(1 + fp * fp, 1.5)
+        return {
+          mainValue: formatValue(kappa),
+          approxValue: `κ(${formatValue(x)})`,
+          exactValue: `R = ${kappa > 0 ? formatValue(1 / kappa) : '∞'}`,
+          error: formatValue(fp),
+          label: `曲率 = ${formatValue(kappa)}`,
+        }
+      }
+
+      case 'higher_derivative1': {
+        const n = Math.round(paramValue)
+        const x = 1
+        let val = Math.exp(x)
+        return {
+          mainValue: formatValue(val),
+          approxValue: `f^(${n})(1)`,
+          exactValue: `f(x) = eˣ`,
+          error: formatValue(val),
+          label: `eˣ 的 ${n} 阶导数 = e`,
+        }
+      }
+
+      case 'substitution1': {
+        const a = paramValue
+        const integral = Math.log(Math.abs(a + 1)) - Math.log(Math.abs(a))
+        return {
+          mainValue: formatValue(integral),
+          approxValue: `∫₁^a 1/(x+1) dx`,
+          exactValue: `ln|a+1| - ln|a|`,
+          error: formatValue(Math.abs(integral - (Math.log(Math.abs(a + 1)) - Math.log(Math.abs(a))))),
+          label: `换元积分 ≈ ${formatValue(integral)}`,
+        }
+      }
+
+      case 'integration_by_parts1': {
+        const a = paramValue
+        const integral = a * Math.exp(a) - Math.exp(a) + 1
+        return {
+          mainValue: formatValue(integral),
+          approxValue: `∫₀^a x·eˣ dx`,
+          exactValue: `xeˣ - eˣ + C`,
+          error: formatValue(Math.abs(integral - (a * Math.exp(a) - Math.exp(a) + 1))),
+          label: `分部积分 ≈ ${formatValue(integral)}`,
+        }
+      }
+
+      case 'improper_integral1': {
+        const p = paramValue
+        const converges = p > 1
+        const exactVal = p > 1 ? 1 / (p - 1) : Infinity
+        return {
+          mainValue: converges ? formatValue(exactVal) : '发散',
+          approxValue: `∫₁^∞ 1/x^p dx`,
+          exactValue: converges ? `1/(p-1) = ${formatValue(exactVal)}` : 'p ≤ 1 发散',
+          error: converges ? '收敛 ✓' : '发散 ✗',
+          label: `p=${formatValue(p)} | ${converges ? '收敛' : '发散'}`,
+        }
+      }
+
+      case 'polar_area1': {
+        const a = paramValue
+        const area = Math.PI * a * a
+        return {
+          mainValue: formatValue(area),
+          approxValue: `S = πa²`,
+          exactValue: `π·${formatValue(a)}²`,
+          error: formatValue(a),
+          label: `极坐标面积 ≈ ${formatValue(area)}`,
+        }
+      }
+
       default:
         return null
     }

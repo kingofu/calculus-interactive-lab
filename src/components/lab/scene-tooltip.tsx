@@ -18,8 +18,11 @@ export function SceneTooltip() {
   const offsetY = 16
 
   // Clamp position so tooltip stays within viewport
-  const x = Math.min(tooltip.x + offsetX, typeof window !== 'undefined' ? window.innerWidth - 220 : tooltip.x)
-  const y = Math.min(tooltip.y + offsetY, typeof window !== 'undefined' ? window.innerHeight - 120 : tooltip.y)
+  // Use a large fallback to avoid hydration mismatch (tooltip will reposition on client)
+  const maxX = typeof window !== 'undefined' ? window.innerWidth - 220 : 9999
+  const maxY = typeof window !== 'undefined' ? window.innerHeight - 120 : 9999
+  const x = Math.min(tooltip.x + offsetX, maxX)
+  const y = Math.min(tooltip.y + offsetY, maxY)
 
   return (
     <div
