@@ -555,8 +555,16 @@ interface SidebarProps {
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
   const { mode, setMode, visitedModes, recentModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
-  const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set())
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(() => new Set(chapters.map(ch => ch.title)))
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
+    const all = new Set<string>()
+    for (const ch of chapters) {
+      for (const sec of ch.sections) {
+        all.add(`${ch.title}/${sec.title}`)
+      }
+    }
+    return all
+  })
   const [favoritesCollapsed, setFavoritesCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
