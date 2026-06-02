@@ -2364,3 +2364,23 @@ Stage Summary:
 - **Html overlay修复**: 所有2D模式提示框从世界坐标改为屏幕固定位置，不再遮挡坐标轴
 - 所有31+模式QA测试通过
 
+
+---
+Task ID: Separate-2D-Canvas
+Agent: Main
+Task: 2D模式使用完全独立的Canvas，与3D彻底分离
+
+Work Log:
+- 问题：2D和3D共享同一个Canvas和OrbitControls实例，旋转3D后切到2D时，相机状态残留导致视角错误
+- 修复viewport.tsx：将单一Canvas拆分为两个完全独立的Canvas
+  - 2D Canvas: key="canvas-2d", orthographic, OrthographicCamera, enableRotate=false, 左键=PAN
+  - 3D Canvas: key="canvas-3d", perspective, OrbitControls, enableRotate=true, 左键=ROTATE
+- 2D Canvas使用独立key确保React在模式切换时重建整个Canvas（WebGL context完全隔离）
+- 5轮3D→2D循环测试全部通过（step1→limit1, prop1→derivative2, triple1→ftc1, green1→monotonicity1, gradient1→curvature1）
+- Lint通过，dev server正常运行
+
+Stage Summary:
+- **2D/3D Canvas完全分离**：2D模式现在有自己的独立Canvas，不再与3D共享任何状态
+- 无论怎么在3D中旋转、缩放，切到2D时永远是正交视角(0,0,10)
+- 切回3D时也不受2D操作影响
+

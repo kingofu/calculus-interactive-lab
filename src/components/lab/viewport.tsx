@@ -431,45 +431,69 @@ export function Viewport() {
         </div>
       </div>
 
-      <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
-        <Suspense fallback={<LoadingIndicator />}>
-          <Canvas
-            camera={cameraConfig.is2D ? undefined : { position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
-            orthographic={cameraConfig.is2D}
-            gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
-            dpr={[1, 2]}
-          >
-            {cameraConfig.is2D && (
+      {/* 2D mode: completely separate Canvas with orthographic camera */}
+      {cameraConfig.is2D ? (
+        <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
+          <Suspense fallback={<LoadingIndicator />}>
+            <Canvas
+              key="canvas-2d"
+              orthographic
+              gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
+              dpr={[1, 2]}
+            >
               <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />
-            )}
-            {/* Enhanced lighting */}
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
-            <directionalLight position={[-5, 10, -5]} intensity={0.3} color="#e0e7ff" />
-            <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
-            <SceneRenderer />
-            <OrbitControls
-              key={`orbit-${mode}-${sceneKey}`}
-              enableDamping
-              dampingFactor={0.1}
-              rotateSpeed={0.5}
-              minDistance={cameraConfig.is2D ? 1 : 3}
-              maxDistance={cameraConfig.is2D ? 50 : 25}
-              minZoom={cameraConfig.is2D ? 10 : undefined}
-              maxZoom={cameraConfig.is2D ? 200 : undefined}
-              enableRotate={!cameraConfig.is2D}
-              enablePan={true}
-              panSpeed={cameraConfig.is2D ? 1.2 : 1}
-              mouseButtons={
-                cameraConfig.is2D
-                  ? { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }
-                  : undefined
-              }
-              target={[0, 0, 0]}
-            />
-          </Canvas>
-        </Suspense>
-      </SceneErrorBoundary>
+              {/* 2D lighting: simple ambient is enough for flat geometry */}
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[0, 10, 5]} intensity={0.4} color="#ffffff" />
+              <SceneRenderer />
+              <OrbitControls
+                key={`orbit-2d-${mode}-${sceneKey}`}
+                enableDamping
+                dampingFactor={0.1}
+                enableRotate={false}
+                enablePan={true}
+                panSpeed={1.2}
+                minZoom={10}
+                maxZoom={200}
+                minDistance={1}
+                maxDistance={50}
+                mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
+                target={[0, 0, 0]}
+              />
+            </Canvas>
+          </Suspense>
+        </SceneErrorBoundary>
+      ) : (
+        /* 3D mode: perspective Canvas with orbit controls */
+        <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
+          <Suspense fallback={<LoadingIndicator />}>
+            <Canvas
+              key="canvas-3d"
+              camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
+              gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
+              dpr={[1, 2]}
+            >
+              {/* Enhanced lighting */}
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
+              <directionalLight position={[-5, 10, -5]} intensity={0.3} color="#e0e7ff" />
+              <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
+              <SceneRenderer />
+              <OrbitControls
+                key={`orbit-3d-${mode}-${sceneKey}`}
+                enableDamping
+                dampingFactor={0.1}
+                rotateSpeed={0.5}
+                minDistance={3}
+                maxDistance={25}
+                enableRotate={true}
+                enablePan={true}
+                target={[0, 0, 0]}
+              />
+            </Canvas>
+          </Suspense>
+        </SceneErrorBoundary>
+      )}
 
       {/* Interactive hover tooltip overlay */}
       <SceneTooltip />
