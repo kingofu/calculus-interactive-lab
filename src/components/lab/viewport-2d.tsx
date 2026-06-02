@@ -1861,7 +1861,7 @@ export function Viewport2D() {
               <span className="sr-only">重置视图</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">重置视图 (双击)</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">重置视图</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
