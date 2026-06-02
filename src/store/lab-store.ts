@@ -57,11 +57,13 @@ interface LabState {
   recentModes: LabMode[]
   favorites: Set<LabMode>
   autoTourActive: boolean
+  autoRotate: boolean
   tooltip: TooltipData | null
   setMode: (mode: LabMode) => void
   setParamValue: (value: number) => void
   setParamValue2: (value: number) => void
   setAutoTourActive: (active: boolean) => void
+  setAutoRotate: (active: boolean) => void
   toggleFavorite: (mode: LabMode) => void
   hydrateFavorites: () => void
   showTooltip: (data: TooltipData) => void
@@ -76,6 +78,7 @@ export const useLabStore = create<LabState>((set) => ({
   recentModes: ['step1'] as LabMode[],
   favorites: new Set<LabMode>(),
   autoTourActive: false,
+  autoRotate: true,
   tooltip: null,
   setMode: (mode) => {
     const info = modeInfo[mode]
@@ -94,6 +97,7 @@ export const useLabStore = create<LabState>((set) => ({
   setParamValue: (paramValue) => set({ paramValue }),
   setParamValue2: (paramValue2) => set({ paramValue2 }),
   setAutoTourActive: (autoTourActive) => set({ autoTourActive }),
+  setAutoRotate: (autoRotate) => set({ autoRotate }),
   toggleFavorite: (mode) => {
     set((state) => {
       const next = new Set(state.favorites)

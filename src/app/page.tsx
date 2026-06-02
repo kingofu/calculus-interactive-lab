@@ -105,6 +105,7 @@ function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void
             ['Space', '展开/收起详情面板'],
             ['D', '切换深色/浅色模式'],
             ['S', '截图保存3D视图'],
+            ['A', '切换自动旋转/固定视角'],
             ['P', '播放/暂停概念步骤动画'],
             ['?', '显示快捷键帮助'],
           ].map(([key, desc]) => (
@@ -124,7 +125,7 @@ function HomeContent() {
   const [infoExpanded, setInfoExpanded] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive, favorites, toggleFavorite } = useLabStore()
+  const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive, favorites, toggleFavorite, autoRotate, setAutoRotate } = useLabStore()
   const info = modeInfo[mode]
   const { toast } = useToast()
 
@@ -256,6 +257,11 @@ function HomeContent() {
         toggleFavorite(mode)
         break
       }
+      case 'a':
+      case 'A': {
+        setAutoRotate(!autoRotate)
+        break
+      }
       case 'p':
       case 'P': {
         window.dispatchEvent(new CustomEvent('timeline-toggle-play'))
@@ -266,7 +272,7 @@ function HomeContent() {
         break
       }
     }
-  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2, toast, favorites, toggleFavorite])
+  }, [autoTourActive, currentIndex, info, mode, paramValue, setAutoTourActive, setMode, setParamValue, setParamValue2, toast, favorites, toggleFavorite, autoRotate, setAutoRotate])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -290,6 +296,10 @@ function HomeContent() {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Screen reader live region for mode changes */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        已切换到: {info.title} — {info.section}
+      </div>
       {/* Header */}
       <header className="relative flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 shadow-sm overflow-hidden">
         {/* Animated gradient background */}

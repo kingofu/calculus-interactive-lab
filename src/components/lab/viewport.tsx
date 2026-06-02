@@ -8,7 +8,7 @@ import { SceneTooltip } from './scene-tooltip'
 import { AnimationTimeline } from './animation-timeline'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
-import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
+import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2, RotateCw, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToast } from './toast-provider'
@@ -201,7 +201,7 @@ function LoadingIndicator() {
 }
 
 export function Viewport() {
-  const { mode } = useLabStore()
+  const { mode, autoRotate, setAutoRotate } = useLabStore()
   const info = modeInfo[mode]
   const cameraConfig = getCameraForMode(mode)
   const bgClass = getBackgroundForMode(mode)
@@ -284,6 +284,20 @@ export function Viewport() {
 
       {/* Top-right buttons */}
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 backdrop-blur-sm hover:bg-background/70 ${autoRotate ? 'bg-background/40 text-emerald-600 dark:text-emerald-400' : 'bg-background/60 text-muted-foreground'}`}
+              onClick={() => setAutoRotate(!autoRotate)}
+            >
+              {autoRotate ? <RotateCw className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+              <span className="sr-only">{autoRotate ? '自动旋转中' : '已暂停旋转'}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">{autoRotate ? '自动旋转 (点击暂停)' : '旋转已暂停 (点击恢复)'}</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

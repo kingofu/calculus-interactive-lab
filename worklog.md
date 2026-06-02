@@ -1996,3 +1996,28 @@ Stage Summary:
 2. **移动端体验优化**: 触摸手势支持，更紧凑的移动端布局
 3. **教学模式**: 添加练习模式，用户可以输入参数验证计算结果
 4. **THREE.Clock deprecation**: R3F/drei依赖的Three.js Clock已弃用，未来版本需迁移到Timer
+
+---
+Task ID: 1
+Agent: Main
+Task: Add auto-rotation toggle for 3D viewport (user reported taylor1 always spinning with no way to stop it)
+
+Work Log:
+- Added `autoRotate: boolean` and `setAutoRotate` to Zustand store (`src/store/lab-store.ts`), default `true`
+- Modified `AutoRotate` component in `scene-renderer.tsx` to check `useLabStore().autoRotate` state - when false, rotation stops but group remains
+- Added toggle button in Viewport (`src/components/lab/viewport.tsx`):
+  - RotateCw icon when auto-rotating (emerald accent), Pause icon when paused (muted)
+  - Tooltip shows "自动旋转 (点击暂停)" / "旋转已暂停 (点击恢复)"
+  - Position: first button in top-right button group
+- Added 'A' keyboard shortcut in page.tsx to toggle auto-rotation
+- Added ['A', '切换自动旋转/固定视角'] to shortcuts dialog
+- Added `autoRotate` and `setAutoRotate` to handleKeyDown useCallback dependencies
+- Added screen reader live region (`aria-live="polite"`) in page.tsx that announces mode changes
+- All lint checks pass, dev server compiles successfully
+
+Stage Summary:
+- **Auto-rotation toggle complete**: Button in viewport + A keyboard shortcut + tooltip
+- **All 40+ AutoRotate scenes** respect the global toggle via Zustand store
+- **Screen reader support**: Live region announces mode changes
+- **No breaking changes**: Auto-rotate defaults to `true` (same behavior as before)
+- Cron job (180471) created for 15-minute webDevReview

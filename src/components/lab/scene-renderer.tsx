@@ -1938,8 +1938,9 @@ function TripleIntegralScene() {
 // --- Auto-rotate wrapper ---
 function AutoRotate({ children, speed = 0.002 }: { children: React.ReactNode; speed?: number }) {
   const ref = useRef<THREE.Group>(null)
+  const { autoRotate } = useLabStore()
   useFrame(() => {
-    if (ref.current) {
+    if (ref.current && autoRotate) {
       ref.current.rotation.y += speed
     }
   })
