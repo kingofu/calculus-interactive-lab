@@ -4795,13 +4795,15 @@ function Limit1Scene() {
           <lineBasicMaterial color={Math.abs(pt[1] - L) < eps ? '#10b981' : '#ef4444'} opacity={0.4} transparent />
         </line>
       ))}
-      <Html position={[3, L + 1.5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">数列极限</div>
-          <div>aₙ = {L.toFixed(1)} + {c.toFixed(1)}/n</div>
-          <div className="text-amber-600 dark:text-amber-400">L = {L.toFixed(2)}</div>
-          <div>ε = {eps.toFixed(2)}</div>
-          <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">数列极限</div>
+            <div>aₙ = {L.toFixed(1)} + {c.toFixed(1)}/n</div>
+            <div className="text-amber-600 dark:text-amber-400">L = {L.toFixed(2)}</div>
+            <div>ε = {eps.toFixed(2)}</div>
+            <div className="text-emerald-600 dark:text-emerald-400">|a₄₀ - L| = {(c / 40).toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -4911,13 +4913,15 @@ function Limit2Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#f59e0b" opacity={0.5} transparent />
       </line>
-      <Html position={[0, 3.5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">函数极限 ε-δ</div>
-          <div>f(x) = sin(x)+1, x₀ = π/2</div>
-          <div className="text-emerald-600 dark:text-emerald-400">ε = {eps.toFixed(2)}</div>
-          <div className="text-orange-500 dark:text-orange-400">δ ≈ {delta.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400">L = f(x₀) = {L.toFixed(2)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">函数极限 ε-δ</div>
+            <div>f(x) = sin(x)+1, x₀ = π/2</div>
+            <div className="text-emerald-600 dark:text-emerald-400">ε = {eps.toFixed(2)}</div>
+            <div className="text-orange-500 dark:text-orange-400">δ ≈ {delta.toFixed(4)}</div>
+            <div className="text-amber-600 dark:text-amber-400">L = f(x₀) = {L.toFixed(2)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -4991,14 +4995,16 @@ function Derivative1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
       </line>
-      <Html position={[0, 3.5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">导数定义 (割线→切线)</div>
-          <div>f(x) = sin(x)+0.5x, x₀ = 1</div>
-          <div className="text-red-500 dark:text-red-400">切线斜率 f&apos;(1) = {tangentSlope.toFixed(4)}</div>
-          <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
-          <div>Δx = {deltaX.toFixed(2)}</div>
-          <div className="text-amber-600 dark:text-amber-400">|差值| = {Math.abs(tangentSlope - secantSlope).toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">导数定义 (割线→切线)</div>
+            <div>f(x) = sin(x)+0.5x, x₀ = 1</div>
+            <div className="text-red-500 dark:text-red-400">切线斜率 f&apos;(1) = {tangentSlope.toFixed(4)}</div>
+            <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
+            <div>Δx = {deltaX.toFixed(2)}</div>
+            <div className="text-amber-600 dark:text-amber-400">|差值| = {Math.abs(tangentSlope - secantSlope).toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5078,13 +5084,15 @@ function Derivative2Scene() {
       {/* Labels */}
       <Text position={[-2.5, 4, -0.5]} fontSize={0.2} color="#3b82f6">f(x)</Text>
       <Text position={[-2.5, 4, 0.5]} fontSize={0.2} color="#ef4444">f&apos;(x)</Text>
-      <Html position={[0, 5.5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">切线与导函数</div>
-          <div>f(x) = x³-3x, f&apos;(x) = 3x²-3</div>
-          <div className="text-blue-500 dark:text-blue-400">x₀ = {x0.toFixed(1)}</div>
-          <div className="text-blue-500 dark:text-blue-400">f(x₀) = {fAt(x0).toFixed(3)}</div>
-          <div className="text-red-500 dark:text-red-400">f&apos;(x₀) = {dfAt(x0).toFixed(3)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">切线与导函数</div>
+            <div>f(x) = x³-3x, f&apos;(x) = 3x²-3</div>
+            <div className="text-blue-500 dark:text-blue-400">x₀ = {x0.toFixed(1)}</div>
+            <div className="text-blue-500 dark:text-blue-400">f(x₀) = {fAt(x0).toFixed(3)}</div>
+            <div className="text-red-500 dark:text-red-400">f&apos;(x₀) = {dfAt(x0).toFixed(3)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5158,14 +5166,16 @@ function Derivative3Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#94a3b8" opacity={0.6} transparent />
       </line>
-      <Html position={[1.5, 7, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">微分与线性近似</div>
-          <div>f(x) = x²</div>
-          <div>x₀ = {x0.toFixed(1)}, Δx = {deltaX.toFixed(2)}</div>
-          <div className="text-blue-500 dark:text-blue-400">Δy = {deltaY.toFixed(4)}</div>
-          <div className="text-red-500 dark:text-red-400">dy = {dy.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400">误差 = {Math.abs(deltaY - dy).toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">微分与线性近似</div>
+            <div>f(x) = x²</div>
+            <div>x₀ = {x0.toFixed(1)}, Δx = {deltaX.toFixed(2)}</div>
+            <div className="text-blue-500 dark:text-blue-400">Δy = {deltaY.toFixed(4)}</div>
+            <div className="text-red-500 dark:text-red-400">dy = {dy.toFixed(4)}</div>
+            <div className="text-amber-600 dark:text-amber-400">误差 = {Math.abs(deltaY - dy).toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5237,13 +5247,15 @@ function Rolle1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#ef4444" linewidth={2} />
       </line>
-      <Html position={[0, 4, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">罗尔定理</div>
-          <div>f(x) = {a.toFixed(1)}·(x-1)(x-3)(x-5)</div>
-          <div className="text-amber-600 dark:text-amber-400">f(1) = f(5) = 0</div>
-          <div className="text-red-500 dark:text-red-400">ξ₁ ≈ {xi1.toFixed(3)}, f(ξ₁) ≈ {fXi1.toFixed(3)}</div>
-          <div className="text-red-500 dark:text-red-400">ξ₂ ≈ {xi2.toFixed(3)}, f(ξ₂) ≈ {fXi2.toFixed(3)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">罗尔定理</div>
+            <div>f(x) = {a.toFixed(1)}·(x-1)(x-3)(x-5)</div>
+            <div className="text-amber-600 dark:text-amber-400">f(1) = f(5) = 0</div>
+            <div className="text-red-500 dark:text-red-400">ξ₁ ≈ {xi1.toFixed(3)}, f(ξ₁) ≈ {fXi1.toFixed(3)}</div>
+            <div className="text-red-500 dark:text-red-400">ξ₂ ≈ {xi2.toFixed(3)}, f(ξ₂) ≈ {fXi2.toFixed(3)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5309,13 +5321,15 @@ function Lagrange1Scene() {
         <sphereGeometry args={[0.1, 12, 12]} />
         <meshPhongMaterial color="#3b82f6" />
       </mesh>
-      <Html position={[0, 5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">拉格朗日中值定理</div>
-          <div>f(x) = {a.toFixed(1)}·(x³-6x²+11x)</div>
-          <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
-          <div className="text-red-500 dark:text-red-400">f&apos;(ξ) = {tangentSlope.toFixed(4)}</div>
-          <div>ξ ≈ {xi.toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">拉格朗日中值定理</div>
+            <div>f(x) = {a.toFixed(1)}·(x³-6x²+11x)</div>
+            <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
+            <div className="text-red-500 dark:text-red-400">f&apos;(ξ) = {tangentSlope.toFixed(4)}</div>
+            <div>ξ ≈ {xi.toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5375,12 +5389,14 @@ function IndefIntegral1Scene() {
       </line>
       <Text position={[-2.5, -5, -1]} fontSize={0.2} color="#94a3b8">f(x)=2x</Text>
       <Text position={[-2.5, 5, 0]} fontSize={0.2} color="#14b8a6">F(x)=x²+C</Text>
-      <Html position={[0, 7, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">原函数族</div>
-          <div>∫2x dx = x² + C</div>
-          <div>曲线数量: {numCurves}</div>
-          <div>C ∈ [{(-4).toFixed(1)}, {(4).toFixed(1)}]</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">原函数族</div>
+            <div>∫2x dx = x² + C</div>
+            <div>曲线数量: {numCurves}</div>
+            <div>C ∈ [{(-4).toFixed(1)}, {(4).toFixed(1)}]</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5494,14 +5510,16 @@ function Ftc1Scene() {
       </line>
       <Text position={[-3, 2, -1]} fontSize={0.2} color="#14b8a6">f(x)</Text>
       <Text position={[-3, 2, 1]} fontSize={0.2} color="#f59e0b">Φ(x)</Text>
-      <Html position={[0, 5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">微积分基本定理</div>
-          <div>f(x) = sin(x)+1</div>
-          <div>Φ(x) = ∫₋₂ˣ f(t)dt</div>
-          <div className="text-emerald-600 dark:text-emerald-400">面积 = {areaValue.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400">Φ({upperLimit.toFixed(1)}) = {phiAtX.toFixed(4)}</div>
-          <div>Φ&apos;(x) = f(x) ✓</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">微积分基本定理</div>
+            <div>f(x) = sin(x)+1</div>
+            <div>Φ(x) = ∫₋₂ˣ f(t)dt</div>
+            <div className="text-emerald-600 dark:text-emerald-400">面积 = {areaValue.toFixed(4)}</div>
+            <div className="text-amber-600 dark:text-amber-400">Φ({upperLimit.toFixed(1)}) = {phiAtX.toFixed(4)}</div>
+            <div>Φ&apos;(x) = f(x) ✓</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5594,14 +5612,16 @@ function MeanValueIntegral1Scene() {
         <sphereGeometry args={[0.12, 12, 12]} />
         <meshPhongMaterial color="#ef4444" />
       </mesh>
-      <Html position={[0, 3, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">积分中值定理</div>
-          <div>f(x) = {a.toFixed(1)}·sin(x)+1</div>
-          <div className="text-emerald-600 dark:text-emerald-400">∫f dx = {integral.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400">平均值 = {avgValue.toFixed(4)}</div>
-          <div className="text-red-500 dark:text-red-400">ξ ≈ {xi.toFixed(4)}</div>
-          <div>f(ξ) = {(a * Math.sin(xi) + 1).toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">积分中值定理</div>
+            <div>f(x) = {a.toFixed(1)}·sin(x)+1</div>
+            <div className="text-emerald-600 dark:text-emerald-400">∫f dx = {integral.toFixed(4)}</div>
+            <div className="text-amber-600 dark:text-amber-400">平均值 = {avgValue.toFixed(4)}</div>
+            <div className="text-red-500 dark:text-red-400">ξ ≈ {xi.toFixed(4)}</div>
+            <div>f(ξ) = {(a * Math.sin(xi) + 1).toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5694,12 +5714,14 @@ function Area1Scene() {
       </mesh>
       <Text position={[-3.5, a + 1, 0]} fontSize={0.18} color="#14b8a6" anchorX="left">f(x)={a.toFixed(1)}+cos(x)</Text>
       <Text position={[-3.5, -1.5, 0]} fontSize={0.18} color="#f59e0b" anchorX="left">g(x)=sin(x)</Text>
-      <Html position={[0, 3.5, 0]} center>
-        <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
-          <div className="text-teal-600 dark:text-teal-400 font-semibold">曲线间面积</div>
-          <div>S = ∫|f(x)-g(x)|dx</div>
-          <div className="text-emerald-600 dark:text-emerald-400">面积 = {area.toFixed(4)}</div>
-          <div>间距 a = {a.toFixed(1)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
+            <div className="text-teal-600 dark:text-teal-400 font-semibold">曲线间面积</div>
+            <div>S = ∫|f(x)-g(x)|dx</div>
+            <div className="text-emerald-600 dark:text-emerald-400">面积 = {area.toFixed(4)}</div>
+            <div>间距 a = {a.toFixed(1)}</div>
+          </div>
         </div>
       </Html>
     </>
@@ -5820,10 +5842,10 @@ function Axes2D({ xRange = 3, yRange = 3 }: { xRange?: number; yRange?: number }
   const gridPts = useMemo(() => {
     const pts: number[] = []
     for (let i = -Math.floor(xRange); i <= Math.floor(xRange); i++) {
-      pts.push(i, 0.001, -yRange, i, 0.001, yRange)
+      pts.push(i, -yRange, 0.001, i, yRange, 0.001)
     }
     for (let j = -Math.floor(yRange); j <= Math.floor(yRange); j++) {
-      pts.push(-xRange, 0.001, j, xRange, 0.001, j)
+      pts.push(-xRange, j, 0.001, xRange, j, 0.001)
     }
     return new Float32Array(pts)
   }, [xRange, yRange])
@@ -5833,14 +5855,14 @@ function Axes2D({ xRange = 3, yRange = 3 }: { xRange?: number; yRange?: number }
       {/* X axis */}
       <line>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[new Float32Array([-xRange, 0.01, 0, xRange, 0.01, 0]), 3]} count={2} />
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-xRange, 0, 0, xRange, 0, 0]), 3]} count={2} />
         </bufferGeometry>
         <lineBasicMaterial color="#888888" linewidth={1} />
       </line>
-      {/* Y axis (mathematical y = R3F z) */}
+      {/* Y axis (mathematical y = R3F y) */}
       <line>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.01, -yRange, 0, 0.01, yRange]), 3]} count={2} />
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, -yRange, 0, 0, yRange, 0]), 3]} count={2} />
         </bufferGeometry>
         <lineBasicMaterial color="#888888" linewidth={1} />
       </line>
@@ -5852,29 +5874,29 @@ function Axes2D({ xRange = 3, yRange = 3 }: { xRange?: number; yRange?: number }
         <lineBasicMaterial color="#cccccc" transparent opacity={0.2} />
       </lineSegments>
       {/* Axis labels */}
-      <Text position={[xRange + 0.3, 0.01, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">x</Text>
-      <Text position={[0, 0.01, yRange + 0.3]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">y</Text>
+      <Text position={[xRange + 0.3, 0, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">x</Text>
+      <Text position={[0, yRange + 0.3, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">y</Text>
       {/* Tick marks */}
       {Array.from({ length: Math.floor(xRange) * 2 + 1 }, (_, i) => i - Math.floor(xRange)).filter(v => v !== 0).map(v => (
         <group key={`xt${v}`}>
           <line>
             <bufferGeometry>
-              <bufferAttribute attach="attributes-position" args={[new Float32Array([v, 0.01, -0.08, v, 0.01, 0.08]), 3]} count={2} />
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([v, -0.08, 0, v, 0.08, 0]), 3]} count={2} />
             </bufferGeometry>
             <lineBasicMaterial color="#888888" />
           </line>
-          <Text position={[v, 0.01, -0.25]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+          <Text position={[v, -0.3, 0]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
         </group>
       ))}
       {Array.from({ length: Math.floor(yRange) * 2 + 1 }, (_, i) => i - Math.floor(yRange)).filter(v => v !== 0).map(v => (
         <group key={`yt${v}`}>
           <line>
             <bufferGeometry>
-              <bufferAttribute attach="attributes-position" args={[new Float32Array([-0.08, 0.01, v, 0.08, 0.01, v]), 3]} count={2} />
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([-0.08, v, 0, 0.08, v, 0]), 3]} count={2} />
             </bufferGeometry>
             <lineBasicMaterial color="#888888" />
           </line>
-          <Text position={[0.25, 0.01, v]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+          <Text position={[-0.3, v, 0]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
         </group>
       ))}
     </group>
@@ -5892,8 +5914,8 @@ function FilledRegion2D({ xMin, xMax, fn, color = '#10b981', opacity = 0.25, yBa
     const dx = (xMax - xMin) / res
     for (let i = 0; i <= res; i++) {
       const x = xMin + i * dx
-      vertices.push(x, 0.005, fn(x))
-      vertices.push(x, 0.005, yBase)
+      vertices.push(x, fn(x), 0)
+      vertices.push(x, yBase, 0)
     }
     for (let i = 0; i < res; i++) {
       const a = i * 2; const b = a + 1; const c = a + 2; const d = a + 3
@@ -5920,7 +5942,7 @@ function Continuity1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, x * x)
+      pts.push(x, x * x, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -5929,7 +5951,7 @@ function Continuity1Scene() {
     const pts: number[] = []
     for (let i = -200; i < 0; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, x * x + 1)
+      pts.push(x, x * x + 1, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -5938,7 +5960,7 @@ function Continuity1Scene() {
     const pts: number[] = []
     for (let i = 1; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, x * x - 0.5)
+      pts.push(x, x * x - 0.5, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -5969,22 +5991,24 @@ function Continuity1Scene() {
             <lineBasicMaterial color="#ef4444" linewidth={2} />
           </line>
           {/* Open/closed circles at discontinuity */}
-          <mesh position={[0, 0.02, 1]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
-          <mesh position={[0, 0.02, -0.5]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+          <mesh position={[0, 1, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+          <mesh position={[0, -0.5, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
           {/* Dashed line for missing point */}
           <line>
             <bufferGeometry>
-              <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, -0.5, 0, 0.02, 0]), 3]} count={2} />
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([0, -0.5, 0, 0, 0, 0]), 3]} count={2} />
             </bufferGeometry>
             <lineBasicMaterial color="#ef4444" opacity={0.4} transparent />
           </line>
         </>
       )}
-      <Html position={[0, 0.02, 4.2]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-green-600 dark:text-green-400 font-semibold">连续函数 f(x) = x²</div>
-          {!isContinuous && <div className="text-red-600 dark:text-red-400 font-semibold">不连续函数 g(x)：x=0处跳跃间断</div>}
-          <div className="text-muted-foreground mt-1">连续性: {isContinuous ? '✓ 连续' : '✗ 不连续'}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-green-600 dark:text-green-400 font-semibold">连续函数 f(x) = x²</div>
+            {!isContinuous && <div className="text-red-600 dark:text-red-400 font-semibold">不连续函数 g(x)：x=0处跳跃间断</div>}
+            <div className="text-muted-foreground mt-1">连续性: {isContinuous ? '✓ 连续' : '✗ 不连续'}</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6002,7 +6026,7 @@ function Discontinuity1Scene() {
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
       if (Math.abs(x - 1) < 0.05) continue
-      pts.push(x, 0.02, x + 1)
+      pts.push(x, x + 1, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -6010,24 +6034,24 @@ function Discontinuity1Scene() {
   // Jump (step) at x=2
   const jumpLeft = useMemo(() => {
     const pts: number[] = []
-    for (let i = -200; i < 200; i++) { const x = (i / 100) * 3; if (x >= 2) break; pts.push(x, 0.02, x > 0 ? 1 : -1) }
+    for (let i = -200; i < 200; i++) { const x = (i / 100) * 3; if (x >= 2) break; pts.push(x, x > 0 ? 1 : -1, 0) }
     return new Float32Array(pts)
   }, [])
   const jumpRight = useMemo(() => {
     const pts: number[] = []
-    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x < 2) continue; pts.push(x, 0.02, -1) }
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x < 2) continue; pts.push(x, -1, 0) }
     return new Float32Array(pts)
   }, [])
 
   // Infinite at x=3: f(x) = 1/(x-3)
   const infiniteLeft = useMemo(() => {
     const pts: number[] = []
-    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x >= 3 - 0.1) break; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, 0.02, y) }
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x >= 3 - 0.1) break; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, y, 0) }
     return new Float32Array(pts)
   }, [])
   const infiniteRight = useMemo(() => {
     const pts: number[] = []
-    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x <= 3 + 0.1) continue; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, 0.02, y) }
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x <= 3 + 0.1) continue; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, y, 0) }
     return new Float32Array(pts)
   }, [])
 
@@ -6038,7 +6062,7 @@ function Discontinuity1Scene() {
       const x = (i / 200) * 3
       if (Math.abs(x) < 0.02) continue
       const y = Math.sin(1 / x)
-      pts.push(x, 0.02, y)
+      pts.push(x, y, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -6056,27 +6080,29 @@ function Discontinuity1Scene() {
       <Axes2D xRange={3.5} yRange={4} />
       {dtype === 1 && (<>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[removablePts, 3]} /></bufferGeometry><lineBasicMaterial color="#3b82f6" linewidth={2} /></line>
-        <mesh position={[1, 0.02, 2]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
-        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([1, 0.02, 1.85, 1, 0.02, 2.15]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#3b82f6" opacity={0.3} transparent /></line>
+        <mesh position={[1, 2, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([1, 1.85, 0, 1, 2.15, 0]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#3b82f6" opacity={0.3} transparent /></line>
       </>)}
       {dtype === 2 && (<>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[jumpLeft, 3]} /></bufferGeometry><lineBasicMaterial color="#f59e0b" linewidth={2} /></line>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[jumpRight, 3]} /></bufferGeometry><lineBasicMaterial color="#f59e0b" linewidth={2} /></line>
-        <mesh position={[2, 0.02, 1]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+        <mesh position={[2, 1, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
       </>)}
       {dtype === 3 && (<>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[infiniteLeft, 3]} /></bufferGeometry><lineBasicMaterial color="#ef4444" linewidth={2} /></line>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[infiniteRight, 3]} /></bufferGeometry><lineBasicMaterial color="#ef4444" linewidth={2} /></line>
-        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([3, 0.02, -4, 3, 0.02, 4]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#ef4444" opacity={0.3} transparent linewidth={1} /></line>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([3, -4, 0, 3, 4, 0]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#ef4444" opacity={0.3} transparent linewidth={1} /></line>
       </>)}
       {dtype === 4 && (<>
         <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[oscPts, 3]} /></bufferGeometry><lineBasicMaterial color="#8b5cf6" linewidth={2} /></line>
       </>)}
-      <Html position={[0, 0.02, 4.2]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="font-semibold" style={{ color: info.color }}>{info.name}</div>
-          <div className="text-muted-foreground">{info.desc}</div>
-          <div className="text-muted-foreground mt-1">类型 {dtype}/4：1=可去 2=跳跃 3=无穷 4=振荡</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="font-semibold" style={{ color: info.color }}>{info.name}</div>
+            <div className="text-muted-foreground">{info.desc}</div>
+            <div className="text-muted-foreground mt-1">类型 {dtype}/4：1=可去 2=跳跃 3=无穷 4=振荡</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6093,7 +6119,7 @@ function ImportantLimits1Scene() {
     for (let i = 1; i <= 200; i++) {
       const x = (i / 200) * 10
       const y = Math.sin(x) / x
-      pts.push(x, 0.02, y + 4)
+      pts.push(x, y + 4, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -6105,7 +6131,7 @@ function ImportantLimits1Scene() {
       const x = (i / 200) * 10
       if (x < 0.1) continue
       const y = Math.pow(1 + 1 / x, x)
-      pts.push(x, 0.02, y - 1.5)
+      pts.push(x, y - 1.5, 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -6126,11 +6152,11 @@ function ImportantLimits1Scene() {
       {/* Dashed line at y=1 (shifted up 4) */}
       <line>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, 5, 5, 0.02, 5]), 3]} count={2} />
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 5, 0, 5, 5, 0]), 3]} count={2} />
         </bufferGeometry>
         <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.5} />
       </line>
-      <Text position={[5.5, 0.02, 5]} fontSize={0.18} color="#ef4444" anchorX="left">y=1</Text>
+      <Text position={[5.5, 5, 0]} fontSize={0.18} color="#ef4444" anchorX="left">y=1</Text>
 
       {/* Bottom: (1+1/x)^x → e */}
       <line>
@@ -6142,21 +6168,23 @@ function ImportantLimits1Scene() {
       {/* Dashed line at y=e (shifted down 1.5) */}
       <line>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, Math.E - 1.5, 5, 0.02, Math.E - 1.5]), 3]} count={2} />
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, Math.E - 1.5, 0, 5, Math.E - 1.5, 0]), 3]} count={2} />
         </bufferGeometry>
         <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.5} />
       </line>
-      <Text position={[5.5, 0.02, Math.E - 1.5]} fontSize={0.18} color="#ef4444" anchorX="left">y=e</Text>
+      <Text position={[5.5, Math.E - 1.5, 0]} fontSize={0.18} color="#ef4444" anchorX="left">y=e</Text>
 
       {/* Current x indicator */}
-      <mesh position={[xVal, 0.02, sinVal + 4]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
-      <mesh position={[xVal, 0.02, expVal - 1.5]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+      <mesh position={[xVal, sinVal + 4, 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+      <mesh position={[xVal, expVal - 1.5, 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
 
-      <Html position={[0, 0.02, -3.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x → 1：x={xVal.toFixed(2)} 时 = {sinVal.toFixed(4)}</div>
-          <div className="text-amber-600 dark:text-amber-400 font-semibold">(1+1/x)^x → e：x={xVal.toFixed(2)} 时 = {expVal.toFixed(4)}</div>
-          <div className="text-muted-foreground">e ≈ {Math.E.toFixed(6)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x → 1：x={xVal.toFixed(2)} 时 = {sinVal.toFixed(4)}</div>
+            <div className="text-amber-600 dark:text-amber-400 font-semibold">(1+1/x)^x → e：x={xVal.toFixed(2)} 时 = {expVal.toFixed(4)}</div>
+            <div className="text-muted-foreground">e ≈ {Math.E.toFixed(6)}</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6172,7 +6200,7 @@ function Lhopital1Scene() {
     for (let i = 1; i <= 200; i++) {
       const x = (i / 200) * eps * 4
       if (x < 0.001) continue
-      pts.push(x, 0.02, Math.sin(x) / x)
+      pts.push(x, Math.sin(x) / x, 0)
     }
     return new Float32Array(pts)
   }, [eps])
@@ -6182,7 +6210,7 @@ function Lhopital1Scene() {
     for (let i = 1; i <= 200; i++) {
       const x = (i / 200) * eps * 4
       if (x < 0.001) continue
-      pts.push(x, 0.02, Math.cos(x) / 1)
+      pts.push(x, Math.cos(x) / 1, 0)
     }
     return new Float32Array(pts)
   }, [eps])
@@ -6210,20 +6238,22 @@ function Lhopital1Scene() {
       {/* Limit line y=1 */}
       <line>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, 1, 3, 0.02, 1]), 3]} count={2} />
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 1, 0, 3, 1, 0]), 3]} count={2} />
         </bufferGeometry>
         <lineBasicMaterial color="#22c55e" linewidth={1} transparent opacity={0.5} />
       </line>
-      <Text position={[3.2, 0.02, 1]} fontSize={0.18} color="#22c55e" anchorX="left">L=1</Text>
+      <Text position={[3.2, 1, 0]} fontSize={0.18} color="#22c55e" anchorX="left">L=1</Text>
       {/* Indicator dots */}
-      <mesh position={[eps, 0.02, fOverGVal]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
-      <mesh position={[eps, 0.02, fPrimeOverGPrimeVal]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+      <mesh position={[eps, fOverGVal, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+      <mesh position={[eps, fPrimeOverGPrimeVal, 0]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
 
-      <Html position={[0, 0.02, 2.3]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x = {fOverGVal.toFixed(4)}</div>
-          <div className="text-red-600 dark:text-red-400 font-semibold">cos(x)/1 = {fPrimeOverGPrimeVal.toFixed(4)}</div>
-          <div className="text-green-600 dark:text-green-400 mt-1">极限值 L = 1</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x = {fOverGVal.toFixed(4)}</div>
+            <div className="text-red-600 dark:text-red-400 font-semibold">cos(x)/1 = {fPrimeOverGPrimeVal.toFixed(4)}</div>
+            <div className="text-green-600 dark:text-green-400 mt-1">极限值 L = 1</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6238,7 +6268,7 @@ function Monotonicity1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, a * (x * x * x - 3 * x))
+      pts.push(x, a * (x * x * x - 3 * x), 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6247,7 +6277,7 @@ function Monotonicity1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, a * (3 * x * x - 3))
+      pts.push(x, a * (3 * x * x - 3), 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6275,14 +6305,16 @@ function Monotonicity1Scene() {
         <lineBasicMaterial color="#ef4444" linewidth={2} transparent opacity={0.7} />
       </line>
       {/* Critical points */}
-      <mesh position={[-1, 0.02, a * (-1 + 3)]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
-      <mesh position={[1, 0.02, a * (1 - 3)]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f97316" /></mesh>
-      <Html position={[0, 0.02, 5.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x³-3x)</div>
-          <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(3x²-3)</div>
-          <div className="text-green-600">绿色: f&apos;&gt;0 递增</div>
-          <div className="text-orange-600">橙色: f&apos;&lt;0 递减</div>
+      <mesh position={[-1, a * (-1 + 3), 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <mesh position={[1, a * (1 - 3), 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f97316" /></mesh>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x³-3x)</div>
+            <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(3x²-3)</div>
+            <div className="text-green-600">绿色: f&apos;&gt;0 递增</div>
+            <div className="text-orange-600">橙色: f&apos;&lt;0 递减</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6297,7 +6329,7 @@ function Extrema1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, a * (x * x * x * x - 4 * x * x))
+      pts.push(x, a * (x * x * x * x - 4 * x * x), 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6306,7 +6338,7 @@ function Extrema1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, a * (4 * x * x * x - 8 * x))
+      pts.push(x, a * (4 * x * x * x - 8 * x), 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6330,19 +6362,21 @@ function Extrema1Scene() {
         <lineBasicMaterial color="#ef4444" linewidth={2} transparent opacity={0.6} />
       </line>
       {/* Local maximum at x=0 (red) */}
-      <mesh position={[0, 0.02, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
-      <Text position={[0.2, 0.02, 0.3]} fontSize={0.15} color="#ef4444">极大</Text>
+      <mesh position={[0, 0, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+      <Text position={[0.2, 0.3, 0]} fontSize={0.15} color="#ef4444">极大</Text>
       {/* Local minima at x=±√2 (green) */}
-      <mesh position={[-sqrt2, 0.02, a * (4 - 8)]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
-      <mesh position={[sqrt2, 0.02, a * (4 - 8)]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
-      <Text position={[-sqrt2, 0.02, a * (4 - 8) + 0.4]} fontSize={0.15} color="#22c55e">极小</Text>
-      <Text position={[sqrt2, 0.02, a * (4 - 8) + 0.4]} fontSize={0.15} color="#22c55e">极小</Text>
-      <Html position={[0, 0.02, 5.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x⁴-4x²)</div>
-          <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(4x³-8x)</div>
-          <div className="text-red-600">红色: 极大值点(x=0)</div>
-          <div className="text-green-600">绿色: 极小值点(x=±√2)</div>
+      <mesh position={[-sqrt2, a * (4 - 8), 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <mesh position={[sqrt2, a * (4 - 8), 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <Text position={[-sqrt2, a * (4 - 8) + 0.4, 0]} fontSize={0.15} color="#22c55e">极小</Text>
+      <Text position={[sqrt2, a * (4 - 8) + 0.4, 0]} fontSize={0.15} color="#22c55e">极小</Text>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x⁴-4x²)</div>
+            <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(4x³-8x)</div>
+            <div className="text-red-600">红色: 极大值点(x=0)</div>
+            <div className="text-green-600">绿色: 极小值点(x=±√2)</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6357,7 +6391,7 @@ function Concavity1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 3
-      pts.push(x, 0.02, a * x * x * x)
+      pts.push(x, a * x * x * x, 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6378,14 +6412,16 @@ function Concavity1Scene() {
         <lineBasicMaterial color="#f59e0b" linewidth={2} />
       </line>
       {/* Inflection point at x=0 */}
-      <mesh position={[0, 0.02, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
-      <Text position={[0.2, 0.02, 0.3]} fontSize={0.18} color="#22c55e">拐点</Text>
-      <Html position={[0, 0.02, 5.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-amber-600 dark:text-amber-400 font-semibold">f(x) = {a.toFixed(1)}x³</div>
-          <div className="text-blue-600">蓝色: 凹区间(x&gt;0, f&apos;&apos;&gt;0)</div>
-          <div className="text-red-600">红色: 凸区间(x&lt;0, f&apos;&apos;&lt;0)</div>
-          <div className="text-green-600">拐点: x=0, f&apos;&apos;(0)=0</div>
+      <mesh position={[0, 0, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <Text position={[0.2, 0.3, 0]} fontSize={0.18} color="#22c55e">拐点</Text>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-amber-600 dark:text-amber-400 font-semibold">f(x) = {a.toFixed(1)}x³</div>
+            <div className="text-blue-600">蓝色: 凹区间(x&gt;0, f&apos;&apos;&gt;0)</div>
+            <div className="text-red-600">红色: 凸区间(x&lt;0, f&apos;&apos;&lt;0)</div>
+            <div className="text-green-600">拐点: x=0, f&apos;&apos;(0)=0</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6404,7 +6440,7 @@ function Curvature1Scene() {
     const pts: number[] = []
     for (let i = -200; i <= 200; i++) {
       const x = (i / 100) * 4
-      pts.push(x, 0.02, f(x))
+      pts.push(x, f(x), 0)
     }
     return new Float32Array(pts)
   }, [])
@@ -6424,7 +6460,7 @@ function Curvature1Scene() {
     const res = 64
     for (let i = 0; i <= res; i++) {
       const theta = (2 * Math.PI * i) / res
-      pts.push(cx + R * Math.cos(theta), 0.015, cy + R * Math.sin(theta))
+      pts.push(cx + R * Math.cos(theta), cy + R * Math.sin(theta), 0)
     }
     return new Float32Array(pts)
   }, [cx, cy, R])
@@ -6446,15 +6482,17 @@ function Curvature1Scene() {
         <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.6} />
       </line>
       {/* Point on curve */}
-      <mesh position={[x0, 0.02, y0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+      <mesh position={[x0, y0, 0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
       {/* Center of curvature */}
-      <mesh position={[cx, 0.015, cy]}><sphereGeometry args={[0.06, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
-      <Html position={[0, 0.02, 2.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = cos(x)</div>
-          <div className="text-red-600">曲率 κ = {kappa.toFixed(4)}</div>
-          <div className="text-amber-600">曲率半径 R = {R.toFixed(4)}</div>
-          <div className="text-muted-foreground">观察点 x₀ = {x0.toFixed(2)}</div>
+      <mesh position={[cx, cy, 0]}><sphereGeometry args={[0.06, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = cos(x)</div>
+            <div className="text-red-600">曲率 κ = {kappa.toFixed(4)}</div>
+            <div className="text-amber-600">曲率半径 R = {R.toFixed(4)}</div>
+            <div className="text-muted-foreground">观察点 x₀ = {x0.toFixed(2)}</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6476,7 +6514,7 @@ function HigherDerivative1Scene() {
       const phase = -d * Math.PI / 2
       for (let i = -200; i <= 200; i++) {
         const x = (i / 100) * 5
-        pts.push(x, 0.02, Math.sin(x + phase) * (d === 0 ? 1 : 1))
+        pts.push(x, Math.sin(x + phase) * (d === 0 ? 1 : 1), 0)
       }
       curves.push(new Float32Array(pts))
     }
@@ -6495,14 +6533,16 @@ function HigherDerivative1Scene() {
           <lineBasicMaterial color={colors[idx]} linewidth={idx === n ? 3 : 1} transparent opacity={idx === n ? 1 : 0.4} />
         </line>
       ) : null)}
-      <Html position={[0, 0.02, 2.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          {Array.from({ length: n + 1 }, (_, i) => (
-            <div key={i} style={{ color: colors[i] }} className={i === n ? 'font-semibold' : 'opacity-70'}>
-              {labels[i]}
-            </div>
-          ))}
-          <div className="text-muted-foreground mt-1">当前阶数: n = {n}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            {Array.from({ length: n + 1 }, (_, i) => (
+              <div key={i} style={{ color: colors[i] }} className={i === n ? 'font-semibold' : 'opacity-70'}>
+                {labels[i]}
+              </div>
+            ))}
+            <div className="text-muted-foreground mt-1">当前阶数: n = {n}</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6526,7 +6566,7 @@ function Substitution1Scene() {
       if (st === 1) y = 2 * x * Math.cos(x * x)
       else if (st === 2) y = 2 * x * Math.exp(-x * x * 0.3)
       else { if (Math.abs(x) < 1) y = x / Math.sqrt(Math.max(0.001, 1 - x * x)) }
-      if (Math.abs(y) < 5) pts.push(x, 0.02, y)
+      if (Math.abs(y) < 5) pts.push(x, y, 0)
     }
     return new Float32Array(pts)
   }, [st])
@@ -6539,7 +6579,7 @@ function Substitution1Scene() {
       if (st === 1) y = Math.cos(u)
       else if (st === 2) y = Math.exp(-u * 0.3)
       else y = -1 / (2 * Math.sqrt(Math.max(0.001, u)))
-      if (Math.abs(y) < 5) pts.push(u, 0.02, y + 4)
+      if (Math.abs(y) < 5) pts.push(u, y + 4, 0)
     }
     return new Float32Array(pts)
   }, [st])
@@ -6563,13 +6603,15 @@ function Substitution1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#ef4444" linewidth={2} />
       </line>
-      <Text position={[-2.5, 0.02, -2]} fontSize={0.2} color="#3b82f6">原函数 f(g(x))g&apos;(x)</Text>
-      <Text position={[0, 0.02, 6]} fontSize={0.2} color="#ef4444">换元后 f(u)</Text>
-      <Html position={[0, 0.02, -4]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-blue-600 dark:text-blue-400 font-semibold">原积分变量 x</div>
-          <div className="text-red-600 dark:text-red-400 font-semibold">换元: {subLabels[st - 1]}</div>
-          <div className="text-muted-foreground">类型 {st}/3</div>
+      <Text position={[-2.5, -2, 0]} fontSize={0.2} color="#3b82f6">原函数 f(g(x))g&apos;(x)</Text>
+      <Text position={[0, 6, 0]} fontSize={0.2} color="#ef4444">换元后 f(u)</Text>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold">原积分变量 x</div>
+            <div className="text-red-600 dark:text-red-400 font-semibold">换元: {subLabels[st - 1]}</div>
+            <div className="text-muted-foreground">类型 {st}/3</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6594,7 +6636,7 @@ function IntegrationByParts1Scene() {
       if (ut === 1) y = x
       else if (ut === 2) y = x * x
       else if (x > 0.01) y = Math.log(x)
-      if (Math.abs(y) < 5) pts.push(x, 0.02, y)
+      if (Math.abs(y) < 5) pts.push(x, y, 0)
     }
     return new Float32Array(pts)
   }, [ut])
@@ -6606,7 +6648,7 @@ function IntegrationByParts1Scene() {
       let y = 0
       if (ut === 1 || ut === 2) y = Math.exp(x * 0.5)
       else y = x
-      if (Math.abs(y) < 5) pts.push(x, 0.02, y + 3)
+      if (Math.abs(y) < 5) pts.push(x, y + 3, 0)
     }
     return new Float32Array(pts)
   }, [ut])
@@ -6628,14 +6670,16 @@ function IntegrationByParts1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#ef4444" linewidth={2} />
       </line>
-      <Text position={[-2.5, 0.02, 2]} fontSize={0.2} color="#3b82f6">u(x)</Text>
-      <Text position={[-2.5, 0.02, 5]} fontSize={0.2} color="#ef4444">v(x)</Text>
-      <Html position={[0, 0.02, -4]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="font-semibold text-emerald-600">∫u dv = uv - ∫v du</div>
-          <div className="text-blue-600 dark:text-blue-400">u(x) (蓝色)</div>
-          <div className="text-red-600 dark:text-red-400">v(x) (红色)</div>
-          <div className="text-muted-foreground">{uvLabel}</div>
+      <Text position={[-2.5, 2, 0]} fontSize={0.2} color="#3b82f6">u(x)</Text>
+      <Text position={[-2.5, 5, 0]} fontSize={0.2} color="#ef4444">v(x)</Text>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="font-semibold text-emerald-600">∫u dv = uv - ∫v du</div>
+            <div className="text-blue-600 dark:text-blue-400">u(x) (蓝色)</div>
+            <div className="text-red-600 dark:text-red-400">v(x) (红色)</div>
+            <div className="text-muted-foreground">{uvLabel}</div>
+          </div>
         </div>
       </Html>
     </group>
@@ -6652,7 +6696,7 @@ function ImproperIntegral1Scene() {
     for (let i = 1; i <= 300; i++) {
       const x = 0.5 + (i / 300) * 9.5
       const y = 1 / Math.pow(x, p)
-      if (y < 5) pts.push(x - 5, 0.02, y)
+      if (y < 5) pts.push(x - 5, y, 0)
     }
     return new Float32Array(pts)
   }, [p])
@@ -6687,16 +6731,18 @@ function ImproperIntegral1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color={convergent ? '#3b82f6' : '#ef4444'} linewidth={2} />
       </line>
-      <Html position={[0, 0.02, 4.5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="font-semibold" style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
-            ∫₁^∞ 1/x^{p.toFixed(1)} dx
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="font-semibold" style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
+              ∫₁^∞ 1/x^{p.toFixed(1)} dx
+            </div>
+            <div style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
+              {convergent ? '✓ 收敛' : '✗ 发散'}
+            </div>
+            <div className="text-muted-foreground">近似值 ≈ {integralVal.toFixed(4)}</div>
+            <div className="text-muted-foreground">p = {p.toFixed(1)} {convergent ? '(p>1)' : '(p≤1)'}</div>
           </div>
-          <div style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
-            {convergent ? '✓ 收敛' : '✗ 发散'}
-          </div>
-          <div className="text-muted-foreground">近似值 ≈ {integralVal.toFixed(4)}</div>
-          <div className="text-muted-foreground">p = {p.toFixed(1)} {convergent ? '(p>1)' : '(p≤1)'}</div>
         </div>
       </Html>
     </group>
@@ -6713,7 +6759,7 @@ function PolarArea1Scene() {
     for (let i = 0; i <= res; i++) {
       const theta = (2 * Math.PI * i) / res
       const r = a + Math.cos(theta)
-      pts.push(r * Math.cos(theta), 0.02, r * Math.sin(theta))
+      pts.push(r * Math.cos(theta), r * Math.sin(theta), 0)
     }
     return new Float32Array(pts)
   }, [a])
@@ -6725,11 +6771,11 @@ function PolarArea1Scene() {
     const indices: number[] = []
     const res = 100
     // Center vertex
-    vertices.push(0, 0.01, 0)
+    vertices.push(0, 0, 0)
     for (let i = 0; i <= res; i++) {
       const theta = (2 * Math.PI * i) / res
       const r = a + Math.cos(theta)
-      vertices.push(r * Math.cos(theta), 0.01, r * Math.sin(theta))
+      vertices.push(r * Math.cos(theta), r * Math.sin(theta), 0)
     }
     for (let i = 0; i < res; i++) {
       indices.push(0, i + 1, i + 2)
@@ -6757,11 +6803,13 @@ function PolarArea1Scene() {
         </bufferGeometry>
         <lineBasicMaterial color="#8b5cf6" linewidth={2} />
       </line>
-      <Html position={[0, 0.02, 5]} center>
-        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-          <div className="text-violet-600 dark:text-violet-400 font-semibold">r = {a.toFixed(1)} + cos(θ)</div>
-          <div className="text-violet-600">S = ½∫r²(θ)dθ</div>
-          <div className="text-emerald-600 dark:text-emerald-400">S = π({a.toFixed(1)}² + ½) = {area.toFixed(4)}</div>
+      <Html fullscreen>
+        <div className="absolute top-12 left-3 pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+            <div className="text-violet-600 dark:text-violet-400 font-semibold">r = {a.toFixed(1)} + cos(θ)</div>
+            <div className="text-violet-600">S = ½∫r²(θ)dθ</div>
+            <div className="text-emerald-600 dark:text-emerald-400">S = π({a.toFixed(1)}² + ½) = {area.toFixed(4)}</div>
+          </div>
         </div>
       </Html>
     </group>

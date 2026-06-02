@@ -2340,3 +2340,27 @@ Stage Summary:
 - **修复**: mouseButtons重映射 + 正交相机zoom控制 + 2D模式panSpeed优化
 - 所有38个模式QA测试通过
 
+
+---
+Task ID: Fix-2D-Coordinate-Convention
+Agent: Main
+Task: 修复一元微积分2D模式坐标轴重叠、视角错误和提示框遮挡问题
+
+Work Log:
+- 分析发现两种不兼容的坐标系混用：
+  - Convention 1（正确）: `(math_x, math_y, 0)` — 数学y → R3F y轴，与正交相机(0,0,10)兼容
+  - Convention 2（错误）: `(math_x, 0.02, math_y)` — 数学y → R3F z轴（深度方向），正交投影下不可见
+- Convention 2影响了13个场景：continuity1, discontinuity1, important_limits1, lhopital1, monotonicity1, extrema1, concavity1, curvature1, higher_derivative1, substitution1, integration_by_parts1, improper_integral1, polar_area1
+- 修复 Axes2D 组件：Y轴从R3F z方向改为y方向，刻度和标签全部重写
+- 修复 FilledRegion2D 组件：顶点从 (x, 0.005, fn(x)) 改为 (x, fn(x), 0)
+- 修复全部13个Convention 2场景的坐标：所有 (x, 0.02, y) → (x, y, 0)
+- 修复全部24个2D场景的Html overlay定位：从世界坐标 `<Html position={[x,y,0]} center>` 改为屏幕固定位置 `<Html fullscreen>` + `absolute top-12 left-3`
+- 全部24个2D模式 + 7个3D模式QA测试通过，0个错误
+
+Stage Summary:
+- **关键Bug修复**: 13个2D场景坐标系从错误的XZ平面改为正确的XY平面
+- **Axes2D重写**: 坐标轴、网格、刻度、标签全部对齐到正确的XY平面
+- **FilledRegion2D重写**: 填充区域顶点坐标修正
+- **Html overlay修复**: 所有2D模式提示框从世界坐标改为屏幕固定位置，不再遮挡坐标轴
+- 所有31+模式QA测试通过
+
