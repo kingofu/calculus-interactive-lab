@@ -2384,3 +2384,24 @@ Stage Summary:
 - 无论怎么在3D中旋转、缩放，切到2D时永远是正交视角(0,0,10)
 - 切回3D时也不受2D操作影响
 
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix 2D mode issues: disable reset button, set default to limit1, fix green overlapping text, hide unnecessary 3D axes
+
+Work Log:
+- Disabled "重置视角" (reset view) button in 2D mode by wrapping it with `{!cameraConfig.is2D && (...)}` in viewport.tsx
+- Changed default mode from 'step1' to 'limit1' (数列极限, first limit concept) in lab-store.ts
+- Fixed green overlapping text near x=0 origin in 2D modes by conditionally hiding 3D Axes/AxisLabels/XYGrid components when mode is 2D (`modeInfo[mode]?.viewType !== '2d'`)
+- Added `modeInfo` import to scene-renderer.tsx for the viewType check
+- Enhanced Axes2D component: added axis arrows, origin "O" label, improved tick mark colors to #999999 (less prominent), reduced grid opacity to 0.15, adjusted label positions to avoid overlap
+- QA tested with agent-browser + VLM: confirmed 2D mode shows only 2 buttons (fullscreen + camera), no 3D axes/z-axis visible, no green overlapping text, default mode is 数列极限
+- Lint passes with zero errors
+
+Stage Summary:
+- **2D reset button disabled**: 2D mode only shows fullscreen + camera buttons (was showing reset + auto-rotate too)
+- **Default mode changed**: Opens to '数列极限' (limit1) instead of '区域划分' (step1)
+- **Green overlapping text fixed**: 3D Axes/AxisLabels/XYGrid no longer render in 2D modes
+- **Axes2D improved**: Added arrows, origin label, better colors and positioning
+- All lint checks pass, dev server compiles successfully

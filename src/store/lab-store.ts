@@ -103,11 +103,11 @@ interface LabState {
 }
 
 export const useLabStore = create<LabState>((set) => ({
-  mode: 'step1',
+  mode: 'limit1',
   paramValue: 2,
-  paramValue2: 2,
-  visitedModes: new Set<LabMode>(['step1']),
-  recentModes: ['step1'] as LabMode[],
+  paramValue2: 1,
+  visitedModes: new Set<LabMode>(['limit1']),
+  recentModes: ['limit1'] as LabMode[],
   favorites: new Set<LabMode>(),
   autoTourActive: false,
   autoRotate: true,

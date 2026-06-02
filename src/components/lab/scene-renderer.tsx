@@ -4,7 +4,7 @@ import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useFrame, ThreeEvent } from '@react-three/fiber'
 import { Text, Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { useLabStore } from '@/store/lab-store'
+import { useLabStore, modeInfo } from '@/store/lab-store'
 import {
   f,
   g,
@@ -5857,46 +5857,63 @@ function Axes2D({ xRange = 3, yRange = 3 }: { xRange?: number; yRange?: number }
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[new Float32Array([-xRange, 0, 0, xRange, 0, 0]), 3]} count={2} />
         </bufferGeometry>
-        <lineBasicMaterial color="#888888" linewidth={1} />
+        <lineBasicMaterial color="#999999" linewidth={1} />
       </line>
       {/* Y axis (mathematical y = R3F y) */}
       <line>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[new Float32Array([0, -yRange, 0, 0, yRange, 0]), 3]} count={2} />
         </bufferGeometry>
-        <lineBasicMaterial color="#888888" linewidth={1} />
+        <lineBasicMaterial color="#999999" linewidth={1} />
+      </line>
+      {/* X axis arrow */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([xRange - 0.2, 0.1, 0, xRange, 0, 0, xRange - 0.2, -0.1, 0]), 3]} count={3} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#999999" />
+      </line>
+      {/* Y axis arrow */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-0.1, yRange - 0.2, 0, 0, yRange, 0, 0.1, yRange - 0.2, 0]), 3]} count={3} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#999999" />
       </line>
       {/* Grid */}
       <lineSegments>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[gridPts, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#cccccc" transparent opacity={0.2} />
+        <lineBasicMaterial color="#cccccc" transparent opacity={0.15} />
       </lineSegments>
       {/* Axis labels */}
-      <Text position={[xRange + 0.3, 0, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">x</Text>
-      <Text position={[0, yRange + 0.3, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">y</Text>
-      {/* Tick marks */}
+      <Text position={[xRange + 0.25, -0.15, 0]} fontSize={0.22} color="#666666" anchorX="center" anchorY="middle">x</Text>
+      <Text position={[0.2, yRange + 0.2, 0]} fontSize={0.22} color="#666666" anchorX="center" anchorY="middle">y</Text>
+      {/* Origin label */}
+      <Text position={[-0.2, -0.25, 0]} fontSize={0.15} color="#999999" anchorX="center" anchorY="middle">O</Text>
+      {/* Tick marks - X axis */}
       {Array.from({ length: Math.floor(xRange) * 2 + 1 }, (_, i) => i - Math.floor(xRange)).filter(v => v !== 0).map(v => (
         <group key={`xt${v}`}>
           <line>
             <bufferGeometry>
               <bufferAttribute attach="attributes-position" args={[new Float32Array([v, -0.08, 0, v, 0.08, 0]), 3]} count={2} />
             </bufferGeometry>
-            <lineBasicMaterial color="#888888" />
+            <lineBasicMaterial color="#999999" />
           </line>
-          <Text position={[v, -0.3, 0]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+          <Text position={[v, -0.25, 0]} fontSize={0.13} color="#999999" anchorX="center" anchorY="middle">{v}</Text>
         </group>
       ))}
+      {/* Tick marks - Y axis */}
       {Array.from({ length: Math.floor(yRange) * 2 + 1 }, (_, i) => i - Math.floor(yRange)).filter(v => v !== 0).map(v => (
         <group key={`yt${v}`}>
           <line>
             <bufferGeometry>
               <bufferAttribute attach="attributes-position" args={[new Float32Array([-0.08, v, 0, 0.08, v, 0]), 3]} count={2} />
             </bufferGeometry>
-            <lineBasicMaterial color="#888888" />
+            <lineBasicMaterial color="#999999" />
           </line>
-          <Text position={[-0.3, v, 0]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+          <Text position={[-0.25, v, 0]} fontSize={0.13} color="#999999" anchorX="center" anchorY="middle">{v}</Text>
         </group>
       ))}
     </group>
@@ -6831,10 +6848,14 @@ export function SceneRenderer() {
       <ambientLight intensity={0.4} />
       <hemisphereLight args={['#b1e1ff', '#b97a20', 0.3]} />
 
-      {/* Common elements */}
-      <Axes length={axisLength} />
-      <AxisLabels length={axisLength} />
-      <XYGrid />
+      {/* Common elements - only show 3D axes/grid for 3D modes */}
+      {modeInfo[mode]?.viewType !== '2d' && (
+        <>
+          <Axes length={axisLength} />
+          <AxisLabels length={axisLength} />
+          <XYGrid />
+        </>
+      )}
 
       {/* Mode-specific scenes */}
       {mode === 'step1' && (

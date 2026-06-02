@@ -376,20 +376,22 @@ export function Viewport() {
             <TooltipContent side="bottom" className="text-xs">{autoRotate ? '自动旋转 (点击暂停)' : '旋转已暂停 (点击恢复)'}</TooltipContent>
           </Tooltip>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 bg-background/40 backdrop-blur-sm hover:bg-background/70"
-              onClick={handleResetCamera}
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span className="sr-only">重置视角</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">重置视角</TooltipContent>
-        </Tooltip>
+        {!cameraConfig.is2D && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 bg-background/40 backdrop-blur-sm hover:bg-background/70"
+                onClick={handleResetCamera}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="sr-only">重置视角</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">重置视角</TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
