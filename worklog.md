@@ -2631,3 +2631,31 @@ Stage Summary:
 - **Parameter renamed**: "收敛速度 c" → "收敛阶数 c" for mathematical accuracy
 - **New features**: N_ε indicator line, convergence rate display O(1/n^c), x-axis label "n"
 - VLM confirmed: "The scatter points (colored dots) appear to be sitting exactly on the teal-colored convergence curve"
+
+---
+Task ID: 15
+Agent: Main
+Task: Fix 数列极限 green-on-green color conflict — scatter points same color as ε-band
+
+Work Log:
+- User reported: "数列极限里面，线是绿色，为什么有的点也是绿色" — green points invisible against green ε-band
+- Analyzed color scheme in Limit1SVG:
+  - ε-band fill/borders: #10b981 (green)
+  - Scatter points within ε: #10b981 (SAME GREEN — invisible against band)
+  - Convergence curve: #14b8a6 (teal — looks green, confusing)
+- Fixed color scheme for clear visual distinction:
+  - ε-band: Keep green (#10b981) — standard math convention for tolerance zone
+  - Convergence curve: Changed from teal (#14b8a6) to slate (#64748b) — neutral, very distinct from green
+  - Points within ε: Changed from green (#10b981) to orange (#f97316) — warm color, high contrast against green
+  - Points outside ε: Keep red (#ef4444) — already distinct
+  - Added white stroke (1.5px) to scatter points for better visibility against any background
+  - Increased point radius from 3.5 to 4 for better visibility
+  - Drop lines updated to match new point colors (orange/red)
+- Updated overlay content color for |a₂₀ - L| from emerald to orange to match new point color
+- Lint passes, dev server compiles successfully
+
+Stage Summary:
+- **Color conflict resolved**: ε-band is green, scatter points are now orange (within ε) / red (outside ε), convergence curve is slate gray
+- **Visual hierarchy now clear**: Green = tolerance zone, Slate = continuous function, Orange = convergent points, Red = non-convergent points, Amber = limit value, Purple = N_ε threshold
+- Added white stroke to points for better visibility
+- Set up cron job (every 15 min) for periodic QA and development review

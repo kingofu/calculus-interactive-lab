@@ -377,7 +377,7 @@ function Limit1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number
       {/* Limit line */}
       <line x1={sx(0, scale, offsetX)} y1={sy(L, scale, offsetY)} x2={sx(xMax, scale, offsetX)} y2={sy(L, scale, offsetY)} stroke="#f59e0b" strokeWidth={2} />
       {/* Convergence curve */}
-      <path d={convergencePath} fill="none" stroke="#14b8a6" strokeWidth={2} />
+      <path d={convergencePath} fill="none" stroke="#64748b" strokeWidth={2} />
       {/* N_ε indicator line */}
       {nEps <= xMax && (
         <line x1={sx(nEps, scale, offsetX)} y1={sy(L - 0.8, scale, offsetY)} x2={sx(nEps, scale, offsetX)} y2={sy(L + 1.8, scale, offsetY)} stroke="#8b5cf6" strokeWidth={1} strokeDasharray="4,4" opacity={0.6} />
@@ -387,13 +387,13 @@ function Limit1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number
         const withinEps = Math.abs(pt.an - L) < eps
         const cx = sx(pt.n, scale, offsetX)
         const cy = sy(pt.an, scale, offsetY)
-        return <circle key={idx} cx={cx} cy={cy} r={3.5} fill={withinEps ? '#10b981' : '#ef4444'} />
+        return <circle key={idx} cx={cx} cy={cy} r={4} fill={withinEps ? '#f97316' : '#ef4444'} stroke="white" strokeWidth={1.5} />
       })}
       {/* Drop lines from points to L */}
       {sequencePoints.map((pt, idx) => {
         const withinEps = Math.abs(pt.an - L) < eps
         const cx = sx(pt.n, scale, offsetX)
-        return <line key={`drop-${idx}`} x1={cx} y1={sy(pt.an, scale, offsetY)} x2={cx} y2={sy(L, scale, offsetY)} stroke={withinEps ? '#10b981' : '#ef4444'} strokeWidth={0.8} opacity={0.35} />
+        return <line key={`drop-${idx}`} x1={cx} y1={sy(pt.an, scale, offsetY)} x2={cx} y2={sy(L, scale, offsetY)} stroke={withinEps ? '#f97316' : '#ef4444'} strokeWidth={0.8} opacity={0.35} />
       })}
       {/* Labels */}
       <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(L + eps + 0.12, scale, offsetY)} fontSize={11} fill="#10b981" textAnchor="end">+ε</text>
@@ -1235,7 +1235,7 @@ function getOverlayContent(mode: LabMode): ReactNode {
           <div className="text-amber-600 dark:text-amber-400">L = {L.toFixed(2)}</div>
           <div>ε = {eps.toFixed(2)}</div>
           <div className="text-purple-600 dark:text-purple-400">N_ε = {nEps}</div>
-          <div className="text-emerald-600 dark:text-emerald-400">|a₂₀ - L| = {lastErr.toFixed(4)}</div>
+          <div className="text-orange-600 dark:text-orange-400">|a₂₀ - L| = {lastErr.toFixed(4)}</div>
           <div className="text-rose-600 dark:text-rose-400 text-[10px]">收敛阶: O(1/n^{c.toFixed(1)})</div>
         </div>
       )
