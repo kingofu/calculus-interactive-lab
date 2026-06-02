@@ -7,6 +7,7 @@ import { SceneRenderer } from './scene-renderer'
 import { SceneErrorBoundary } from './scene-error-boundary'
 import { SceneTooltip } from './scene-tooltip'
 import { AnimationTimeline } from './animation-timeline'
+import { Viewport2D } from './viewport-2d'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
 import { useLabStore, modeInfo } from '@/store/lab-store'
 import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2, RotateCw, Pause } from 'lucide-react'
@@ -433,38 +434,9 @@ export function Viewport() {
         </div>
       </div>
 
-      {/* 2D mode: completely separate Canvas with orthographic camera */}
+      {/* 2D mode: pure SVG rendering engine — NO Three.js */}
       {cameraConfig.is2D ? (
-        <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
-          <Suspense fallback={<LoadingIndicator />}>
-            <Canvas
-              key="canvas-2d"
-              orthographic
-              gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
-              dpr={[1, 2]}
-            >
-              <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />
-              {/* 2D lighting: simple ambient is enough for flat geometry */}
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[0, 10, 5]} intensity={0.4} color="#ffffff" />
-              <SceneRenderer />
-              <OrbitControls
-                key={`orbit-2d-${mode}-${sceneKey}`}
-                enableDamping
-                dampingFactor={0.1}
-                enableRotate={false}
-                enablePan={true}
-                panSpeed={1.2}
-                minZoom={10}
-                maxZoom={200}
-                minDistance={1}
-                maxDistance={50}
-                mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
-                target={[0, 0, 0]}
-              />
-            </Canvas>
-          </Suspense>
-        </SceneErrorBoundary>
+        <Viewport2D />
       ) : (
         /* 3D mode: perspective Canvas with orbit controls */
         <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>

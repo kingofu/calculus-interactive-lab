@@ -2473,3 +2473,126 @@ Stage Summary:
 - **All 24 2D scene overlays are now draggable** (previously pointer-events-none)
 - DraggableOverlay component with mouse drag support added
 - No remaining bugs in 2D rendering
+
+---
+Task ID: 4
+Agent: SVG Scene Converter Agent
+Task: Convert ALL 24 2D calculus visualization scenes from R3F/Three.js to pure SVG
+
+Work Log:
+- Read worklog.md to understand project status
+- Read existing `viewport-2d.tsx` (887 lines, placeholder Scene2D component)
+- Read existing `scene-renderer.tsx` R3F implementations for all 24 scenes (lines 4774-6900)
+- Read `lab-store.ts` for LabMode type and modeInfo structure
+- Read `math-computations.ts` for available helper functions (numericalIntegral1D, findRollePoint, findLagrangePoint, etc.)
+
+- **Created SVG helper functions**:
+  - `sx(mathX, scale, offsetX)` / `sy(mathY, scale, offsetY)` — coordinate mapping
+  - `curveToPath(fn, xMin, xMax, steps, scale, offsetX, offsetY)` — generate SVG path d from y=f(x)
+  - `filledAreaPath(fn, xMin, xMax, yBase, steps, scale, offsetX, offsetY)` — filled region between curve and yBase
+  - `filledAreaBetweenPath(fn1, fn2, xMin, xMax, steps, scale, offsetX, offsetY)` — filled area between two curves
+  - `polarCurveToPath(rFn, thetaMin, thetaMax, steps, scale, offsetX, offsetY)` — polar curve SVG path
+  - `polarFilledPath(rFn, thetaMin, thetaMax, steps, scale, offsetX, offsetY)` — filled polar area (closes to origin)
+
+- **Implemented all 24 SVG scene components**:
+  1. `Limit1SVG` — Sequence scatter points, convergence curve, ε-band, limit line, drop lines
+  2. `Limit2SVG` — Curve f(x)=sin(x)+1, ε-band (green), δ-interval (orange), point (x₀,L)
+  3. `Derivative1SVG` — Curve f(x)=sin(x)+0.5x, tangent line (red), secant line (blue dashed), Δx indicator
+  4. `Derivative2SVG` — f(x)=x³-3x (blue), f'(x)=3x²-3 (red), tangent line, connecting line, labels
+  5. `Derivative3SVG` — f(x)=x², Δy (blue), dy (red), tangent line, Δx indicator
+  6. `Rolle1SVG` — f(x)=a(x-1)(x-3)(x-5), endpoints, ξ₁/ξ₂ points with horizontal tangents
+  7. `Lagrange1SVG` — f(x)=a(x³-6x²+11x), secant line (blue), parallel tangent (red), ξ point
+  8. `IndefIntegral1SVG` — Family of curves F(x)=x²+C, f(x)=2x (dashed), labels
+  9. `Ftc1SVG` — f(x)=sin(x)+1, Φ(x) curve, shaded area, upper limit indicator
+  10. `MeanValueIntegral1SVG` — f(x)=a·sin(x)+1, filled area, average value rectangle, ξ point
+  11. `Area1SVG` — f(x)=a+cos(x), g(x)=sin(x), filled area between curves, labels
+  12. `Continuity1SVG` — f(x)=x² (green), discontinuous g(x) (red), open/closed circles
+  13. `Discontinuity1SVG` — 4 switchable types: removable, jump, infinite, oscillating
+  14. `ImportantLimits1SVG` — sin(x)/x→1 (blue), (1+1/x)^x→e (amber), limit lines, indicator dots
+  15. `Lhopital1SVG` — sin(x)/x (blue), cos(x) (red), limit line y=1, indicator dots
+  16. `Monotonicity1SVG` — f(x)=a(x³-3x) (blue), f'(x) (red dashed), increasing/decreasing regions
+  17. `Extrema1SVG` — f(x)=a(x⁴-4x²) (blue), f'(x) (red dashed), max/min points
+  18. `Concavity1SVG` — f(x)=ax³ (amber), concave up (blue), concave down (red), inflection point
+  19. `Curvature1SVG` — f(x)=cos(x) (blue), curvature circle (red), center of curvature (amber)
+  20. `HigherDerivative1SVG` — sin(x) and derivatives up to order 5, current order highlighted
+  21. `Substitution1SVG` — Original function (blue), substituted function (red, shifted), 3 types
+  22. `IntegrationByParts1SVG` — u(x) (blue), v(x) (red, shifted), 3 types
+  23. `ImproperIntegral1SVG` — 1/x^p curve, filled area (blue if convergent, red if divergent)
+  24. `PolarArea1SVG` — r=a+cos(θ) (violet), filled polar area, area value
+
+- **Created `getOverlayContent(mode)` function** that returns mode-specific info card content for all 24 modes
+- **Updated `Scene2D` component** with switch statement routing to the appropriate SVG scene component
+- **Updated `Viewport2D`** to use `getOverlayContent()` for the DraggableOverlay2D content
+- Preserved all existing infrastructure: SVGAxes, DraggableOverlay2D, pan/zoom, screenshot, etc.
+- Fixed all 16 React Compiler memoization lint errors (inlined function definitions into useMemo callbacks)
+- Lint passes with 0 errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **All 24 2D scenes converted from R3F/Three.js to pure SVG**
+- NO imports from @react-three/fiber, @react-three/drei, or three
+- SVG helper functions: curveToPath, filledAreaPath, filledAreaBetweenPath, polarCurveToPath, polarFilledPath
+- Each scene renders as SVG elements: `<path>`, `<circle>`, `<line>`, `<rect>`, `<text>`, `<g>`
+- Coordinate mapping: svgX = mathX * scale + offsetX, svgY = -mathY * scale + offsetY
+- Draggable info overlays with mode-specific content for all 24 scenes
+- 0 lint errors, dev server compiling
+
+---
+Task ID: 2D-Engine-Migration
+Agent: Main
+Task: Replace all 2D scene rendering from R3F/Three.js to pure SVG engine
+
+Work Log:
+- Read entire project codebase to understand all 24 2D scene implementations
+- Identified core problem: 2D scenes used R3F with orthographic camera, causing deformation when dragging floating text overlays (z-axis changes)
+- Created `/src/components/lab/viewport-2d.tsx` - new pure SVG 2D rendering engine
+  - Viewport2D: Full SVG-based viewport with pan/zoom/reset
+  - DraggableOverlay2D: Pure HTML/CSS draggable div (no R3F Html fullscreen)
+  - SVGAxes: SVG coordinate axes with ticks, labels, arrows, grid
+  - Scene2D: All 24 2D scene implementations using SVG elements
+  - Helper functions: sx/sy coordinate mapping, curveToPath, filledAreaPath, polarCurveToPath, polarFilledPath
+  - getOverlayContent: Mode-specific info card content for all 24 modes
+- Modified `/src/components/lab/viewport.tsx`:
+  - Replaced R3F Canvas+OrthographicCamera with Viewport2D for 2D modes
+  - 3D modes continue to use R3F Canvas+OrbitControls unchanged
+- All 24 2D scenes converted from R3F to SVG:
+  1. limit1 (数列极限): scatter dots, convergence curve, ε-band
+  2. limit2 (函数极限ε-δ): curve, ε/δ bands, point indicator
+  3. derivative1 (割线→切线): curve, tangent/secant lines, Δx indicator
+  4. derivative2 (切线与导函数): f/f' curves, tangent line, connecting line
+  5. derivative3 (微分与线性近似): Δy/dy comparison, tangent line
+  6. rolle1 (罗尔定理): curve, endpoints, ξ points with horizontal tangents
+  7. lagrange1 (拉格朗日中值定理): secant/tangent lines, ξ point
+  8. indef_integral1 (原函数族): family of x²+C curves, f(x)=2x dashed
+  9. ftc1 (微积分基本定理): f/Φ curves, shaded area, upper limit indicator
+  10. mean_value_integral1 (积分中值定理): filled area, avg value rectangle, ξ point
+  11. area1 (曲线间面积): two curves, filled area between
+  12. continuity1 (函数连续性): continuous/discontinuous curves
+  13. discontinuity1 (间断点类型): 4 switchable types
+  14. important_limits1 (两个重要极限): sin(x)/x, (1+1/x)^x
+  15. lhopital1 (洛必达法则): f/g, f'/g' curves, limit line
+  16. monotonicity1 (函数单调性): f/f' curves, colored regions
+  17. extrema1 (函数极值): f/f' curves, max/min points
+  18. concavity1 (凹凸性与拐点): f curve, concave up/down regions
+  19. curvature1 (曲率): curve, curvature circle, center
+  20. higher_derivative1 (高阶导数): sin(x) derivatives up to order 5
+  21. substitution1 (换元积分法): original/substituted functions, 3 types
+  22. integration_by_parts1 (分部积分法): u/v curves, 3 types
+  23. improper_integral1 (反常积分): 1/x^p, filled area, convergence indicator
+  24. polar_area1 (极坐标面积): polar curve, filled area
+- QA tested with agent-browser and VLM verification:
+  - limit1: ✅ axes, curves, scatter dots, draggable overlay
+  - derivative1: ✅ axes, curve, tangent/secant lines, points
+  - limit2, rolle1, ftc1, monotonicity1, curvature1, polar_area1: ✅ all pass
+  - 3D mode (step3): ✅ still works correctly
+  - Drag test: ✅ moving overlay does NOT cause deformation (core fix verified)
+- Lint passes with zero errors
+- Dev server compiles and runs successfully
+
+Stage Summary:
+- **ARCHITECTURE CHANGE**: 2D scenes now use pure SVG rendering engine instead of R3F/Three.js
+- **Core problem FIXED**: Dragging floating text boxes no longer deforms the 2D coordinate system
+- **All 24 2D modes** fully converted to SVG with proper mathematical visualizations
+- **3D modes unchanged** - continue using R3F Canvas with OrbitControls
+- **New features**: SVG-based pan/zoom, draggable overlays, reset view, double-click reset
+- Zero Three.js/R3F imports in 2D engine
