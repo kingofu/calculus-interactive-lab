@@ -288,31 +288,24 @@ interface SVGAxesProps {
 function SVGAxes({ xRange = [-6, 6], yRange = [-4, 4], scale, offsetX, offsetY }: SVGAxesProps) {
   const toSvgX = (mathX: number) => mathX * scale + offsetX
   const toSvgY = (mathY: number) => -mathY * scale + offsetY
-  const toMathX = (svgX: number) => (svgX - offsetX) / scale
-  const toMathY = (svgY: number) => -(svgY - offsetY) / scale
 
-  // Compute visible math range (large area to cover viewport after pan/zoom)
-  const svgW = typeof window !== 'undefined' ? window.innerWidth : 1200
-  const svgH = typeof window !== 'undefined' ? window.innerHeight : 800
-  const visXMin = Math.floor(toMathX(-200))
-  const visXMax = Math.ceil(toMathX(svgW + 200))
-  const visYMin = Math.floor(toMathY(svgH + 200))
-  const visYMax = Math.ceil(toMathY(-200))
-
-  // Grid line range: cover entire visible area
-  const gridXMin = visXMin
-  const gridXMax = visXMax
-  const gridYMin = visYMin
-  const gridYMax = visYMax
+  // Compute visible math range — use a generous fixed range to cover any viewport
+  // This avoids hydration mismatch from using window.innerWidth/Height
+  // With scale=50 (default), [-50, 50] covers ~5000px — more than any screen
+  const gridMathRange = Math.max(50, Math.ceil(1200 / Math.max(scale, 10)))
+  const gridXMin = -gridMathRange
+  const gridXMax = gridMathRange
+  const gridYMin = -gridMathRange
+  const gridYMax = gridMathRange
 
   // Tick positions: only within a reasonable range around the scene content
   const xTicks: number[] = []
   const yTicks: number[] = []
-  const xStart = Math.max(Math.ceil(visXMin), Math.ceil(xRange[0] - 5))
-  const xEnd = Math.min(Math.floor(visXMax), Math.floor(xRange[1] + 5))
+  const xStart = Math.max(-gridMathRange, Math.ceil(xRange[0] - 5))
+  const xEnd = Math.min(gridMathRange, Math.floor(xRange[1] + 5))
   for (let i = xStart; i <= xEnd; i++) xTicks.push(i)
-  const yStart = Math.max(Math.ceil(visYMin), Math.ceil(yRange[0] - 5))
-  const yEnd = Math.min(Math.floor(visYMax), Math.floor(yRange[1] + 5))
+  const yStart = Math.max(-gridMathRange, Math.ceil(yRange[0] - 5))
+  const yEnd = Math.min(gridMathRange, Math.floor(yRange[1] + 5))
   for (let i = yStart; i <= yEnd; i++) yTicks.push(i)
 
   const tickLen = 4
