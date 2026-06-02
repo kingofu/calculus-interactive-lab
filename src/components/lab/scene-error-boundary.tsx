@@ -45,7 +45,6 @@ const allModes: LabMode[] = [
   'curl1',
   'divergence_field1',
   'conservative1',
-  'taylor1',
   'surface_integral1',
 ]
 

@@ -219,7 +219,6 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'curl1') return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
   if (mode === 'divergence_field1') return 'from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20'
   if (mode === 'conservative1') return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
-  if (mode === 'taylor1') return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
   if (mode === 'surface_integral1') return 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20'
   return 'from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'
 }
@@ -271,7 +270,6 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'curl1') return 'bg-rose-500'
   if (mode === 'divergence_field1') return 'bg-pink-500'
   if (mode === 'conservative1') return 'bg-emerald-500'
-  if (mode === 'taylor1') return 'bg-red-500'
   if (mode === 'surface_integral1') return 'bg-violet-500'
   return 'bg-slate-500'
 }

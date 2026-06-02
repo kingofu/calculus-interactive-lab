@@ -60,7 +60,7 @@ const allModes: LabMode[] = [
   'curl1', 'divergence_field1',
   'conservative1',
   'laplace1',
-  'fourier1', 'taylor1',
+  'fourier1',
   'isosurface1',
   'mass_center1', 'moment_of_inertia1',
   'arc_length1',

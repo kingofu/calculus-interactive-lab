@@ -2659,3 +2659,28 @@ Stage Summary:
 - **Visual hierarchy now clear**: Green = tolerance zone, Slate = continuous function, Orange = convergent points, Red = non-convergent points, Amber = limit value, Purple = N_ε threshold
 - Added white stroke to points for better visibility
 - Set up cron job (every 15 min) for periodic QA and development review
+
+---
+Task ID: 16
+Agent: Main
+Task: Remove 泰勒展开 (Taylor Expansion) mode from project
+
+Work Log:
+- User requested deletion of 泰勒展开 mode
+- Removed `taylor1` from all files:
+  - `src/store/lab-store.ts`: Removed from LabMode type union and modeInfo object
+  - `src/components/lab/sidebar.tsx`: Removed sidebar menu entry
+  - `src/components/lab/viewport-2d.tsx`: Removed background gradient and accent color
+  - `src/components/lab/viewport.tsx`: Removed camera preset, background gradient, and accent color
+  - `src/components/lab/scene-renderer.tsx`: Removed TaylorExpansionScene component (~180 lines) and render case
+  - `src/hooks/use-computed-values.ts`: Removed computed values case
+  - `src/components/lab/info-panel.tsx`: Removed theme colors, formula list, and section mapping
+  - `src/components/lab/scene-error-boundary.tsx`: Removed from 3D modes list
+  - `src/app/page.tsx`: Removed from 3D modes list
+- Lint passes with zero errors, dev server compiles successfully
+
+Stage Summary:
+- **泰勒展开 mode fully removed** from all 9 files
+- Sidebar no longer shows 泰勒展开 option
+- No orphaned references remaining
+- 中值定理 section now only has 罗尔定理 and 拉格朗日中值定理

@@ -50,7 +50,7 @@ export type LabMode =
   | 'laplace1'
   // 级数与逼近
   | 'convergence1' | 'convergence2'
-  | 'fourier1' | 'taylor1'
+  | 'fourier1'
   | 'isosurface1'
   | 'surface_integral1'
 
@@ -766,15 +766,6 @@ export const modeInfo: Record<LabMode, {
     description: '保守场是无旋的向量场（∇×F=0），等价于存在势函数φ使得F=∇φ。保守场中沿任意闭曲线的线积分为0，路径积分与路径无关。图中展示保守场F=(x, y)及其势函数φ=½(x²+y²)的等高线。',
     paramLabel: '场强缩放',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
-  },
-  taylor1: {
-    title: '泰勒展开逼近',
-    section: '微分中值定理',
-    math: 'f(x) = \\sum_{n=0}^{N} \\frac{f^{(n)}(a)}{n!}(x-a)^n',
-    description: '泰勒展开将函数在某点附近用多项式逼近。随着阶数N增加，逼近范围逐渐扩大。图中展示目标函数sin(x)及其N阶泰勒多项式，观察逼近精度随N的变化。同时展示3D视角下的函数曲面和泰勒多项式曲面。',
-    paramLabel: '展开阶数 N',
-    paramMin: 1, paramMax: 15, paramStep: 1, paramDefault: 3,
-    viewType: '2d',
   },
   surface_integral1: {
     title: '对面积的曲面积分',

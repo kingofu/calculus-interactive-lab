@@ -778,28 +778,6 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
-      case 'taylor1': {
-        const N = Math.round(paramValue)
-        // Compute max error for sin(x) vs Taylor polynomial on [-3, 3]
-        let maxError = 0
-        for (let x = -3; x <= 3; x += 0.05) {
-          const sinY = Math.sin(x)
-          let taylorY = 0
-          for (let n = 0; n <= N; n++) {
-            const sign = n % 2 === 0 ? 1 : -1
-            taylorY += sign * Math.pow(x, 2 * n + 1) / factorial2(2 * n + 1)
-          }
-          maxError = Math.max(maxError, Math.abs(sinY - taylorY))
-        }
-        return {
-          mainValue: formatValue(maxError),
-          approxValue: `T${N}(x)`,
-          exactValue: `sin(x)`,
-          error: formatValue(maxError),
-          label: `N=${N} 阶泰勒逼近最大误差`,
-        }
-      }
-
       case 'surface_integral1': {
         const a = paramValue
         const range = 1.5

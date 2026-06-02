@@ -216,14 +216,6 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-emerald-50/50 via-muted/30 to-teal-50/50 dark:from-emerald-950/20 dark:via-muted/20 dark:to-teal-950/20',
     computedBorder: 'border-emerald-200/40 dark:border-emerald-800/30',
   },
-  '泰勒展开与逼近': {
-    bg: 'bg-amber-100 dark:bg-amber-900/40',
-    text: 'text-amber-800 dark:text-amber-300',
-    border: 'border-0',
-    glow: 'shadow-amber-500/20',
-    computedBg: 'from-amber-50/50 via-muted/30 to-orange-50/50 dark:from-amber-950/20 dark:via-muted/20 dark:to-orange-950/20',
-    computedBorder: 'border-amber-200/40 dark:border-amber-800/30',
-  },
   '曲面积分': {
     bg: 'bg-violet-100 dark:bg-violet-900/40',
     text: 'text-violet-800 dark:text-violet-300',
@@ -408,10 +400,6 @@ const relatedFormulas: Record<string, { formula: string; label: string }[]> = {
     { formula: '\\mathbf{F} = \\nabla \\phi \\Rightarrow \\nabla \\times \\mathbf{F} = 0', label: '无旋等价' },
     { formula: '\\oint_C \\mathbf{F}\\cdot d\\mathbf{r} = 0', label: '闭路径积分为零' },
   ],
-  taylor1: [
-    { formula: 'f^{(n)}(a) = \\frac{d^n f}{dx^n}\\big|_{x=a}', label: 'n阶导数' },
-    { formula: 'R_n = O((x-a)^{n+1})', label: '余项' },
-  ],
   surface_integral1: [
     { formula: 'd\\mathbf{S} = \\mathbf{n}\\,dS', label: '有向面积元素' },
     { formula: '\\iint_\\Sigma f\\,dS = \\iint_D f\\sqrt{1+z_x^2+z_y^2}\\,dxdy', label: '投影法' },
@@ -451,7 +439,6 @@ const sectionModes: Record<string, LabMode[]> = {
   '等值面与等高线': ['isosurface1'],
   '旋度场与散度场': ['curl1', 'divergence_field1'],
   '保守场与势函数': ['conservative1'],
-  '泰勒展开与逼近': ['taylor1'],
   '曲面积分': ['surface_integral1'],
 }
 

@@ -67,7 +67,6 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'curl1':
     case 'divergence_field1':
     case 'conservative1':
-    case 'taylor1':
     case 'surface_integral1':
       return { position: [6, 8, 4], fov: 50 }
     default:
@@ -205,9 +204,6 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'conservative1') {
     return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   }
-  if (mode === 'taylor1') {
-    return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
-  }
   if (mode === 'surface_integral1') {
     return 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20'
   }
@@ -261,7 +257,6 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'curl1') return 'bg-rose-500'
   if (mode === 'divergence_field1') return 'bg-pink-500'
   if (mode === 'conservative1') return 'bg-emerald-500'
-  if (mode === 'taylor1') return 'bg-red-500'
   if (mode === 'surface_integral1') return 'bg-violet-500'
   return 'bg-slate-500'
 }

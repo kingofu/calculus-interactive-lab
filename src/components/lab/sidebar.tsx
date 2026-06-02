@@ -153,7 +153,6 @@ const chapters: ChapterEntry[] = [
         modes: [
           { mode: 'rolle1' as LabMode, label: '罗尔定理', icon: Target },
           { mode: 'lagrange1' as LabMode, label: '拉格朗日中值定理', icon: Waypoints },
-          { mode: 'taylor1' as LabMode, label: '泰勒展开', icon: TrendingUp },
         ],
       },
     ],
