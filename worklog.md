@@ -2794,3 +2794,25 @@ Stage Summary:
 - No remaining references to deleted modes in the codebase
 - App stable, lint clean, browser-verified
 
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix mode view types, move surface_integral1, fix step1-4 origin jumping, remove visited tracking
+
+Work Log:
+- **rect_approx (矩形近似)**: Changed viewType from 3D to 2D in lab-store.ts, created RectApproxSVG component in viewport-2d.tsx with filled rectangles, curve overlay, and real-time approximate/exact/error values
+- **fourier1 (傅里叶级数逼近)**: Changed viewType from 3D to 2D, created FourierSVG component with square wave target (red), Fourier approximation (blue), individual harmonics (dashed), and L² error display
+- **arc_length1 (弧长计算)**: Changed viewType from 3D to 2D, created ArcLengthSVG with sin(x) curve, segmented polyline approximation (amber), segment points, and arc length values. Updated math-computations.ts to compute 2D arc length for f(x)=sin(x) instead of 3D helix
+- **surface_integral1 (曲面积分)**: Moved from "级数与逼近" chapter to "积分定理" chapter in sidebar.tsx (placed after 高斯散度定理)
+- **volume_rev1 (旋转体体积)**: Verified 3D display logic is correct - surface of revolution with disc cross-sections is inherently 3D
+- **step1-4 origin jumping fix**: Added conceptSteps array to viewport.tsx, made OrbitControls use stable key 'concept' for all step modes instead of mode-specific key, and ensured all 4 step modes share the same camera position [6,8,4]
+- **Removed visited modes tracking**: Removed visitedModes from lab-store.ts (state, setMode update), removed visited counts from chapter/section badges in sidebar, removed bottom progress bar from sidebar, replaced progressPercent with positionPercent in page.tsx
+- **Fixed approxL typo**: Fixed variable name case mismatch (approxl → approxL) in viewport-2d.tsx that caused runtime crash
+
+Stage Summary:
+- rect_approx, fourier1, arc_length1 now render as 2D SVG scenes instead of 3D
+- surface_integral1 moved from 级数与逼近 to 积分定理 chapter
+- step1-4 animation no longer causes camera origin jumps between steps
+- Visited modes tracking feature fully removed
+- All lint checks pass, dev server compiles, all modes verified via agent-browser

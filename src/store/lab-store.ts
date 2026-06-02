@@ -81,7 +81,6 @@ interface LabState {
   mode: LabMode
   paramValue: number
   paramValue2: number
-  visitedModes: Set<LabMode>
   favorites: Set<LabMode>
   autoTourActive: boolean
   autoRotate: boolean
@@ -101,7 +100,6 @@ export const useLabStore = create<LabState>((set) => ({
   mode: 'limit1',
   paramValue: 2,
   paramValue2: 1,
-  visitedModes: new Set<LabMode>(['limit1']),
   favorites: new Set<LabMode>(),
   autoTourActive: false,
   autoRotate: true,
@@ -114,7 +112,6 @@ export const useLabStore = create<LabState>((set) => ({
         mode,
         paramValue: info.paramDefault,
         paramValue2: info.paramDefault2 ?? info.paramDefault,
-        visitedModes: new Set([...state.visitedModes, mode]),
         tooltip: null,
         autoRotate: is2D ? false : state.autoRotate,
       }
@@ -448,9 +445,10 @@ export const modeInfo: Record<LabMode, {
     title: '矩形近似面积',
     section: '矩形近似面积演示',
     math: '\\int_a^b f(x)\\,dx \\approx \\sum_{i=1}^{n} f(x_i)\\Delta x',
-    description: '用 n 个矩形近似函数 f(x) 在 [a,b] 上的定积分，随着矩形数量增加，近似值趋近精确值。同时展示 2D 和 3D 视角。',
+    description: '用 n 个矩形近似函数 f(x) 在 [a,b] 上的定积分，随着矩形数量增加，近似值趋近精确值。图中展示函数曲线和矩形近似，面积值实时显示。',
     paramLabel: '矩形数量',
     paramMin: 2, paramMax: 100, paramStep: 1, paramDefault: 10,
+    viewType: '2d',
   },
   sphere_cyl1: {
     title: '球体与圆柱面相交体',
@@ -560,10 +558,11 @@ export const modeInfo: Record<LabMode, {
   arc_length1: {
     title: '弧长计算',
     section: '弧长与曲线积分',
-    math: 'L = \\int_a^b \\sqrt{1 + [f\'(x)]^2}\\,dx = \\int_a^b |\\mathbf{r}\'(t)|\\,dt',
-    description: '弧长公式将曲线的长度表示为速度大小的积分。在参数曲线 r(t)=(t, 1.5sin(t), 1.5cos(t)) 上，弧长等于 |r\'(t)| 的积分。随着分段数增加，折线长度趋近真实弧长。',
+    math: 'L = \\int_a^b \\sqrt{1 + [f\'(x)]^2}\\,dx',
+    description: '弧长公式将曲线的长度表示为导数大小的积分 L=∫√(1+[f\'(x)]²)dx。对于曲线 f(x)=sin(x)，随着分段数增加，折线长度趋近真实弧长。图中展示曲线、分段折线和弧长近似值。',
     paramLabel: '分段数',
     paramMin: 2, paramMax: 50, paramStep: 1, paramDefault: 8,
+    viewType: '2d',
   },
   mass_center1: {
     title: '质心计算',
@@ -624,6 +623,7 @@ export const modeInfo: Record<LabMode, {
     description: '傅里叶级数将周期函数分解为正弦和余弦函数的叠加。随着项数N增加，部分和逐渐逼近原函数。图中展示目标函数（红色）和傅里叶级数部分和（蓝色），下方显示各阶分量。调整参数观察逼近精度随N的变化。',
     paramLabel: '逼近项数 N',
     paramMin: 1, paramMax: 20, paramStep: 1, paramDefault: 5,
+    viewType: '2d',
   },
   vector_field1: {
     title: '向量场线积分',

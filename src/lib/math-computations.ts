@@ -360,27 +360,30 @@ export function fubiniDoubleIntegral(
   return { dydx, dxdy, direct }
 }
 
-// 弧长近似计算：r(t) = (t, 1.5sin(t), 1.5cos(t)), t ∈ [0, 2π]
-// 用 n 段折线逼近弧长
+// 弧长近似值：2D曲线 f(x)=sin(x) 在 [0, 2π] 上
 export function arcLengthApprox(n: number): number {
-  const tMin = 0
-  const tMax = 2 * Math.PI
-  const dt = (tMax - tMin) / n
+  const a = 0
+  const b = 2 * Math.PI
+  const dx = (b - a) / n
   let length = 0
+  const f = (x: number) => Math.sin(x)
   for (let i = 0; i < n; i++) {
-    const t1 = tMin + i * dt
-    const t2 = tMin + (i + 1) * dt
-    const x1 = t1 - Math.PI, y1 = 1.5 * Math.sin(t1), z1 = 1.5 * Math.cos(t1)
-    const x2 = t2 - Math.PI, y2 = 1.5 * Math.sin(t2), z2 = 1.5 * Math.cos(t2)
-    const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1
-    length += Math.sqrt(dx * dx + dy * dy + dz * dz)
+    const x1 = a + i * dx
+    const x2 = a + (i + 1) * dx
+    const y1 = f(x1)
+    const y2 = f(x2)
+    const ddx = x2 - x1
+    const ddy = y2 - y1
+    length += Math.sqrt(ddx * ddx + ddy * ddy)
   }
   return length
 }
 
-// 弧长精确值：L = 2π√3.25
+// 弧长精确值：L = ∫₀²π √(1+cos²(x)) dx (数值高精度)
 export function arcLengthExact(): number {
-  return 2 * Math.PI * Math.sqrt(3.25)
+  // 用辛普森法计算精确弧长
+  const f = (x: number) => Math.sqrt(1 + Math.cos(x) * Math.cos(x))
+  return numericalIntegral1D(f, 0, 2 * Math.PI, 2000)
 }
 
 // 质心计算：z = 2 - x² - y² over [-1,1]×[-1,1]

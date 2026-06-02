@@ -9,7 +9,7 @@ import { SceneTooltip } from './scene-tooltip'
 import { AnimationTimeline } from './animation-timeline'
 import { Viewport2D } from './viewport-2d'
 import { Suspense, useCallback, useRef, useState, useEffect } from 'react'
-import { useLabStore, modeInfo } from '@/store/lab-store'
+import { useLabStore, modeInfo, type LabMode } from '@/store/lab-store'
 import { Loader2, Move3d, Camera, RotateCcw, Maximize2, Minimize2, RotateCw, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -20,6 +20,9 @@ function is2DMode(mode: string): boolean {
   const info = modeInfo[mode as keyof typeof modeInfo]
   return info?.viewType === '2d'
 }
+
+// Concept step modes share a stable camera key to prevent origin jumps
+const conceptSteps: LabMode[] = ['step1', 'step2', 'step3', 'step4']
 
 // Camera presets for different modes
 function getCameraForMode(mode: string): { position: [number, number, number]; fov: number; is2D?: boolean } {
@@ -39,6 +42,8 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
       return { position: [7, 5, 7], fov: 45 }
     case 'step1':
     case 'step2':
+    case 'step3':
+    case 'step4':
       return { position: [6, 8, 4], fov: 50 }
     case 'cartesian1':
     case 'cartesian2':
@@ -439,7 +444,7 @@ export function Viewport() {
               <pointLight position={[0, 10, 0]} intensity={0.4} color="#ffffff" />
               <SceneRenderer />
               <OrbitControls
-                key={`orbit-3d-${mode}-${sceneKey}`}
+                key={`orbit-3d-${conceptSteps.includes(mode as LabMode) ? 'concept' : mode}-${sceneKey}`}
                 enableDamping
                 dampingFactor={0.1}
                 rotateSpeed={0.5}

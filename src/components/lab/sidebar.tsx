@@ -51,10 +51,8 @@ import {
   Globe,
   Waves,
   Star,
-  Check,
   Activity,
   Wind,
-  Trophy,
   RotateCw,
   Shield,
   Calculator,
@@ -410,6 +408,14 @@ const chapters: ChapterEntry[] = [
           { mode: 'divergence1' as LabMode, label: '高斯散度定理', icon: Atom },
         ],
       },
+      {
+        title: '曲面积分',
+        subtitle: '对面积的曲面积分',
+        color: 'violet',
+        modes: [
+          { mode: 'surface_integral1' as LabMode, label: '对面积的曲面积分', icon: Mountain },
+        ],
+      },
     ],
   },
   {
@@ -490,14 +496,6 @@ const chapters: ChapterEntry[] = [
         color: 'cyan',
         modes: [
           { mode: 'isosurface1' as LabMode, label: '等值面与等高线', icon: Layers },
-        ],
-      },
-      {
-        title: '曲面积分',
-        subtitle: '对面积的曲面积分',
-        color: 'violet',
-        modes: [
-          { mode: 'surface_integral1' as LabMode, label: '对面积的曲面积分', icon: Mountain },
         ],
       },
     ],
@@ -672,7 +670,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
-  const { mode, setMode, visitedModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
+  const { mode, setMode, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(() => new Set(chapters.map(ch => ch.title)))
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
@@ -701,9 +699,6 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
     }, 200)
     return () => clearTimeout(timer)
   }, [searchQuery])
-
-  // Total mode count for progress calculation
-  const totalModeCount = flatSections.reduce((acc, s) => acc + s.modes.length, 0)
 
   // Build utility maps from flat sections
   const modeToSectionColor = useMemo(() => {
@@ -1003,8 +998,6 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
           const chapterActive = isChapterActive(chapter)
           const chapterExpanded = isChapterExpanded(chapter)
           const totalModes = chapter.sections.reduce((a, s) => a + s.modes.length, 0)
-          const visitedModes_ = chapter.sections.flatMap(s => s.modes).filter(m => visitedModes.has(m.mode)).length
-          const allVisited_ = visitedModes_ === totalModes
 
           return (
             <div key={chapter.title} className="mt-1 pt-1 border-t border-border/30">
@@ -1042,13 +1035,12 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                   </p>
                 </div>
                 <span className={cn(
-                  "text-[8px] font-mono px-1.5 py-0.5 rounded-full shrink-0 flex items-center gap-0.5",
+                  "text-[8px] font-mono px-1.5 py-0.5 rounded-full shrink-0",
                   chapterActive
                     ? cn(chapterColors.badge, chapterColors.badgeText)
                     : 'bg-muted/50 text-muted-foreground/50'
                 )}>
-                  {allVisited_ && <Check className="h-2.5 w-2.5 text-emerald-500" />}
-                  {visitedModes_}/{totalModes}
+                  {totalModes}
                 </span>
                 {chapterExpanded ? (
                   <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
@@ -1072,8 +1064,6 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                     const secExpanded = isSectionExpanded(chapter.title, section.title)
                     const secKey = `${chapter.title}/${section.title}`
                     const modeCount = section.modes.length
-                    const visitedInSection = section.modes.filter(m => visitedModes.has(m.mode)).length
-                    const allVisited = visitedInSection === modeCount
 
                     return (
                       <div key={section.title} className="mt-0.5">
@@ -1098,13 +1088,12 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
                             </h3>
                           </div>
                           <span className={cn(
-                            "text-[7px] font-mono px-1 py-0 rounded-full shrink-0 flex items-center gap-0.5",
+                            "text-[7px] font-mono px-1 py-0 rounded-full shrink-0",
                             secActive
                               ? cn(secColors.badge, secColors.badgeText)
                               : 'bg-muted/50 text-muted-foreground/50'
                           )}>
-                            {allVisited && <Check className="h-2 w-2 text-emerald-500" />}
-                            {visitedInSection}/{modeCount}
+                            {modeCount}
                           </span>
                           {secExpanded ? (
                             <ChevronDown className={cn("h-2.5 w-2.5 shrink-0", secActive ? '' : 'text-muted-foreground/50')} />
@@ -1189,54 +1178,6 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
             </div>
           )
         })}
-
-        {/* Completion progress at bottom with circular indicator */}
-        <div className="mt-2 pt-2 border-t border-border/30 px-2">
-          <div className="flex items-center gap-3">
-            {/* Circular progress indicator */}
-            <div className="relative shrink-0">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center"
-                style={{
-                  background: `conic-gradient(from 0deg, #10b981 0%, #14b8a6 ${Math.round((visitedModes.size / totalModeCount) * 100)}%, transparent ${Math.round((visitedModes.size / totalModeCount) * 100)}%, transparent 100%)`,
-                  mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))',
-                  WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))',
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                  {Math.round((visitedModes.size / totalModeCount) * 100)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="flex-1 min-w-0 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Trophy className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-[9px] font-medium text-muted-foreground">总体进度</span>
-              </div>
-              <div className="flex items-center gap-2 text-[8px]">
-                <span className="text-muted-foreground">
-                  共 <span className="text-foreground font-mono font-medium">{totalModeCount}</span> 个
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  已探索 <span className="font-mono font-medium">{visitedModes.size}</span>
-                </span>
-                <span className="text-muted-foreground/60">
-                  剩余 <span className="font-mono">{totalModeCount - visitedModes.size}</span>
-                </span>
-              </div>
-              {/* Thin progress bar */}
-              <div className="w-full h-1 bg-muted/50 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
-                  style={{ width: `${Math.round((visitedModes.size / totalModeCount) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </nav>
     </ScrollArea>
   )

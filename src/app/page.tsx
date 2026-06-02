@@ -132,7 +132,7 @@ function HomeContent() {
   const [infoExpanded, setInfoExpanded] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const { mode, setMode, paramValue, setParamValue, setParamValue2, visitedModes, autoTourActive, setAutoTourActive, favorites, toggleFavorite, autoRotate, setAutoRotate } = useLabStore()
+  const { mode, setMode, paramValue, setParamValue, setParamValue2, autoTourActive, setAutoTourActive, favorites, toggleFavorite, autoRotate, setAutoRotate } = useLabStore()
   const info = modeInfo[mode]
   const { toast } = useToast()
 
@@ -167,9 +167,8 @@ function HomeContent() {
   }, [])
 
   const currentIndex = allModes.indexOf(mode)
-  const visitedCount = visitedModes.size
   const totalModes = allModes.length
-  const progressPercent = Math.round((visitedCount / totalModes) * 100)
+  const positionPercent = Math.round(((currentIndex + 1) / totalModes) * 100)
 
   // Auto tour
   useEffect(() => {
@@ -351,14 +350,14 @@ function HomeContent() {
             <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden relative">
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${positionPercent}%` }}
               />
               {/* Shimmer animation when auto-tour is active */}
               {autoTourActive && (
                 <div className="absolute inset-0 animate-[shimmer-progress_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               )}
             </div>
-            <span className="text-[9px] text-muted-foreground font-mono">{visitedCount}/{totalModes}</span>
+            <span className="text-[9px] text-muted-foreground font-mono">{currentIndex + 1}/{totalModes}</span>
           </div>
 
           {/* Auto tour button */}
@@ -491,7 +490,7 @@ function HomeContent() {
         <div className="w-full h-[3px] bg-muted/40">
           <div
             className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 transition-all duration-700 ease-out relative overflow-hidden"
-            style={{ width: `${progressPercent}%` }}
+            style={{ width: `${positionPercent}%` }}
           >
             {autoTourActive && (
               <div className="absolute inset-0 animate-[shimmer-progress_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
@@ -539,7 +538,7 @@ function HomeContent() {
 
           <div className="flex items-center gap-2">
             <span className="text-[9px] text-muted-foreground hidden sm:inline">
-              已探索 {visitedCount}/{totalModes}
+              {currentIndex + 1}/{totalModes}
             </span>
 
             {/* Mode navigation arrows with hover effects */}

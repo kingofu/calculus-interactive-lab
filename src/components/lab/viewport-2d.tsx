@@ -1026,6 +1026,231 @@ function PolarArea1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: nu
   )
 }
 
+// --- rect_approx (矩形近似面积) ---
+function RectApproxSVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
+  const { paramValue } = useLabStore()
+  const n = Math.round(paramValue)
+  const fAt = (x: number) => 1 + 0.5 * Math.cos(x * Math.PI / 2) * Math.exp(-x * x / 8)
+
+  const curvePath = useMemo(() => curveToPath(fAt, -3, 3, 300, scale, offsetX, offsetY), [scale, offsetX, offsetY])
+  
+  const rects = useMemo(() => {
+    const a = -3, b = 3
+    const dx = (b - a) / n
+    const result: { x: number; w: number; h: number; fVal: number }[] = []
+    for (let i = 0; i < n; i++) {
+      const x = a + (i + 0.5) * dx
+      const h = fAt(x)
+      result.push({ x: a + i * dx, w: dx, h, fVal: h })
+    }
+    return result
+  }, [n])
+
+  const approxValue = useMemo(() => {
+    const a = -3, b = 3
+    const dx = (b - a) / n
+    let sum = 0
+    for (let i = 0; i < n; i++) {
+      sum += fAt(-3 + (i + 0.5) * dx) * dx
+    }
+    return sum
+  }, [n])
+
+  const exactValue = useMemo(() => {
+    // numerical integration with Simpson's rule
+    const a = -3, b = 3, m = 1000
+    const dx = (b - a) / m
+    let sum = fAt(a) + fAt(b)
+    for (let i = 1; i < m; i++) {
+      sum += (i % 2 === 0 ? 2 : 4) * fAt(a + i * dx)
+    }
+    return sum * dx / 3
+  }, [])
+
+  return (
+    <g>
+      <SVGAxes xRange={[-3.5, 3.5]} yRange={[-0.5, 2.5]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
+      {/* Filled rectangles */}
+      {rects.map((rect, idx) => (
+        <rect
+          key={idx}
+          x={sx(rect.x, scale, offsetX)}
+          y={rect.h >= 0 ? sy(rect.h, scale, offsetY) : sy(0, scale, offsetY)}
+          width={rect.w * scale}
+          height={Math.abs(rect.h) * scale}
+          fill={idx % 2 === 0 ? '#10b981' : '#34d399'}
+          opacity={0.4}
+          stroke={idx % 2 === 0 ? '#059669' : '#10b981'}
+          strokeWidth={0.5}
+        />
+      ))}
+      {/* Curve on top */}
+      <path d={curvePath} fill="none" stroke="#ef4444" strokeWidth={2} />
+      {/* Approx value label */}
+      <text x={sx(3, scale, offsetX) + 5} y={sy(2, scale, offsetY)} fontSize={11} fill="#10b981" fontWeight="bold">
+        ≈ {approxValue.toFixed(4)}
+      </text>
+      <text x={sx(3, scale, offsetX) + 5} y={sy(1.6, scale, offsetY)} fontSize={10} fill="#f59e0b">
+        精确: {exactValue.toFixed(4)}
+      </text>
+      <text x={sx(3, scale, offsetX) + 5} y={sy(1.2, scale, offsetY)} fontSize={10} fill="#ef4444">
+        误差: {Math.abs(approxValue - exactValue).toFixed(4)}
+      </text>
+    </g>
+  )
+}
+
+// --- arc_length1 (弧长计算) ---
+function ArcLengthSVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
+  const { paramValue } = useLabStore()
+  const n = Math.max(2, Math.round(paramValue))
+  const fAt = (x: number) => Math.sin(x)
+
+  const curvePath = useMemo(() => curveToPath(fAt, 0, 2 * Math.PI, 300, scale, offsetX, offsetY), [scale, offsetX, offsetY])
+
+  // Segmented polyline points
+  const segPoints = useMemo(() => {
+    const pts: { x: number; y: number }[] = []
+    for (let i = 0; i <= n; i++) {
+      const x = (i / n) * 2 * Math.PI
+      pts.push({ x, y: fAt(x) })
+    }
+    return pts
+  }, [n])
+
+  // Approximate arc length
+  const approxL = useMemo(() => {
+    let len = 0
+    for (let i = 1; i < segPoints.length; i++) {
+      const dx = segPoints[i].x - segPoints[i - 1].x
+      const dy = segPoints[i].y - segPoints[i - 1].y
+      len += Math.sqrt(dx * dx + dy * dy)
+    }
+    return len
+  }, [segPoints])
+
+  // Exact arc length: ∫₀²π √(1+cos²(x)) dx ≈ 7.6404
+  const exactL = 7.6404
+
+  return (
+    <g>
+      <SVGAxes xRange={[-0.5, 7]} yRange={[-1.5, 2]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
+      {/* Smooth curve (green, thin) */}
+      <path d={curvePath} fill="none" stroke="#10b981" strokeWidth={2.5} />
+      {/* Segmented polyline (amber) */}
+      {segPoints.map((pt, idx) => {
+        if (idx === 0) return null
+        const prev = segPoints[idx - 1]
+        return (
+          <line
+            key={idx}
+            x1={sx(prev.x, scale, offsetX)}
+            y1={sy(prev.y, scale, offsetY)}
+            x2={sx(pt.x, scale, offsetX)}
+            y2={sy(pt.y, scale, offsetY)}
+            stroke="#f59e0b"
+            strokeWidth={2.5}
+          />
+        )
+      })}
+      {/* Segment points */}
+      {segPoints.map((pt, idx) => (
+        <circle
+          key={`pt-${idx}`}
+          cx={sx(pt.x, scale, offsetX)}
+          cy={sy(pt.y, scale, offsetY)}
+          r={3}
+          fill="#f59e0b"
+          stroke="white"
+          strokeWidth={1}
+        />
+      ))}
+      {/* Info labels */}
+      <text x={sx(6.5, scale, offsetX) + 5} y={sy(1.8, scale, offsetY)} fontSize={11} fill="#f59e0b" fontWeight="bold">
+        近似: {approxL.toFixed(4)}
+      </text>
+      <text x={sx(6.5, scale, offsetX) + 5} y={sy(1.3, scale, offsetY)} fontSize={10} fill="#10b981">
+        精确: {exactL.toFixed(4)}
+      </text>
+      <text x={sx(6.5, scale, offsetX) + 5} y={sy(0.8, scale, offsetY)} fontSize={10} fill="#ef4444">
+        误差: {Math.abs(approxL - exactL).toFixed(4)}
+      </text>
+      <text x={sx(6.5, scale, offsetX) + 5} y={sy(0.3, scale, offsetY)} fontSize={10} fill="#64748b">
+        分段: {n}
+      </text>
+    </g>
+  )
+}
+
+// --- fourier1 (傅里叶级数逼近) ---
+function FourierSVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
+  const { paramValue } = useLabStore()
+  const N = Math.round(paramValue)
+
+  // Target: square wave f(x) = sign(sin(x))
+  const targetFunc = (x: number) => Math.sign(Math.sin(x))
+  // Fourier approximation
+  const fourierApprox = (x: number, numTerms: number) => {
+    let sum = 0
+    for (let n = 1; n <= numTerms; n++) {
+      const bn = n % 2 === 1 ? 4 / (n * Math.PI) : 0
+      sum += bn * Math.sin(n * x)
+    }
+    return sum
+  }
+
+  const targetPath = useMemo(() => curveToPath(targetFunc, -Math.PI, Math.PI, 500, scale, offsetX, offsetY), [scale, offsetX, offsetY])
+  const approxPath = useMemo(() => curveToPath(
+    (x) => fourierApprox(x, N), -Math.PI, Math.PI, 500, scale, offsetX, offsetY
+  ), [N, scale, offsetX, offsetY])
+
+  // Individual harmonics (show first 3)
+  const harmonicPaths = useMemo(() => {
+    const paths: { d: string; color: string; label: string }[] = []
+    const colors = ['#22c55e', '#8b5cf6', '#f59e0b']
+    const numShow = Math.min(3, N)
+    for (let h = 0; h < numShow; h++) {
+      const n = h * 2 + 1
+      const bn = 4 / (n * Math.PI)
+      const path = curveToPath(
+        (x) => bn * Math.sin(n * x), -Math.PI, Math.PI, 200, scale, offsetX, offsetY
+      )
+      paths.push({ d: path, color: colors[h], label: `b${n}sin(${n}x)` })
+    }
+    return paths
+  }, [N, scale, offsetX, offsetY])
+
+  // L2 error
+  const l2Error = useMemo(() => {
+    let sumSq = 0
+    const res = 500
+    for (let i = 0; i <= res; i++) {
+      const x = -Math.PI + (2 * Math.PI * i) / res
+      const diff = targetFunc(x) - fourierApprox(x, N)
+      sumSq += diff * diff
+    }
+    return Math.sqrt(sumSq / res)
+  }, [N])
+
+  return (
+    <g>
+      <SVGAxes xRange={[-3.5, 3.5]} yRange={[-1.8, 1.8]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
+      {/* Individual harmonics (thin, below) */}
+      {harmonicPaths.map((h, idx) => (
+        <path key={idx} d={h.d} fill="none" stroke={h.color} strokeWidth={1.2} opacity={0.5} strokeDasharray="4,3" />
+      ))}
+      {/* Target function (red) */}
+      <path d={targetPath} fill="none" stroke="#ef4444" strokeWidth={2} />
+      {/* Fourier approximation (blue) */}
+      <path d={approxPath} fill="none" stroke="#3b82f6" strokeWidth={2.5} />
+      {/* Labels */}
+      <text x={sx(-3.5, scale, offsetX)} y={sy(1.6, scale, offsetY)} fontSize={10} fill="#ef4444" fontWeight="bold">目标函数</text>
+      <text x={sx(-3.5, scale, offsetX)} y={sy(1.3, scale, offsetY)} fontSize={10} fill="#3b82f6" fontWeight="bold">N={N} 项逼近</text>
+      <text x={sx(-3.5, scale, offsetX)} y={sy(-1.2, scale, offsetY)} fontSize={9} fill="#64748b">L²误差: {l2Error.toFixed(4)}</text>
+    </g>
+  )
+}
+
 // ═══════════════════════════════════════════════════════
 // Scene2D – Switch on mode to render appropriate SVG scene
 // ═══════════════════════════════════════════════════════
@@ -1060,6 +1285,9 @@ function Scene2D({ mode, scale, offsetX, offsetY }: Scene2DProps) {
     case 'curvature1': return <Curvature1SVG {...props} />
     case 'improper_integral1': return <ImproperIntegral1SVG {...props} />
     case 'polar_area1': return <PolarArea1SVG {...props} />
+    case 'rect_approx': return <RectApproxSVG {...props} />
+    case 'arc_length1': return <ArcLengthSVG {...props} />
+    case 'fourier1': return <FourierSVG {...props} />
     default:
       return <SVGAxes xRange={[-6, 6]} yRange={[-4, 4]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
   }
@@ -1347,6 +1575,86 @@ function getOverlayContent(mode: LabMode): ReactNode {
           <div className="text-violet-600 dark:text-violet-400 font-semibold">r = {a.toFixed(1)} + cos(θ)</div>
           <div className="text-violet-600">S = ½∫r²(θ)dθ</div>
           <div className="text-emerald-600 dark:text-emerald-400">S = π({a.toFixed(1)}² + ½) = {area.toFixed(4)}</div>
+        </div>
+      )
+    }
+    case 'rect_approx': {
+      const n = Math.round(paramValue)
+      const fAt = (x: number) => 1 + 0.5 * Math.cos(x * Math.PI / 2) * Math.exp(-x * x / 8)
+      const a = -3, b = 3
+      const dx = (b - a) / n
+      let approxVal = 0
+      for (let i = 0; i < n; i++) approxVal += fAt(a + (i + 0.5) * dx) * dx
+      // Simpson exact
+      const m = 1000
+      const sdx = (b - a) / m
+      let exactVal = fAt(a) + fAt(b)
+      for (let i = 1; i < m; i++) exactVal += (i % 2 === 0 ? 2 : 4) * fAt(a + i * sdx)
+      exactVal *= sdx / 3
+      return (
+        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">矩形近似</div>
+          <div>f(x) = 1+0.5cos(πx/2)·e^(-x²/8)</div>
+          <div>区间: [-3, 3], n = {n}</div>
+          <div className="text-emerald-600 dark:text-emerald-400">近似值 ≈ {approxVal.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400">精确值 ≈ {exactVal.toFixed(4)}</div>
+          <div className="text-rose-600 dark:text-rose-400">误差 = {Math.abs(approxVal - exactVal).toFixed(4)}</div>
+        </div>
+      )
+    }
+    case 'arc_length1': {
+      const n = Math.max(2, Math.round(paramValue))
+      const fAt = (x: number) => Math.sin(x)
+      let approxL = 0
+      const dx = 2 * Math.PI / n
+      for (let i = 0; i < n; i++) {
+        const x1 = i * dx, x2 = (i + 1) * dx
+        const ddx = x2 - x1, ddy = fAt(x2) - fAt(x1)
+        approxL += Math.sqrt(ddx * ddx + ddy * ddy)
+      }
+      const exactL = 7.6404
+      return (
+        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
+          <div className="text-teal-600 dark:text-teal-400 font-semibold">弧长计算</div>
+          <div>f(x) = sin(x), [0, 2π]</div>
+          <div>L = ∫√(1+[f&apos;(x)]²)dx</div>
+          <div className="text-amber-600 dark:text-amber-400">近似: {approxL.toFixed(4)}</div>
+          <div className="text-emerald-600 dark:text-emerald-400">精确: {exactL.toFixed(4)}</div>
+          <div className="text-rose-600 dark:text-rose-400">误差: {Math.abs(approxL - exactL).toFixed(4)}</div>
+          <div className="text-muted-foreground">分段: {n}</div>
+        </div>
+      )
+    }
+    case 'fourier1': {
+      const N = Math.round(paramValue)
+      const targetFunc = (x: number) => Math.sign(Math.sin(x))
+      const fourierApprox = (x: number, numTerms: number) => {
+        let sum = 0
+        for (let n = 1; n <= numTerms; n++) {
+          const bn = n % 2 === 1 ? 4 / (n * Math.PI) : 0
+          sum += bn * Math.sin(n * x)
+        }
+        return sum
+      }
+      let l2Err = 0
+      const res = 500
+      for (let i = 0; i <= res; i++) {
+        const x = -Math.PI + (2 * Math.PI * i) / res
+        const diff = targetFunc(x) - fourierApprox(x, N)
+        l2Err += diff * diff
+      }
+      l2Err = Math.sqrt(l2Err / res)
+      const coeffs: string[] = []
+      for (let n = 1; n <= Math.min(N, 5); n++) {
+        if (n % 2 === 1) coeffs.push(`b${n}=${(4 / (n * Math.PI)).toFixed(3)}`)
+      }
+      return (
+        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
+          <div className="text-orange-600 dark:text-orange-400 font-semibold">傅里叶级数逼近</div>
+          <div>f(x) = sign(sin(x))</div>
+          <div>N = {N} 项</div>
+          <div className="text-blue-600 dark:text-blue-400">L²误差: {l2Err.toFixed(4)}</div>
+          <div className="text-muted-foreground text-[10px]">{coeffs.join(', ')}</div>
         </div>
       )
     }
