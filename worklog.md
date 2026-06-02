@@ -2856,3 +2856,30 @@ Stage Summary:
 - **New mode added**: taylor1 (泰勒级数展开) - 2D SVG visualization of sin(x) Taylor polynomial approximation
 - Total modes now: 46 (previously 45)
 - All lint checks pass, no errors
+
+---
+Task ID: 15
+Agent: Main
+Task: Fix 3D draggable overlays and double integral step coordinate consistency
+
+Work Log:
+- **Issue 1**: 3D mode floating text boxes not draggable
+  - Root cause: 31 scene components used `<Html position={[x,y,z]} center>` which positions overlays at fixed 3D coordinates (they move with the scene rotation, cannot be dragged)
+  - Fix: Changed all 31 `<Html position={...}>` to `<Html fullscreen>` + `<DraggableOverlay>` pattern
+  - The DraggableOverlay component already existed in the file (line 43), so no new code was needed
+  - Total DraggableOverlay count went from 19 to 50 (all 3D scene overlays now draggable)
+  - All overlays now have a green grab handle bar (bg-emerald-400/60) for visual drag affordance
+
+- **Issue 2**: Double integral concept steps (step1-step4) coordinate origin jumps between steps 2 and 3
+  - Root cause: step1/step2 used region [-2, 2]×[-2, 2], but step3/step4 used default xRange=[-3, 3], yRange=[-3, 3] in RiemannBars/Surface components
+  - Fix: Added `xRange={[-2, 2]} yRange={[-2, 2]}` props to step3 RiemannBars, step3 Surface, and step4 Surface
+  - All 4 steps now use consistent [-2, 2]×[-2, 2] coordinate range
+  - Combined with the existing shared OrbitControls key for concept steps, transitions are now smooth
+
+- Lint passes with zero errors
+- Agent-browser verified both fixes: draggable overlays work, step transitions are smooth
+
+Stage Summary:
+- **Bug fixed**: All 3D mode floating text boxes are now draggable (was: 31 non-draggable)
+- **Bug fixed**: Double integral concept steps no longer have origin jumps (consistent [-2,2] range)
+- All lint checks pass, dev server compiles successfully

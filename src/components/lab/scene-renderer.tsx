@@ -1123,7 +1123,8 @@ function RectApproxBars({ n = 10 }: { n?: number }) {
         <meshPhongMaterial color="#ffffff" transparent opacity={0.5} />
       </instancedMesh>
       {/* Numerical value display */}
-      <Html position={[0, 4.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-emerald-600 dark:text-emerald-400">
             近似值: {approxValue.toFixed(4)}
@@ -1135,6 +1136,7 @@ function RectApproxBars({ n = 10 }: { n?: number }) {
             误差: {Math.abs(approxValue - exactValue).toFixed(4)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </group>
   )
@@ -1413,7 +1415,8 @@ function PolarRegionScene() {
       />
 
       {/* Info label */}
-      <Html position={[0, 4, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-emerald-600 dark:text-emerald-400">
             R = {R.toFixed(1)}, β = {(beta / Math.PI).toFixed(2)}π
@@ -1422,6 +1425,7 @@ function PolarRegionScene() {
             ∫∫f·r dr dθ ≈ {formatValue(approxValue)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -1587,7 +1591,8 @@ function PolarRiemannScene() {
       />
 
       {/* Info label */}
-      <Html position={[0, 4.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-emerald-600 dark:text-emerald-400">
             径向: {nR}, 角度: {nTheta}
@@ -1596,6 +1601,7 @@ function PolarRiemannScene() {
             ∫∫f·r dr dθ ≈ {formatValue(approxValue)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -1642,7 +1648,8 @@ function ConvergenceScene() {
       />
 
       {/* Info overlay */}
-      <Html position={[0, 5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-foreground">
             n = {nInt}×{nInt} = {nInt * nInt}
@@ -1657,6 +1664,7 @@ function ConvergenceScene() {
             误差: {formatValue(error)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -1843,7 +1851,8 @@ function TripleIntegralScene() {
       <Text position={[0, 0, 3.4]} fontSize={0.25} color="#22c55e" anchorX="center" anchorY="middle">y</Text>
 
       {/* Info overlay */}
-      <Html position={[1.5, 4.5, 1.5]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-foreground">
             n = {nInt}³ = {nInt ** 3} 个体素
@@ -1858,6 +1867,7 @@ function TripleIntegralScene() {
             误差: {formatValue(Math.abs(approxValue - exactValue))}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2039,7 +2049,8 @@ function JacobianScene() {
       <XYGrid size={4} divisions={8} color="#888888" />
 
       {/* Info overlay */}
-      <Html position={[0, 5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-amber-600 dark:text-amber-400 mb-1">
             变换: x = au cosθ - av sinθ, y = au sinθ + av cosθ
@@ -2055,6 +2066,7 @@ function JacobianScene() {
             <span className="inline-block w-3 h-0.5 bg-amber-500 mr-1 ml-3" />变换网格 (xy)
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2258,7 +2270,8 @@ function GreenScene() {
       />
 
       {/* Info overlay */}
-      <Html position={[0, 5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
           <div className="text-red-500 dark:text-red-400 font-bold">
             ∮_C (P dx + Q dy) = {lineIntegral.toFixed(4)}
@@ -2278,6 +2291,7 @@ function GreenScene() {
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber-500" />向量场</span>
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2441,7 +2455,8 @@ function SurfaceAreaScene() {
       <XYGrid size={4} divisions={8} color="#888888" />
 
       {/* Info overlay */}
-      <Html position={[0, 6, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
           <div className="text-teal-600 dark:text-teal-400 font-bold">
             S = ∫∫√(1+fx²+fy²) dσ ≈ {surfaceArea.toFixed(4)}
@@ -2461,6 +2476,7 @@ function SurfaceAreaScene() {
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-orange-500" />法向量</span>
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2664,7 +2680,8 @@ function FubiniScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, 7, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-4 py-2 text-xs font-mono whitespace-nowrap shadow-lg space-y-1">
           <div className="text-violet-600 dark:text-violet-400 font-bold">
             ∫∫f dσ = {integralValues.direct.toFixed(4)}
@@ -2683,6 +2700,7 @@ function FubiniScene() {
             <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber-500" />Y型切片 (先x后y)</span>
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2769,7 +2787,8 @@ function ArcLengthScene() {
       ))}
 
       {/* Info overlay */}
-      <Html position={[0, 3, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-pink-600 dark:text-pink-400">
             分段数: {nInt}
@@ -2784,6 +2803,7 @@ function ArcLengthScene() {
             误差: {Math.abs(approxL - exactL).toFixed(4)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -2899,7 +2919,8 @@ function MassCenterScene() {
       </line>
 
       {/* Info overlay */}
-      <Html position={[0, 4, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-cyan-600 dark:text-cyan-400">
             质量 M = {mass.toFixed(4)}
@@ -2911,6 +2932,7 @@ function MassCenterScene() {
             密度范围: [1, {(1 + a * 2).toFixed(2)}]
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -3143,7 +3165,8 @@ function MomentOfInertiaScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, 4, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-red-600 dark:text-red-400">
             Ix = ∫∫y²ρ dσ = {Ix.toFixed(4)}
@@ -3158,6 +3181,7 @@ function MomentOfInertiaScene() {
             ρ = 1 + {a.toFixed(1)}·r²
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -3362,7 +3386,8 @@ function CylindricalCoordScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, height / 2 + 2, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-cyan-600 dark:text-cyan-400">
             V = πr²h = π×{radius.toFixed(1)}²×{height.toFixed(1)} = {volume.toFixed(4)}
@@ -3374,6 +3399,7 @@ function CylindricalCoordScene() {
             dV = r·dr·dθ·dz
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -3607,7 +3633,8 @@ function DirectionalDerivativeScene() {
       </line>
 
       {/* Info overlay */}
-      <Html position={[0, a * 2 + 1.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-yellow-600 dark:text-yellow-400 font-semibold mb-1">
             方向导数 D_uf
@@ -3628,6 +3655,7 @@ function DirectionalDerivativeScene() {
             D_uf = ∇f·u = {dirDeriv.toFixed(4)} = |∇f|·cos({(angleBetween * 180 / Math.PI).toFixed(0)}°)
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -3752,7 +3780,8 @@ function CurlFieldScene() {
         负旋度(顺时针)
       </Text>
 
-      <Html position={[0, 4.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-rose-200 dark:border-rose-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-rose-600 dark:text-rose-400 font-bold mb-1">
             F = (-y, x)
@@ -3764,6 +3793,7 @@ function CurlFieldScene() {
             均匀正旋度 → 处处逆时针旋转
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -3903,7 +3933,8 @@ function DivergenceFieldScene() {
         负散度(汇)
       </Text>
 
-      <Html position={[0, 4.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-pink-200 dark:border-pink-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-pink-600 dark:text-pink-400 font-bold mb-1">
             F = (x, y)
@@ -3915,6 +3946,7 @@ function DivergenceFieldScene() {
             均匀正散度 → 处处向外发散（源场）
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -4107,7 +4139,8 @@ function ConservativeFieldScene() {
       />
 
       {/* Html overlay */}
-      <Html position={[0, 4.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-emerald-600 dark:text-emerald-400 font-bold">
             保守场 F = ({a.toFixed(1)}x, {a.toFixed(1)}y)
@@ -4125,6 +4158,7 @@ function ConservativeFieldScene() {
             红色: 直线路径 | 黄色: 半圆路径 → 积分相同
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -4429,7 +4463,8 @@ function SurfaceIntegralScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, a * 2 * range * range + 1.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-violet-200 dark:border-violet-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-violet-600 dark:text-violet-400 font-semibold mb-1">
             对面积的曲面积分
@@ -4447,6 +4482,7 @@ function SurfaceIntegralScene() {
             f(x,y,z) = z, 曲面陡度 a = {a.toFixed(1)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -5574,7 +5610,8 @@ function VolumeRev1Scene() {
           </line>
         )
       }, [a])}
-      <Html position={[0, 3.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-teal-600 dark:text-teal-400 font-semibold">旋转体体积</div>
           <div>f(x) = {a.toFixed(1)}·sin(x)+1.5</div>
@@ -5582,6 +5619,7 @@ function VolumeRev1Scene() {
           <div className="text-emerald-600 dark:text-emerald-400">V ≈ {vol.toFixed(4)}</div>
           <div>截面数: {nDiscs}</div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -6288,14 +6326,14 @@ export function SceneRenderer() {
 
       {mode === 'step3' && (
         <AutoRotate>
-          <RiemannBars func={f} n={Math.round(paramValue)} color="#10b981" opacity={0.7} tooltipMode="step3" />
-          <Surface func={f} color="#059669" opacity={0.3} resolution={30} />
+          <RiemannBars func={f} n={Math.round(paramValue)} color="#10b981" opacity={0.7} tooltipMode="step3" xRange={[-2, 2]} yRange={[-2, 2]} />
+          <Surface func={f} color="#059669" opacity={0.3} resolution={30} xRange={[-2, 2]} yRange={[-2, 2]} />
         </AutoRotate>
       )}
 
       {mode === 'step4' && (
         <AutoRotate>
-          <Surface func={f} color="#10b981" opacity={0.85} resolution={Math.round(paramValue)} />
+          <Surface func={f} color="#10b981" opacity={0.85} resolution={Math.round(paramValue)} xRange={[-2, 2]} yRange={[-2, 2]} />
         </AutoRotate>
       )}
 
@@ -6337,7 +6375,8 @@ export function SceneRenderer() {
           {/* Riemann bars showing cancellation */}
           <ParityRiemannBars func={fOdd} a={paramValue} n={8} />
           {/* Integral value label */}
-          <Html position={[0, paramValue * paramValue + 1.5, 0]} center>
+          <Html fullscreen>
+            <DraggableOverlay>
             <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
               <div className="text-orange-500 dark:text-orange-400">
                 正区域 ≈ 负区域
@@ -6346,6 +6385,7 @@ export function SceneRenderer() {
                 ∫∫f = 0 (相互抵消)
               </div>
             </div>
+          </DraggableOverlay>
           </Html>
         </AutoRotate>
       )}
@@ -6370,12 +6410,14 @@ export function SceneRenderer() {
           {/* Riemann bars showing equal contributions from both halves */}
           <ParityRiemannBars func={fEven} a={paramValue} n={6} />
           {/* Integral value label */}
-          <Html position={[0, paramValue * paramValue + 1.5, 0]} center>
+          <Html fullscreen>
+            <DraggableOverlay>
             <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
               <div className="text-emerald-600 dark:text-emerald-400">
                 ∫∫f = 2·∫∫<sub>D⁺</sub>f
               </div>
             </div>
+          </DraggableOverlay>
           </Html>
         </AutoRotate>
       )}
@@ -6411,12 +6453,14 @@ export function SceneRenderer() {
           <CylinderWireframe radius={paramValue} height={paramValue2 * 2 + 1} />
           <IntersectionVolume sphereR={paramValue2} cylR={paramValue} />
           {/* Volume label */}
-          <Html position={[0, paramValue2 + 1, 0]} center>
+          <Html fullscreen>
+            <DraggableOverlay>
             <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
               <div className="text-emerald-600 dark:text-emerald-400">
                 V = 2πa²√(R²-a²) = {sphereCylinderVolume(paramValue2, paramValue).toFixed(4)}
               </div>
             </div>
+          </DraggableOverlay>
           </Html>
         </group>
       )}
@@ -6682,7 +6726,8 @@ function SphereCyl2Scene() {
         <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.5} />
       </line>
       {/* Cross-section area label */}
-      <Html position={[0, zHeight + 0.3, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-2 py-1 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-emerald-600 dark:text-emerald-400">
             A(z) = π×{cylR.toFixed(1)}² = {(Math.PI * cylR * cylR).toFixed(3)}
@@ -6691,6 +6736,7 @@ function SphereCyl2Scene() {
             z = {zHeight.toFixed(2)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </group>
   )
@@ -6895,7 +6941,8 @@ function StokesScene() {
       )}
 
       {/* Info overlay */}
-      <Html position={[0, a * 2 + 1.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-violet-600 dark:text-violet-400 font-semibold mb-1">
             斯托克斯定理
@@ -6916,6 +6963,7 @@ function StokesScene() {
             ✓ 验证: {Math.abs(lineIntegral - surfaceIntegral) < 0.001 ? '等式成立' : '计算中...'}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -7066,7 +7114,8 @@ function DivergenceScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, R + 2, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-orange-600 dark:text-orange-400 font-semibold mb-1">
             高斯散度定理
@@ -7084,6 +7133,7 @@ function DivergenceScene() {
             ✓ 验证: {Math.abs(flux - volumeIntegral) < 0.001 ? '等式成立' : '计算中...'}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -7217,7 +7267,8 @@ function GradientScene() {
       })}
 
       {/* Info overlay */}
-      <Html position={[0, a + 1.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-yellow-600 dark:text-yellow-400 font-semibold mb-1">
             梯度场可视化
@@ -7235,6 +7286,7 @@ function GradientScene() {
             方向导数最大值 = |∇f| (沿梯度方向)
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -7457,7 +7509,8 @@ function SphericalScene() {
       </line>
 
       {/* Info overlay */}
-      <Html position={[0, R + 2.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-green-600 dark:text-green-400 font-semibold mb-1">
             球坐标系
@@ -7475,6 +7528,7 @@ function SphericalScene() {
             雅可比因子: r²sinφ
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -7617,7 +7671,8 @@ function LaplaceScene() {
       ))}
 
       {/* Info overlay */}
-      <Html position={[0, maxZ + 1.2, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-slate-600 dark:text-slate-400 font-semibold mb-1">
             拉普拉斯算子与调和函数
@@ -7635,6 +7690,7 @@ function LaplaceScene() {
             f(x,y)值域: [{(-a).toFixed(1)}, {(a * maxCoshY).toFixed(2)}]
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -7845,7 +7901,8 @@ function FourierScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, 2.2, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-orange-600 dark:text-orange-400 font-semibold mb-1">
             傅里叶级数逼近 (N={N})
@@ -7863,6 +7920,7 @@ function FourierScene() {
             系数: {keyCoeffs.join(', ')}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -8167,7 +8225,8 @@ function IsosurfaceScene() {
       </mesh>
 
       {/* Html overlay */}
-      <Html position={[0, 5.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-1.5 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-cyan-600 dark:text-cyan-400 font-semibold mb-0.5">
             {funcFormula}
@@ -8182,6 +8241,7 @@ function IsosurfaceScene() {
             {funcType === 0 ? '球面模式 | 等值面 = 同心球' : '抛物面模式 | 等高线 = 同心圆'}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
@@ -8418,7 +8478,8 @@ function VectorFieldScene() {
       </Text>
 
       {/* Info overlay */}
-      <Html position={[0, 2.5, 0]} center>
+      <Html fullscreen>
+        <DraggableOverlay>
         <div className="bg-background/90 backdrop-blur-sm border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2 text-xs font-mono whitespace-nowrap shadow-lg">
           <div className="text-teal-600 dark:text-teal-400 font-semibold mb-1">
             向量场线积分
@@ -8436,6 +8497,7 @@ function VectorFieldScene() {
             弯曲度 a = {curvature.toFixed(1)}
           </div>
         </div>
+      </DraggableOverlay>
       </Html>
     </AutoRotate>
   )
