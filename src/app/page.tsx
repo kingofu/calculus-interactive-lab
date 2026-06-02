@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils'
 const allModes: LabMode[] = [
   'limit1', 'limit2', 'continuity1', 'discontinuity1',
   'derivative1', 'derivative2', 'derivative3',
-  'rolle1', 'lagrange1',
+  'rolle1', 'lagrange1', 'taylor1',
   'monotonicity1', 'extrema1', 'concavity1', 'curvature1',
   'indef_integral1',
   'rect_approx', 'ftc1', 'mean_value_integral1', 'improper_integral1',

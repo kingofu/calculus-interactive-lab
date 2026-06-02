@@ -180,6 +180,7 @@ function getBackgroundForMode(mode: string): string {
   if (mode === 'limit1' || mode === 'limit2') return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
   if (mode === 'derivative1' || mode === 'derivative2' || mode === 'derivative3') return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
   if (mode === 'rolle1' || mode === 'lagrange1') return 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20'
+  if (mode === 'taylor1') return 'from-red-50 to-amber-50 dark:from-red-950/20 dark:to-amber-950/20'
   if (mode === 'indef_integral1') return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
   if (mode === 'area1') return 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/20'
@@ -227,6 +228,7 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'limit1' || mode === 'limit2') return 'bg-rose-500'
   if (mode === 'derivative1' || mode === 'derivative2' || mode === 'derivative3') return 'bg-amber-500'
   if (mode === 'rolle1' || mode === 'lagrange1') return 'bg-red-500'
+  if (mode === 'taylor1') return 'bg-red-500'
   if (mode === 'indef_integral1') return 'bg-purple-500'
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'bg-emerald-500'
   if (mode === 'area1') return 'bg-sky-500'
@@ -606,6 +608,109 @@ function Lagrange1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: num
       <circle cx={sx(0, scale, offsetX)} cy={sy(f0, scale, offsetY)} r={5} fill="#3b82f6" />
       <circle cx={sx(4, scale, offsetX)} cy={sy(f4, scale, offsetY)} r={5} fill="#3b82f6" />
       <text x={sx(xi, scale, offsetX)} y={sy(fAt(xi), scale, offsetY) - 10} fontSize={11} fill="#ef4444" textAnchor="middle">ξ</text>
+    </g>
+  )
+}
+
+// --- Taylor helper ---
+function factorial(n: number): number {
+  if (n <= 1) return 1
+  let result = 1
+  for (let i = 2; i <= n; i++) result *= i
+  return result
+}
+
+// --- 7b. taylor1 (泰勒级数展开) ---
+function Taylor1SVG({ scale, offsetX, offsetY }: { scale: number; offsetX: number; offsetY: number }) {
+  const { paramValue } = useLabStore()
+  const N = Math.round(paramValue)
+
+  // Original function: sin(x)
+  const fAt = (x: number) => Math.sin(x)
+
+  // Taylor polynomial of sin(x) at x0=0 with N terms
+  const taylorAt = useCallback((x: number, n: number) => {
+    let sum = 0
+    for (let k = 0; k < n; k++) {
+      const power = 2 * k + 1
+      const sign = k % 2 === 0 ? 1 : -1
+      sum += sign * Math.pow(x, power) / factorial(power)
+    }
+    return sum
+  }, [])
+
+  const xMin = -2 * Math.PI
+  const xMax = 2 * Math.PI
+
+  // Original curve path
+  const sinPath = useMemo(() => curveToPath(fAt, xMin, xMax, 400, scale, offsetX, offsetY), [scale, offsetX, offsetY])
+
+  // Taylor polynomial path
+  const taylorPath = useMemo(() => curveToPath((x) => taylorAt(x, N), xMin, xMax, 400, scale, offsetX, offsetY), [N, taylorAt, scale, offsetX, offsetY])
+
+  // Error region between sin(x) and Taylor polynomial
+  const errorPath = useMemo(() => filledAreaBetweenPath(fAt, (x) => taylorAt(x, N), xMin, xMax, 400, scale, offsetX, offsetY), [N, taylorAt, scale, offsetX, offsetY])
+
+  // Individual Taylor term curves (fading lower-order terms)
+  const termCurves = useMemo(() => {
+    const curves: { path: string; opacity: number; label: string }[] = []
+    for (let k = 0; k < N; k++) {
+      const power = 2 * k + 1
+      const sign = k % 2 === 0 ? 1 : -1
+      const coeff = sign / factorial(power)
+      const termFn = (x: number) => coeff * Math.pow(x, power)
+      const path = curveToPath(termFn, -3, 3, 200, scale, offsetX, offsetY)
+      const opacity = 0.15 + 0.6 * (k / Math.max(N - 1, 1))
+      const signStr = sign > 0 ? '+' : '-'
+      curves.push({ path, opacity, label: `${signStr}x${power > 1 ? `^${power}` : ''}/${factorial(power)}` })
+    }
+    return curves
+  }, [N, scale, offsetX, offsetY])
+
+  // Key intersection points (where Taylor = sin at multiples of π/2)
+  const keyPoints = useMemo(() => {
+    const pts: { x: number; y: number }[] = []
+    // Always matches at x0=0
+    pts.push({ x: 0, y: 0 })
+    // Check at π and -π
+    const xPi = Math.PI
+    const ySinPi = fAt(xPi)
+    const yTayPi = taylorAt(xPi, N)
+    if (Math.abs(ySinPi - yTayPi) < 0.3) {
+      pts.push({ x: xPi, y: yTayPi })
+      pts.push({ x: -xPi, y: -yTayPi })
+    }
+    return pts
+  }, [N, taylorAt])
+
+  return (
+    <g>
+      <SVGAxes xRange={[-7, 7]} yRange={[-2.5, 2.5]} scale={scale} offsetX={offsetX} offsetY={offsetY} />
+      {/* Error region fill */}
+      <path d={errorPath} fill="#f43f5e" opacity={0.12} />
+      {/* Individual term curves (fading) */}
+      {termCurves.map((tc, idx) => (
+        <path key={`term-${idx}`} d={tc.path} fill="none" stroke="#f59e0b" strokeWidth={1} opacity={tc.opacity * 0.4} strokeDasharray="3,3" />
+      ))}
+      {/* Original function: sin(x) in teal */}
+      <path d={sinPath} fill="none" stroke="#14b8a6" strokeWidth={2.5} />
+      {/* Taylor polynomial in orange/amber */}
+      <path d={taylorPath} fill="none" stroke="#f59e0b" strokeWidth={2} strokeDasharray="8,4" />
+      {/* Vertical line at x₀=0 */}
+      <line x1={sx(0, scale, offsetX)} y1={sy(-2.5, scale, offsetY)} x2={sx(0, scale, offsetX)} y2={sy(2.5, scale, offsetY)} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4,4" opacity={0.6} />
+      {/* Expansion point dot at x₀=0 */}
+      <circle cx={sx(0, scale, offsetX)} cy={sy(0, scale, offsetY)} r={5} fill="#ef4444" stroke="white" strokeWidth={1.5} />
+      {/* Key intersection points */}
+      {keyPoints.filter(p => p.x !== 0).map((pt, idx) => (
+        <circle key={`kp-${idx}`} cx={sx(pt.x, scale, offsetX)} cy={sy(pt.y, scale, offsetY)} r={4} fill="#f59e0b" stroke="white" strokeWidth={1} />
+      ))}
+      {/* Labels */}
+      <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(fAt(xMax - 0.5) + 0.2, scale, offsetY)} fontSize={12} fill="#14b8a6" fontWeight="bold" textAnchor="end">sin(x)</text>
+      <text x={sx(xMax - 0.5, scale, offsetX)} y={sy(taylorAt(xMax - 0.5, N) - 0.25, scale, offsetY)} fontSize={12} fill="#f59e0b" fontWeight="bold" textAnchor="end">P{N}(x)</text>
+      {/* x₀ label */}
+      <text x={sx(0, scale, offsetX) + 8} y={sy(-2.2, scale, offsetY)} fontSize={11} fill="#ef4444" fontStyle="italic">x₀=0</text>
+      {/* Error label */}
+      <text x={sx(Math.PI + 0.3, scale, offsetX)} y={sy(0.5, scale, offsetY)} fontSize={10} fill="#f43f5e" opacity={0.8}>R(x)</text>
     </g>
   )
 }
@@ -1273,6 +1378,7 @@ function Scene2D({ mode, scale, offsetX, offsetY }: Scene2DProps) {
     case 'derivative3': return <Derivative3SVG {...props} />
     case 'rolle1': return <Rolle1SVG {...props} />
     case 'lagrange1': return <Lagrange1SVG {...props} />
+    case 'taylor1': return <Taylor1SVG {...props} />
     case 'indef_integral1': return <IndefIntegral1SVG {...props} />
     case 'ftc1': return <Ftc1SVG {...props} />
     case 'mean_value_integral1': return <MeanValueIntegral1SVG {...props} />
@@ -1412,6 +1518,29 @@ function getOverlayContent(mode: LabMode): ReactNode {
           <div className="text-blue-500 dark:text-blue-400">割线斜率 = {secantSlope.toFixed(4)}</div>
           <div className="text-red-500 dark:text-red-400">f&apos;(ξ) = {tangentSlope.toFixed(4)}</div>
           <div>ξ ≈ {xi.toFixed(4)}</div>
+        </div>
+      )
+    }
+    case 'taylor1': {
+      const N = Math.round(paramValue)
+      const factorialLocal = (n: number) => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r }
+      const taylorAtLocal = (x: number) => {
+        let sum = 0
+        for (let k = 0; k < N; k++) {
+          const power = 2 * k + 1
+          const sign = k % 2 === 0 ? 1 : -1
+          sum += sign * Math.pow(x, power) / factorialLocal(power)
+        }
+        return sum
+      }
+      const maxErr = Math.abs(Math.sin(Math.PI) - taylorAtLocal(Math.PI))
+      return (
+        <div className="text-xs space-y-0.5 font-mono whitespace-nowrap">
+          <div className="text-red-600 dark:text-red-400 font-semibold">泰勒级数展开</div>
+          <div>f(x) = sin(x), x₀ = 0</div>
+          <div>展开项数: N = {N}</div>
+          <div className="text-amber-600 dark:text-amber-400">最高次: x^{2*N-1}</div>
+          <div className="text-rose-600 dark:text-rose-400">|R(π)| ≈ {maxErr.toFixed(4)}</div>
         </div>
       )
     }

@@ -158,6 +158,28 @@ export function useComputedValues(): ComputedValues | null {
         }
       }
 
+      case 'taylor1': {
+        const N = Math.round(paramValue)
+        const factorialLocal = (n: number) => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r }
+        const taylorAtLocal = (x: number) => {
+          let sum = 0
+          for (let k = 0; k < N; k++) {
+            const power = 2 * k + 1
+            const sign = k % 2 === 0 ? 1 : -1
+            sum += sign * Math.pow(x, power) / factorialLocal(power)
+          }
+          return sum
+        }
+        const maxErr = Math.abs(Math.sin(Math.PI) - taylorAtLocal(Math.PI))
+        return {
+          mainValue: formatValue(maxErr),
+          approxValue: `N=${N} 项, x^{2*N-1}`,
+          exactValue: `P(x) = Σ(-1)^k·x^(2k+1)/(2k+1)!`,
+          error: formatValue(maxErr),
+          label: `泰勒展开 N=${N}, |R(π)| ≈ ${formatValue(maxErr)}`,
+        }
+      }
+
       case 'indef_integral1': {
         const numCurves = Math.round(paramValue)
         // f(x) = 2x, F(x) = x² + C

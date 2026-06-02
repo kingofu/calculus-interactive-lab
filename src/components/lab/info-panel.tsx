@@ -224,6 +224,14 @@ const sectionColors: Record<string, { bg: string; text: string; border: string; 
     computedBg: 'from-violet-50/50 via-muted/30 to-purple-50/50 dark:from-violet-950/20 dark:via-muted/20 dark:to-purple-950/20',
     computedBorder: 'border-violet-200/40 dark:border-violet-800/30',
   },
+  '微分中值定理': {
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    text: 'text-red-800 dark:text-red-300',
+    border: 'border-0',
+    glow: 'shadow-red-500/20',
+    computedBg: 'from-red-50/50 via-muted/30 to-amber-50/50 dark:from-red-950/20 dark:via-muted/20 dark:to-amber-950/20',
+    computedBorder: 'border-red-200/40 dark:border-red-800/30',
+  },
 }
 
 // Map of mode → related formulas (2-3 per mode)
@@ -401,6 +409,10 @@ const relatedFormulas: Record<string, { formula: string; label: string }[]> = {
     { formula: 'd\\mathbf{S} = \\mathbf{n}\\,dS', label: '有向面积元素' },
     { formula: '\\iint_\\Sigma f\\,dS = \\iint_D f\\sqrt{1+z_x^2+z_y^2}\\,dxdy', label: '投影法' },
   ],
+  taylor1: [
+    { formula: 'R_n(x) = \\frac{f^{(n+1)}(\\xi)}{(n+1)!}(x-x_0)^{n+1}', label: '拉格朗日余项' },
+    { formula: '\\sin(x) = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - \\cdots', label: 'sin(x)展开' },
+  ],
 }
 
 // Get the section color config, fallback to emerald
@@ -437,6 +449,7 @@ const sectionModes: Record<string, LabMode[]> = {
   '旋度场与散度场': ['curl1', 'divergence_field1'],
   '保守场与势函数': ['conservative1'],
   '曲面积分': ['surface_integral1'],
+  '微分中值定理': ['rolle1', 'lagrange1', 'taylor1'],
 }
 
 export function InfoPanel() {

@@ -2816,3 +2816,43 @@ Stage Summary:
 - step1-4 animation no longer causes camera origin jumps between steps
 - Visited modes tracking feature fully removed
 - All lint checks pass, dev server compiles, all modes verified via agent-browser
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix volume_rev1 disc orientation bug, add Taylor series expansion mode (taylor1)
+
+Work Log:
+- Analyzed user's two issues: (1) Taylor series missing, (2) Orange circles in volume_rev1 perpendicular to wrong axis
+- **Fixed volume_rev1 disc rotation**: Changed `rotation={[Math.PI / 2, 0, 0]}` to `rotation={[0, 0, Math.PI / 2]}` in scene-renderer.tsx
+  - The cylinderGeometry default axis is along Y; the original rotation aligned it along Z
+  - The correct rotation aligns the cylinder axis along X, making disc faces perpendicular to the rotation axis (X-axis)
+  - This makes the orange disc cross-sections correctly oriented in the YZ plane
+- **Added taylor1 (泰勒级数展开) mode** (via subagent):
+  - Added 'taylor1' to LabMode type in lab-store.ts (under 微分中值定理 section)
+  - Added taylor1 modeInfo entry with math formula, description, paramLabel '逼近项数 N' (1-15, step 1, default 3), viewType '2d'
+  - Added Taylor1SVG component in viewport-2d.tsx:
+    - sin(x) curve in teal, Taylor polynomial P_N(x) in amber/orange
+    - Error region (light rose fill) between the two curves
+    - Fading individual term curves (dashed)
+    - Expansion point x₀=0 marked with red dot and vertical line
+    - Labels for sin(x), P_N(x), x₀, R(x)
+  - Added overlay content in getOverlayContent with N, max degree, |R(π)| error
+  - Added background/accent color mappings
+  - Added factorial helper function
+  - Added taylor1 case in getSVGScene switch
+  - Added to sidebar.tsx under 微分中值定理 > 中值定理 section with Puzzle icon
+  - Updated section subtitle to '罗尔定理、拉格朗日与泰勒展开'
+  - Added to allModes array in page.tsx after lagrange1
+  - Added computed values case in use-computed-values.ts
+  - Added info-panel.tsx section color mapping for 微分中值定理
+  - Added to scene-error-boundary.tsx allModes list
+- Lint passes with zero errors
+- Dev server compiles successfully
+- Agent-browser verified: taylor1 renders correctly with 2D SVG, volume_rev1 discs now perpendicular to X-axis
+
+Stage Summary:
+- **Bug fixed**: volume_rev1 disc cross-sections now correctly perpendicular to X-axis (rotation axis)
+- **New mode added**: taylor1 (泰勒级数展开) - 2D SVG visualization of sin(x) Taylor polynomial approximation
+- Total modes now: 46 (previously 45)
+- All lint checks pass, no errors

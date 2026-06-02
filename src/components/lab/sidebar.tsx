@@ -136,11 +136,12 @@ const chapters: ChapterEntry[] = [
     sections: [
       {
         title: '中值定理',
-        subtitle: '罗尔定理与拉格朗日中值定理',
+        subtitle: '罗尔定理、拉格朗日与泰勒展开',
         color: 'red',
         modes: [
           { mode: 'rolle1' as LabMode, label: '罗尔定理', icon: Target },
           { mode: 'lagrange1' as LabMode, label: '拉格朗日中值定理', icon: Waypoints },
+          { mode: 'taylor1' as LabMode, label: '泰勒级数展开', icon: Puzzle },
         ],
       },
     ],

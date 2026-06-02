@@ -5545,7 +5545,7 @@ function VolumeRev1Scene() {
       </mesh>
       {/* Disc cross-sections */}
       {discData.map((disc, idx) => (
-        <mesh key={idx} position={[disc.x, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh key={idx} position={[disc.x, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[disc.r, disc.r, 0.03, 24]} />
           <meshPhongMaterial color={idx % 2 === 0 ? '#f59e0b' : '#fbbf24'} transparent opacity={0.5} side={THREE.DoubleSide} />
         </mesh>

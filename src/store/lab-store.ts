@@ -7,7 +7,7 @@ export type LabMode =
   // 一元微积分 - 导数与微分
   | 'derivative1' | 'derivative2' | 'derivative3'
   // 一元微积分 - 微分中值定理
-  | 'rolle1' | 'lagrange1'
+  | 'rolle1' | 'lagrange1' | 'taylor1'
   // 一元微积分 - 导数的应用
   | 'monotonicity1' | 'extrema1' | 'concavity1' | 'curvature1'
   // 一元微积分 - 不定积分
@@ -228,6 +228,15 @@ export const modeInfo: Record<LabMode, {
     description: '拉格朗日中值定理：若 f 在 [a,b] 上连续、(a,b) 内可导，则存在 ξ∈(a,b) 使割线斜率等于切线斜率。图中展示割线（蓝色虚线）和与割线平行的切线（红色实线）。调整参数观察不同函数和区间。',
     paramLabel: '曲线变形 a',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  taylor1: {
+    title: '泰勒级数展开',
+    section: '微分中值定理',
+    math: 'f(x) = \\sum_{k=0}^{n} \\frac{f^{(k)}(x_0)}{k!}(x-x_0)^k + R_n(x)',
+    description: '泰勒级数将函数在某点附近用多项式逼近。随着项数n增加，泰勒多项式在展开点附近越来越精确地逼近原函数。图中展示函数f(x)=sin(x)（蓝色）及其不同阶的泰勒多项式（橙色），展开点为x₀=0。调整参数观察项数对逼近精度的影响。误差余项Rₙ(x)表示多项式与原函数的差距。',
+    paramLabel: '逼近项数 N',
+    paramMin: 1, paramMax: 15, paramStep: 1, paramDefault: 3,
     viewType: '2d',
   },
   indef_integral1: {

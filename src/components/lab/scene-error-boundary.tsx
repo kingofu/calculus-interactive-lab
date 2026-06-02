@@ -19,7 +19,7 @@ interface State {
 const allModes: LabMode[] = [
   'limit1', 'limit2',
   'derivative1', 'derivative2', 'derivative3',
-  'rolle1', 'lagrange1',
+  'rolle1', 'lagrange1', 'taylor1',
   'indef_integral1',
   'ftc1', 'mean_value_integral1',
   'area1', 'volume_rev1',
