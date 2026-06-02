@@ -88,24 +88,34 @@ interface ChapterEntry {
 const chapters: ChapterEntry[] = [
   {
     title: '函数与极限',
-    subtitle: '数列极限与函数极限',
+    subtitle: '极限、连续与间断点',
     icon: Target,
     color: 'rose',
     sections: [
       {
-        title: '数列极限',
-        subtitle: '数列收敛与ε-N定义',
+        title: '极限概念',
+        subtitle: '数列极限与函数极限',
         color: 'rose',
         modes: [
           { mode: 'limit1' as LabMode, label: '数列极限', icon: Target },
           { mode: 'limit2' as LabMode, label: '函数极限ε-δ', icon: Crosshair },
+          { mode: 'important_limits1' as LabMode, label: '两个重要极限', icon: Star },
+        ],
+      },
+      {
+        title: '连续性',
+        subtitle: '函数连续与间断点',
+        color: 'pink',
+        modes: [
+          { mode: 'continuity1' as LabMode, label: '函数连续性', icon: Activity },
+          { mode: 'discontinuity1' as LabMode, label: '间断点类型', icon: Shield },
         ],
       },
     ],
   },
   {
     title: '导数与微分',
-    subtitle: '导数定义、切线与微分',
+    subtitle: '导数定义、高阶导数与洛必达',
     icon: TrendingUp,
     color: 'amber',
     sections: [
@@ -117,6 +127,15 @@ const chapters: ChapterEntry[] = [
           { mode: 'derivative1' as LabMode, label: '导数定义', icon: Spline },
           { mode: 'derivative2' as LabMode, label: '切线与导函数', icon: Navigation },
           { mode: 'derivative3' as LabMode, label: '微分与线性近似', icon: ArrowRightLeft },
+        ],
+      },
+      {
+        title: '高阶导数与洛必达',
+        subtitle: '高阶导数与未定式极限',
+        color: 'orange',
+        modes: [
+          { mode: 'higher_derivative1' as LabMode, label: '高阶导数', icon: Layers },
+          { mode: 'lhopital1' as LabMode, label: '洛必达法则', icon: Compass },
         ],
       },
     ],
@@ -140,17 +159,45 @@ const chapters: ChapterEntry[] = [
     ],
   },
   {
+    title: '导数的应用',
+    subtitle: '单调性、极值、凹凸性与曲率',
+    icon: LineChart,
+    color: 'teal',
+    sections: [
+      {
+        title: '单调性与极值',
+        subtitle: '函数增减与极值判定',
+        color: 'teal',
+        modes: [
+          { mode: 'monotonicity1' as LabMode, label: '函数单调性', icon: TrendingUp },
+          { mode: 'extrema1' as LabMode, label: '函数极值', icon: Target },
+        ],
+      },
+      {
+        title: '凹凸性与曲率',
+        subtitle: '函数凹凸性与曲率计算',
+        color: 'cyan',
+        modes: [
+          { mode: 'concavity1' as LabMode, label: '凹凸性与拐点', icon: Spline },
+          { mode: 'curvature1' as LabMode, label: '曲率', icon: CircleDot },
+        ],
+      },
+    ],
+  },
+  {
     title: '不定积分',
-    subtitle: '原函数与不定积分',
+    subtitle: '原函数、换元与分部积分',
     icon: Sigma,
     color: 'purple',
     sections: [
       {
-        title: '不定积分',
-        subtitle: '原函数族与积分常数',
+        title: '积分方法',
+        subtitle: '原函数、换元与分部积分',
         color: 'purple',
         modes: [
           { mode: 'indef_integral1' as LabMode, label: '原函数族', icon: Layers },
+          { mode: 'substitution1' as LabMode, label: '换元积分法', icon: RefreshCw },
+          { mode: 'integration_by_parts1' as LabMode, label: '分部积分法', icon: Split },
         ],
       },
     ],
@@ -163,19 +210,20 @@ const chapters: ChapterEntry[] = [
     sections: [
       {
         title: '定积分概念与性质',
-        subtitle: '微积分基本定理与积分中值',
+        subtitle: '矩形近似、微积分基本定理与积分中值',
         color: 'emerald',
         modes: [
           { mode: 'rect_approx' as LabMode, label: '矩形近似', icon: BoxSelect },
           { mode: 'ftc1' as LabMode, label: '微积分基本定理', icon: GitMerge },
           { mode: 'mean_value_integral1' as LabMode, label: '积分中值定理', icon: Target },
+          { mode: 'improper_integral1' as LabMode, label: '反常积分', icon: Waves },
         ],
       },
     ],
   },
   {
     title: '定积分的应用',
-    subtitle: '面积、体积与弧长',
+    subtitle: '面积、体积、弧长与极坐标',
     icon: FlaskConical,
     color: 'sky',
     sections: [
@@ -186,6 +234,14 @@ const chapters: ChapterEntry[] = [
         modes: [
           { mode: 'area1' as LabMode, label: '曲线间面积', icon: BoxSelect },
           { mode: 'volume_rev1' as LabMode, label: '旋转体体积', icon: Cylinder },
+          { mode: 'polar_area1' as LabMode, label: '极坐标面积', icon: CircleDot },
+        ],
+      },
+      {
+        title: '弧长',
+        subtitle: '弧长计算',
+        color: 'pink',
+        modes: [
           { mode: 'arc_length1' as LabMode, label: '弧长计算', icon: Spline },
         ],
       },

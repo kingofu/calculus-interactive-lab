@@ -2123,3 +2123,191 @@ Stage Summary:
 - Math computations: analytical solutions for Rolle/Lagrange points, numerical integration for volume/area/mean value
 - All React Compiler memoization requirements satisfied
 - Zero lint errors, dev server compiles successfully
+
+---
+Task ID: 1
+Agent: Store Update Agent
+Task: Update lab-store.ts with new single-variable calculus modes and 2D view support
+
+Work Log:
+- Read worklog.md to understand project status (46+ existing modes)
+- Read current lab-store.ts to understand existing structure
+- **Added `viewType?: '2d' | '3d'`** to modeInfo type definition (defaults to '3d' if not specified)
+- **Added 13 new LabMode types** to the LabMode union type:
+  - continuity1, discontinuity1, important_limits1 (函数与极限)
+  - lhopital1 (洛必达法则)
+  - higher_derivative1 (导数与微分)
+  - monotonicity1, extrema1, concavity1, curvature1 (导数的应用)
+  - substitution1, integration_by_parts1 (不定积分)
+  - improper_integral1 (定积分)
+  - polar_area1 (定积分的应用)
+- **Added modeInfo entries** for all 13 new modes, all with `viewType: '2d'`:
+  - continuity1: 函数连续性 (连续性系数 0-1)
+  - discontinuity1: 间断点类型 (显示类型 1-4)
+  - important_limits1: 两个重要极限 (x 值 0.01-10)
+  - lhopital1: 洛必达法则 (逼近程度 0.1-2)
+  - monotonicity1: 函数单调性 (函数系数 a 0.3-3)
+  - extrema1: 函数极值 (函数系数 a 0.3-3)
+  - concavity1: 凹凸性与拐点 (函数系数 a 0.3-3)
+  - curvature1: 曲率 (观察点 x₀ -2 to 2)
+  - higher_derivative1: 高阶导数 (导数阶数 n 0-5)
+  - substitution1: 换元积分法 (换元函数类型 1-3)
+  - integration_by_parts1: 分部积分法 (u 的选择 1-3)
+  - improper_integral1: 反常积分 (衰减速度 p 0.3-3)
+  - polar_area1: 极坐标面积 (花瓣参数 a 0.5-3)
+- **Added `viewType: '2d'`** to 12 existing single-variable calculus modes:
+  - limit1, limit2, derivative1, derivative2, derivative3
+  - rolle1, lagrange1, indef_integral1
+  - ftc1, mean_value_integral1, area1, taylor1
+- **Updated `setMode`** to automatically disable autoRotate for 2D modes:
+  - Added `const is2D = info.viewType === '2d'`
+  - Added `autoRotate: is2D ? false : state.autoRotate` to returned state
+- All existing modeInfo entries preserved intact (only additions made)
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **13 new modes added** to LabMode type and modeInfo (all viewType: '2d')
+- **12 existing modes** updated with viewType: '2d'
+- **viewType property** added to modeInfo type definition ('2d' | '3d', defaults to '3d')
+- **setMode auto-disables autoRotate** for 2D modes
+- Total mode count now: 59 (46 existing + 13 new)
+- All lint checks pass
+
+---
+Task ID: 2
+Agent: Viewport 2D Mode Agent
+Task: Update viewport.tsx to support 2D viewing mode for single-variable calculus
+
+Work Log:
+- Read worklog.md to understand project status
+- Modified `/src/components/lab/viewport.tsx` with the following changes:
+  - **Imported OrthographicCamera** from `@react-three/drei` (added to existing OrbitControls import)
+  - **Created `is2DMode` helper function** that checks `modeInfo[mode]?.viewType === '2d'` to determine if a mode uses 2D orthographic viewing
+  - **Updated `getCameraForMode` return type** to include `is2D?: boolean` property
+  - **Added 2D camera handling** in `getCameraForMode`: modes with `viewType: '2d'` return `{ position: [0, 0, 10], fov: 50, is2D: true }` which is caught before the switch statement
+  - **Removed redundant 2D mode cases** from switch (limit1, limit2, derivative1-3, rolle1, lagrange1, indef_integral1, ftc1, mean_value_integral1, area1, curvature1) since they're all handled by the is2DMode check
+  - **Updated Canvas component** to conditionally use orthographic camera:
+    - `camera` prop set to `undefined` for 2D modes (avoiding conflict with OrthographicCamera)
+    - Added `orthographic={cameraConfig.is2D}` prop to Canvas
+    - Added `<OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />` for 2D modes
+  - **Updated OrbitControls** with `enableRotate={!cameraConfig.is2D}` to disable rotation in 2D modes while keeping pan and zoom
+  - **Hidden auto-rotate button** for 2D modes (wrapped with `{!cameraConfig.is2D && (...)}`)
+  - **Updated controls hint text**: 2D modes show "拖拽平移 · 滚轮缩放" instead of "拖拽旋转 · 滚轮缩放"
+  - **Updated ARIA labels**: 2D modes show "2D可视化" and "可拖拽平移和滚轮缩放" instead of "3D可视化" and "可拖拽旋转和滚轮缩放"
+  - **Added backgrounds for new modes** in `getBackgroundForMode`:
+    - continuity1, discontinuity1, important_limits1: rose/pink
+    - lhopital1: amber/orange
+    - monotonicity1, extrema1, concavity1, curvature1: teal/cyan
+    - higher_derivative1: amber/orange
+    - substitution1, integration_by_parts1: purple/violet
+    - improper_integral1: emerald/teal
+    - polar_area1: sky/cyan
+  - **Added accent colors for new modes** in `getModeAccentColor`:
+    - continuity1, discontinuity1, important_limits1: bg-rose-500
+    - lhopital1: bg-amber-500
+    - monotonicity1, extrema1: bg-teal-500
+    - concavity1, curvature1: bg-cyan-500
+    - higher_derivative1: bg-amber-500
+    - substitution1, integration_by_parts1: bg-purple-500
+    - improper_integral1: bg-emerald-500
+    - polar_area1: bg-sky-500
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **2D viewing mode implemented**: Single-variable calculus modes with `viewType: '2d'` now use OrthographicCamera instead of PerspectiveCamera
+- **OrbitControls adapted**: Rotation disabled for 2D modes, pan and zoom preserved
+- **UI adapted for 2D**: Auto-rotate button hidden, controls hint shows "平移" instead of "旋转", ARIA labels reflect 2D/3D mode
+- **8 new mode backgrounds and accent colors** added for previously missing single-variable calculus modes
+- All 2D modes (limit1, limit2, derivative1-3, rolle1, lagrange1, indef_integral1, ftc1, mean_value_integral1, area1, continuity1, discontinuity1, important_limits1, lhopital1, monotonicity1, extrema1, concavity1, curvature1, higher_derivative1, substitution1, integration_by_parts1, improper_integral1, polar_area1) now display correctly in orthographic 2D view
+
+---
+Task ID: 3+4
+Agent: Scene Renderer Agent
+Task: Add 13 new single-variable calculus scene renderers (2D modes)
+
+Work Log:
+- Read worklog.md to understand project status (40+ existing modes)
+- Read scene-renderer.tsx to understand SceneRenderer pattern (uses JSX conditional rendering `{mode === 'xxx' && (<XxxScene />)}`)
+- Confirmed all 13 modes already defined in lab-store.ts with `viewType: '2d'`
+- Added reusable `Axes2D` component in scene-renderer.tsx:
+  - X and Y axes with gray lines
+  - Grid lines with 20% opacity
+  - Axis labels (x, y) with Text component
+  - Integer tick marks with number labels
+- Added reusable `FilledRegion2D` component:
+  - Generates triangulated mesh between a function curve and a baseline
+  - Used by monotonicity1, concavity1, improper_integral1 scenes
+- Added 13 new scene components:
+  1. **Continuity1Scene**: Green continuous f(x)=x² + red discontinuous g(x) with jump at x=0, open/closed circle markers, Html overlay
+  2. **Discontinuity1Scene**: 4 types based on param: 可去(blue, hole at x=1), 跳跃(amber, step at x=2), 无穷(red, 1/(x-3)), 振荡(violet, sin(1/x))
+  3. **ImportantLimits1Scene**: sin(x)/x→1 (blue, shifted up 4) + (1+1/x)^x→e (amber, shifted down 1.5), dashed reference lines, indicator dots
+  4. **Lhopital1Scene**: sin(x)/x (blue) + cos(x)/1 (red), limit line y=1, indicator dots at param value
+  5. **Monotonicity1Scene**: f(x)=a(x³-3x) (blue) + f'(x) (red dashed), green increasing regions + orange decreasing regions
+  6. **Extrema1Scene**: f(x)=a(x⁴-4x²) (blue) + f'(x) (red), local max at x=0 (red dot), local mins at x=±√2 (green dots)
+  7. **Concavity1Scene**: f(x)=a·x³ (amber curve), blue fill (concave up, x>0), red fill (concave down, x<0), inflection point marker
+  8. **Curvature1Scene**: f(x)=cos(x) (blue curve) + curvature circle (red, computed from κ formula), point and center markers
+  9. **HigherDerivative1Scene**: sin(x) derivatives 0-5 with phase shift -nπ/2, current order highlighted, color legend
+  10. **Substitution1Scene**: Original function (blue) + substituted function (red, shifted up), 3 types: u=x²→∫cos(u)du, u=x²→∫e^u du, u=1-x²→∫1/(2√u)du
+  11. **IntegrationByParts1Scene**: u(x) (blue) + v(x) (red, shifted up), 3 types: u=x/dv=e^x, u=x²/dv=e^x, u=ln(x)/dv=x
+  12. **ImproperIntegral1Scene**: 1/x^p curve + filled area, blue (convergent, p>1) or red (divergent, p≤1), numerical integral value
+  13. **PolarArea1Scene**: r=a+cos(θ) cardioid curve (violet) + filled triangulated area, area formula S=π(a²+½)
+- Added 13 mode cases in SceneRenderer JSX block after volume_rev1
+- Lint passes with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- **13 new 2D scene renderers added**: continuity1, discontinuity1, important_limits1, lhopital1, monotonicity1, extrema1, concavity1, curvature1, higher_derivative1, substitution1, integration_by_parts1, improper_integral1, polar_area1
+- **2 reusable 2D components added**: Axes2D (grid/axes/ticks/labels), FilledRegion2D (triangulated fill between curve and baseline)
+- All scenes render on the z=0 plane (2D view from above)
+- All scenes use useLabStore() for paramValue/paramValue2
+- All scenes have Html overlays with mathematical values
+- Lint passes with zero errors
+
+---
+Task ID: 14
+Agent: Main
+Task: Add single-variable calculus modes with 2D default view, change title to 微积分互动实验室
+
+Work Log:
+- Read worklog.md to understand project status (45+ existing modes, stable)
+- **Changed main title** from "多元微积分互动实验室" to "微积分互动实验室" (already done in page.tsx)
+- **Added `viewType` property** to modeInfo type in lab-store.ts: `'2d' | '3d'` (defaults to '3d')
+- **Added 13 new single-variable calculus LabMode types**: continuity1, discontinuity1, important_limits1, lhopital1, monotonicity1, extrema1, concavity1, curvature1, higher_derivative1, substitution1, integration_by_parts1, improper_integral1, polar_area1
+- **Added modeInfo entries** for all 13 new modes (all with viewType: '2d')
+- **Added `viewType: '2d'`** to 12 existing single-variable calculus modes: limit1, limit2, derivative1-3, rolle1, lagrange1, indef_integral1, ftc1, mean_value_integral1, area1, taylor1
+- **Updated setMode** to auto-disable autoRotate when switching to 2D modes
+- **Updated viewport.tsx** for 2D mode support:
+  - Imported OrthographicCamera from drei
+  - Created is2DMode() helper function
+  - Updated getCameraForMode to return is2D flag
+  - Canvas uses orthographic camera for 2D modes
+  - OrbitControls: enableRotate={false} for 2D modes
+  - Hidden auto-rotate button for 2D modes
+  - Updated controls hint: "拖拽平移 · 滚轮缩放" for 2D
+  - Added backgrounds and accent colors for all new modes
+- **Added 13 scene renderers** to scene-renderer.tsx:
+  - Created reusable Axes2D and FilledRegion2D components
+  - All 13 new scenes render 2D curves on XY plane
+  - Each scene has Html overlay with mathematical values
+- **Updated sidebar.tsx** with restructured 一元微积分 navigation:
+  - 函数与极限: 极限概念(3) + 连续性(2) = 5 modes
+  - 导数与微分: 导数概念(3) + 高阶导数与洛必达(2) = 5 modes
+  - 微分中值定理: 中值定理(3) = 3 modes
+  - 导数的应用: 单调性与极值(2) + 凹凸性与曲率(2) = 4 modes
+  - 不定积分: 积分方法(3) = 3 modes
+  - 定积分: 定积分概念与性质(4) = 4 modes
+  - 定积分的应用: 面积与体积(3) + 弧长(1) = 4 modes
+- **Updated page.tsx allModes** array with all new modes in correct order
+- All lint checks pass, dev server compiles successfully
+- Tested multiple new modes via agent-browser — all render correctly
+
+Stage Summary:
+- **Title changed**: 微积分互动实验室
+- **13 new visualization modes** added (all 2D)
+- **2D view support**: Orthographic camera, no rotation, pan+zoom only
+- **Total modes now: 58** (was 45)
+- **7 single-variable calculus chapters** restructured per standard textbook
+- Single-variable modes default to 2D view with no auto-rotation
+

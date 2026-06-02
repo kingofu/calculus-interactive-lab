@@ -3,16 +3,24 @@ import { create } from 'zustand'
 export type LabMode =
   // 一元微积分 - 函数与极限
   | 'limit1' | 'limit2'
+  | 'continuity1' | 'discontinuity1' | 'important_limits1'
   // 一元微积分 - 导数与微分
   | 'derivative1' | 'derivative2' | 'derivative3'
+  | 'higher_derivative1'
   // 一元微积分 - 微分中值定理
   | 'rolle1' | 'lagrange1'
+  // 一元微积分 - 导数的应用
+  | 'monotonicity1' | 'extrema1' | 'concavity1' | 'curvature1'
   // 一元微积分 - 不定积分
   | 'indef_integral1'
+  | 'substitution1' | 'integration_by_parts1'
   // 一元微积分 - 定积分
   | 'ftc1' | 'mean_value_integral1'
   // 一元微积分 - 定积分应用
   | 'area1' | 'volume_rev1'
+  | 'improper_integral1' | 'polar_area1'
+  // 一元微积分 - 洛必达法则
+  | 'lhopital1'
   // 多元微积分 - 二重积分基础
   | 'step1' | 'step2' | 'step3' | 'step4'
   | 'prop1' | 'prop2' | 'prop3' | 'prop4' | 'prop5' | 'prop6' | 'prop7'
@@ -108,6 +116,7 @@ export const useLabStore = create<LabState>((set) => ({
     const info = modeInfo[mode]
     set((state) => {
       const recent = [mode, ...state.recentModes.filter(m => m !== mode)].slice(0, 10)
+      const is2D = info.viewType === '2d'
       return {
         mode,
         paramValue: info.paramDefault,
@@ -115,6 +124,7 @@ export const useLabStore = create<LabState>((set) => ({
         visitedModes: new Set([...state.visitedModes, mode]),
         recentModes: recent,
         tooltip: null,
+        autoRotate: is2D ? false : state.autoRotate,
       }
     })
   },
@@ -159,6 +169,7 @@ export const modeInfo: Record<LabMode, {
   paramMax2?: number
   paramStep2?: number
   paramDefault2?: number
+  viewType?: '2d' | '3d'
 }> = {
   // ═══════════════════════════════════════════════════════════
   // 一元微积分 (Single-Variable Calculus)
@@ -172,6 +183,7 @@ export const modeInfo: Record<LabMode, {
     paramMin: 0.5, paramMax: 5, paramStep: 0.1, paramDefault: 2,
     paramLabel2: '极限值 L',
     paramMin2: 0, paramMax2: 3, paramStep2: 0.1, paramDefault2: 1,
+    viewType: '2d',
   },
   limit2: {
     title: '函数极限 ε-δ',
@@ -180,6 +192,7 @@ export const modeInfo: Record<LabMode, {
     description: '函数极限的 ε-δ 定义：对于任意 ε>0，存在 δ>0，当 0<|x-x₀|<δ 时，|f(x)-L|<ε。图中展示函数曲线、ε-带（水平绿色带）和对应的 δ-区间（垂直橙色带）。调整 ε 观察 δ 的变化。',
     paramLabel: 'ε 大小',
     paramMin: 0.1, paramMax: 1.5, paramStep: 0.05, paramDefault: 0.5,
+    viewType: '2d',
   },
   derivative1: {
     title: '导数定义 (割线→切线)',
@@ -188,6 +201,7 @@ export const modeInfo: Record<LabMode, {
     description: '导数是割线斜率的极限，当 Δx→0 时割线变为切线。图中展示曲线 f(x)=sin(x)+0.5x，随着参数减小，割线（蓝色虚线）逐渐逼近切线（红色实线）。动画演示从割线到切线的过渡过程。',
     paramLabel: 'Δx 大小',
     paramMin: 0.05, paramMax: 2, paramStep: 0.05, paramDefault: 1,
+    viewType: '2d',
   },
   derivative2: {
     title: '切线与导函数',
@@ -196,6 +210,7 @@ export const modeInfo: Record<LabMode, {
     description: '在曲线 f(x) 上某点 x₀ 处的切线方程为 y-f(x₀)=f\'(x₀)(x-x₀)。图中同时展示原函数 f(x)=x³-3x（蓝色）和其导函数 f\'(x)=3x²-3（红色），移动点观察切线斜率与导数值的对应关系。',
     paramLabel: '切点位置 x₀',
     paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 0,
+    viewType: '2d',
   },
   derivative3: {
     title: '微分与线性近似',
@@ -206,6 +221,7 @@ export const modeInfo: Record<LabMode, {
     paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
     paramLabel2: 'Δx 大小',
     paramMin2: 0.1, paramMax2: 1.5, paramStep2: 0.05, paramDefault2: 0.5,
+    viewType: '2d',
   },
   rolle1: {
     title: '罗尔定理',
@@ -214,6 +230,7 @@ export const modeInfo: Record<LabMode, {
     description: '罗尔定理：若 f 在 [a,b] 上连续、(a,b) 内可导，且 f(a)=f(b)，则存在 ξ∈(a,b) 使 f\'(ξ)=0。图中展示满足条件的曲线 f(x)=(x-1)(x-3)(x-5) 上的水平切线点 ξ。调整参数改变曲线形状。',
     paramLabel: '曲线变形 a',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   lagrange1: {
     title: '拉格朗日中值定理',
@@ -222,6 +239,7 @@ export const modeInfo: Record<LabMode, {
     description: '拉格朗日中值定理：若 f 在 [a,b] 上连续、(a,b) 内可导，则存在 ξ∈(a,b) 使割线斜率等于切线斜率。图中展示割线（蓝色虚线）和与割线平行的切线（红色实线）。调整参数观察不同函数和区间。',
     paramLabel: '曲线变形 a',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   indef_integral1: {
     title: '原函数族',
@@ -230,6 +248,7 @@ export const modeInfo: Record<LabMode, {
     description: '不定积分 ∫f(x)dx 是 f(x) 的全体原函数 F(x)+C。不同的常数 C 对应曲线族中不同的曲线，它们沿 y 轴方向平移。图中展示 f(x)=2x 的原函数族 F(x)=x²+C，多条曲线以不同颜色显示。调整 C 的范围观察曲线族变化。',
     paramLabel: '曲线数量',
     paramMin: 3, paramMax: 12, paramStep: 1, paramDefault: 7,
+    viewType: '2d',
   },
   ftc1: {
     title: '微积分基本定理',
@@ -238,6 +257,7 @@ export const modeInfo: Record<LabMode, {
     description: '微积分基本定理（牛顿-莱布尼茨公式）将微分与积分联系起来。第一部分：变上限积分的导数等于被积函数；第二部分：定积分等于原函数在端点的差值。图中展示 f(x) 的面积函数 Φ(x)=∫ₐˣf(t)dt 和其导数 Φ\'(x)=f(x) 的关系。',
     paramLabel: '上限 x 位置',
     paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   mean_value_integral1: {
     title: '积分中值定理',
@@ -246,6 +266,7 @@ export const modeInfo: Record<LabMode, {
     description: '积分中值定理：存在 ξ∈[a,b] 使 f(ξ) 等于函数在 [a,b] 上的平均值。图中展示曲线 f(x) 下的面积与同底等高的矩形面积相等，矩形高度为平均值 f(ξ)。调整参数观察不同函数的平均值位置。',
     paramLabel: '曲线振幅',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   area1: {
     title: '曲线间面积',
@@ -254,6 +275,7 @@ export const modeInfo: Record<LabMode, {
     description: '两曲线 y=f(x) 和 y=g(x) 之间的面积可通过定积分 S=∫ₐᵇ[f(x)-g(x)]dx 计算。图中展示两条曲线之间的区域（高亮填充），面积值实时显示。调整参数观察不同曲线围成的区域。',
     paramLabel: '曲线间距',
     paramMin: 0.3, paramMax: 2, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   volume_rev1: {
     title: '旋转体体积',
@@ -264,6 +286,123 @@ export const modeInfo: Record<LabMode, {
     paramMin: 0.5, paramMax: 2.5, paramStep: 0.1, paramDefault: 1.5,
     paramLabel2: '截面数',
     paramMin2: 3, paramMax2: 20, paramStep2: 1, paramDefault2: 8,
+  },
+  continuity1: {
+    title: '函数连续性',
+    section: '函数与极限',
+    math: '\\lim_{x \\to x_0} f(x) = f(x_0)',
+    description: '函数 f(x) 在 x₀ 处连续，需满足三个条件：f(x₀) 存在、lim f(x) 存在、lim f(x)=f(x₀)。图中展示连续函数（绿色）和不连续函数（红色虚线）的对比。调整参数观察连续性破坏的情况。',
+    paramLabel: '连续性系数',
+    paramMin: 0, paramMax: 1, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  discontinuity1: {
+    title: '间断点类型',
+    section: '函数与极限',
+    math: '\\text{第一类: 可去/跳跃} \\quad \\text{第二类: 无穷/振荡}',
+    description: '间断点分为第一类（左右极限都存在：可去间断点、跳跃间断点）和第二类（至少一侧极限不存在：无穷间断点、振荡间断点）。图中展示四种典型间断点：可去(x=1)、跳跃(x=2)、无穷(x=3)、振荡(x=4)。调整参数观察不同类型。',
+    paramLabel: '显示类型',
+    paramMin: 1, paramMax: 4, paramStep: 1, paramDefault: 1,
+    viewType: '2d',
+  },
+  important_limits1: {
+    title: '两个重要极限',
+    section: '函数与极限',
+    math: '\\lim_{x \\to 0}\\frac{\\sin x}{x} = 1, \\quad \\lim_{x \\to \\infty}(1+\\frac{1}{x})^x = e',
+    description: '两个重要极限是微积分的基础：第一个 lim(sin(x)/x)=1 揭示了三角函数与线性的关系，第二个 lim(1+1/x)^x=e 定义了自然常数。图中同时展示两个极限的收敛过程。调整参数观察不同 x 值下的逼近。',
+    paramLabel: 'x 值',
+    paramMin: 0.01, paramMax: 10, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  lhopital1: {
+    title: '洛必达法则',
+    section: '导数与微分',
+    math: "\\lim_{x \\to a} \\frac{f(x)}{g(x)} = \\lim_{x \\to a} \\frac{f'(x)}{g'(x)}",
+    description: "洛必达法则：对于 0/0 或 ∞/∞ 型未定式，lim f(x)/g(x) = lim f'(x)/g'(x)。图中展示原函数之比 f(x)/g(x)（蓝色）和导数之比 f'(x)/g'(x)（红色），两者在极限点趋于相同的值。调整参数观察不同函数的洛必达法则应用。",
+    paramLabel: '逼近程度',
+    paramMin: 0.1, paramMax: 2, paramStep: 0.05, paramDefault: 0.5,
+    viewType: '2d',
+  },
+  monotonicity1: {
+    title: '函数单调性',
+    section: '导数的应用',
+    math: "f'(x) > 0 \\Rightarrow f\\text{单调增}, \\quad f'(x) < 0 \\Rightarrow f\\text{单调减}",
+    description: "函数单调性与导数符号的关系：f'(x)>0 时 f 单调递增，f'(x)<0 时 f 单调递减。图中展示函数 f(x)=x³-3x（蓝色）、其导函数 f'(x)=3x²-3（红色虚线），以及单调递增区间（绿色底色）和单调递减区间（橙色底色）。",
+    paramLabel: '函数系数 a',
+    paramMin: 0.3, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  extrema1: {
+    title: '函数极值',
+    section: '导数的应用',
+    math: "f'(x_0)=0, \\quad f''(x_0)<0 \\Rightarrow \\text{极大值}, \\quad f''(x_0)>0 \\Rightarrow \\text{极小值}",
+    description: "极值的充分条件：f'(x₀)=0 且 f''(x₀)<0 时为极大值，f''(x₀)>0 时为极小值。图中展示函数 f(x)=x⁴-4x² 的极大值点（红色）和极小值点（绿色），以及二阶导数的符号变化。",
+    paramLabel: '函数系数 a',
+    paramMin: 0.3, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  concavity1: {
+    title: '凹凸性与拐点',
+    section: '导数的应用',
+    math: "f''(x) > 0 \\Rightarrow \\text{凹函数}, \\quad f''(x) < 0 \\Rightarrow \\text{凸函数}, \\quad f''(x_0)=0 \\Rightarrow \\text{拐点}",
+    description: "二阶导数决定函数的凹凸性：f''(x)>0 时曲线凹（开口向上），f''(x)<0 时曲线凸（开口向下），f''(x₀)=0 处可能为拐点。图中展示函数 f(x)=x³ 的凹区间（蓝色）和凸区间（红色），以及拐点位置。",
+    paramLabel: '函数系数 a',
+    paramMin: 0.3, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
+  },
+  curvature1: {
+    title: '曲率',
+    section: '导数的应用',
+    math: '\\kappa = \\frac{|f\'\'(x)|}{(1+[f\'(x)]^2)^{3/2}}',
+    description: '曲率 κ 衡量曲线在某点的弯曲程度。曲率越大，弯曲越厉害；直线曲率为0，圆的曲率恒为 1/R。图中展示曲线 f(x) 及其曲率圆（在最大曲率点处），曲率 κ 与曲率半径 R=1/κ 的关系。调整参数观察不同曲线的曲率变化。',
+    paramLabel: '观察点 x₀',
+    paramMin: -2, paramMax: 2, paramStep: 0.1, paramDefault: 0,
+    viewType: '2d',
+  },
+  higher_derivative1: {
+    title: '高阶导数',
+    section: '导数与微分',
+    math: "f^{(n)}(x) = \\frac{d^n f}{dx^n}",
+    description: '高阶导数是导数的导数。图中展示 f(x)=sin(x) 的各阶导数：f(x)（蓝色）、f\'(x)=cos(x)（红色）、f\'\'(x)=-sin(x)（绿色）、f\'\'\'(x)=-cos(x)（橙色）。每求导一次，正弦函数相移 π/2。调整参数观察不同阶数。',
+    paramLabel: '导数阶数 n',
+    paramMin: 0, paramMax: 5, paramStep: 1, paramDefault: 0,
+    viewType: '2d',
+  },
+  substitution1: {
+    title: '换元积分法',
+    section: '不定积分',
+    math: '\\int f(g(x))g\'(x)\\,dx = \\int f(u)\\,du, \\quad u = g(x)',
+    description: '换元积分法（第一类）：令 u=g(x)，则 ∫f(g(x))g\'(x)dx = ∫f(u)du。图中展示原积分变量 x 下的函数（蓝色）和换元后 u 变量下的函数（红色），换元使积分变得简单。调整参数观察不同换元方式。',
+    paramLabel: '换元函数类型',
+    paramMin: 1, paramMax: 3, paramStep: 1, paramDefault: 1,
+    viewType: '2d',
+  },
+  integration_by_parts1: {
+    title: '分部积分法',
+    section: '不定积分',
+    math: '\\int u\\,dv = uv - \\int v\\,du',
+    description: '分部积分公式 ∫u dv = uv - ∫v du 将复杂积分转化为简单积分。图中展示分部积分的几何意义：矩形面积 uv 减去 ∫v du 的面积等于 ∫u dv 的面积。调整参数观察 u 和 dv 的选择对积分的影响。',
+    paramLabel: 'u 的选择',
+    paramMin: 1, paramMax: 3, paramStep: 1, paramDefault: 1,
+    viewType: '2d',
+  },
+  improper_integral1: {
+    title: '反常积分',
+    section: '定积分',
+    math: '\\int_a^{+\\infty} f(x)\\,dx = \\lim_{b \\to +\\infty} \\int_a^b f(x)\\,dx',
+    description: '反常积分将定积分推广到无限区间或无界函数。对于 ∫ₐ^∞ f(x)dx，若极限 lim(b→∞) ∫ₐᵇf(x)dx 存在，则积分收敛；否则发散。图中展示收敛积分（蓝色填充区域趋于有限值）和发散积分（红色填充区域趋于无穷）。调整参数观察收敛与发散的临界状态。',
+    paramLabel: '衰减速度 p',
+    paramMin: 0.3, paramMax: 3, paramStep: 0.1, paramDefault: 1.5,
+    viewType: '2d',
+  },
+  polar_area1: {
+    title: '极坐标面积',
+    section: '定积分的应用',
+    math: 'S = \\frac{1}{2}\\int_\\alpha^\\beta [r(\\theta)]^2\\,d\\theta',
+    description: '极坐标下曲线 r=r(θ) 与射线 θ=α、θ=β 所围区域的面积 S=½∫ₐᵝr²(θ)dθ。图中展示极坐标曲线 r=2+cos(θ)（心形线）及围成区域的填充。调整参数观察不同极坐标曲线的面积。',
+    paramLabel: '花瓣参数 a',
+    paramMin: 0.5, paramMax: 3, paramStep: 0.1, paramDefault: 1,
+    viewType: '2d',
   },
   // ═══════════════════════════════════════════════════════════
   // 多元微积分 (Multivariable Calculus)
@@ -635,6 +774,7 @@ export const modeInfo: Record<LabMode, {
     description: '泰勒展开将函数在某点附近用多项式逼近。随着阶数N增加，逼近范围逐渐扩大。图中展示目标函数sin(x)及其N阶泰勒多项式，观察逼近精度随N的变化。同时展示3D视角下的函数曲面和泰勒多项式曲面。',
     paramLabel: '展开阶数 N',
     paramMin: 1, paramMax: 15, paramStep: 1, paramDefault: 3,
+    viewType: '2d',
   },
   surface_integral1: {
     title: '对面积的曲面积分',

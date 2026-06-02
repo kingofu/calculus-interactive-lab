@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, OrthographicCamera } from '@react-three/drei'
 import { SceneRenderer } from './scene-renderer'
 import { SceneErrorBoundary } from './scene-error-boundary'
 import { SceneTooltip } from './scene-tooltip'
@@ -13,27 +13,20 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToast } from './toast-provider'
 
+// Check if a mode uses 2D viewing (orthographic, no rotation)
+function is2DMode(mode: string): boolean {
+  const info = modeInfo[mode as keyof typeof modeInfo]
+  return info?.viewType === '2d'
+}
+
 // Camera presets for different modes
-function getCameraForMode(mode: string): { position: [number, number, number]; fov: number } {
+function getCameraForMode(mode: string): { position: [number, number, number]; fov: number; is2D?: boolean } {
+  // 2D modes use orthographic camera looking at XY plane
+  if (is2DMode(mode)) {
+    return { position: [0, 0, 10], fov: 50, is2D: true }
+  }
   switch (mode) {
-    // 一元微积分 modes
-    case 'limit1':
-    case 'limit2':
-      return { position: [5, 5, 5], fov: 50 }
-    case 'derivative1':
-    case 'derivative2':
-    case 'derivative3':
-      return { position: [5, 5, 5], fov: 50 }
-    case 'rolle1':
-    case 'lagrange1':
-      return { position: [5, 5, 5], fov: 50 }
-    case 'indef_integral1':
-      return { position: [5, 5, 5], fov: 50 }
-    case 'ftc1':
-    case 'mean_value_integral1':
-      return { position: [5, 5, 5], fov: 50 }
-    case 'area1':
-      return { position: [5, 5, 5], fov: 50 }
+    // 一元微积分 3D modes
     case 'volume_rev1':
       return { position: [6, 5, 6], fov: 50 }
     // 多元微积分 modes
@@ -102,6 +95,27 @@ function getBackgroundForMode(mode: string): string {
     return 'from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/20'
   }
   if (mode === 'volume_rev1') {
+    return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
+  }
+  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') {
+    return 'from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20'
+  }
+  if (mode === 'lhopital1') {
+    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+  }
+  if (mode === 'monotonicity1' || mode === 'extrema1' || mode === 'concavity1' || mode === 'curvature1') {
+    return 'from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/20'
+  }
+  if (mode === 'higher_derivative1') {
+    return 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20'
+  }
+  if (mode === 'substitution1' || mode === 'integration_by_parts1') {
+    return 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/20'
+  }
+  if (mode === 'improper_integral1') {
+    return 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20'
+  }
+  if (mode === 'polar_area1') {
     return 'from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/20'
   }
   // 多元微积分 backgrounds
@@ -208,6 +222,14 @@ function getModeAccentColor(mode: string): string {
   if (mode === 'ftc1' || mode === 'mean_value_integral1') return 'bg-emerald-500'
   if (mode === 'area1') return 'bg-sky-500'
   if (mode === 'volume_rev1') return 'bg-sky-500'
+  if (mode === 'continuity1' || mode === 'discontinuity1' || mode === 'important_limits1') return 'bg-rose-500'
+  if (mode === 'lhopital1') return 'bg-amber-500'
+  if (mode === 'monotonicity1' || mode === 'extrema1') return 'bg-teal-500'
+  if (mode === 'concavity1' || mode === 'curvature1') return 'bg-cyan-500'
+  if (mode === 'higher_derivative1') return 'bg-amber-500'
+  if (mode === 'substitution1' || mode === 'integration_by_parts1') return 'bg-purple-500'
+  if (mode === 'improper_integral1') return 'bg-emerald-500'
+  if (mode === 'polar_area1') return 'bg-sky-500'
   // 多元微积分 accent colors
   if (mode.startsWith('step')) return 'bg-emerald-500'
   if (mode.startsWith('prop')) return 'bg-sky-500'
@@ -303,8 +325,8 @@ export function Viewport() {
   }, [])
 
   // Accessibility: generate ARIA description for the current mode
-  const ariaLabel = `3D可视化: ${info.title} - 交互式数学可视化，可拖拽旋转和滚轮缩放`
-  const ariaDescription = `${info.section}类别的${info.title}模式。${info.description} 使用鼠标拖拽可旋转3D视图，滚轮可缩放。`
+  const ariaLabel = `${cameraConfig.is2D ? '2D' : '3D'}可视化: ${info.title} - 交互式数学可视化，${cameraConfig.is2D ? '可拖拽平移和滚轮缩放' : '可拖拽旋转和滚轮缩放'}`
+  const ariaDescription = `${info.section}类别的${info.title}模式。${info.description} ${cameraConfig.is2D ? '使用鼠标拖拽可平移视图，滚轮可缩放。' : '使用鼠标拖拽可旋转3D视图，滚轮可缩放。'}`
 
   return (
     <div
@@ -337,20 +359,22 @@ export function Viewport() {
 
       {/* Top-right buttons */}
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-7 w-7 backdrop-blur-sm hover:bg-background/70 ${autoRotate ? 'bg-background/40 text-emerald-600 dark:text-emerald-400' : 'bg-background/60 text-muted-foreground'}`}
-              onClick={() => setAutoRotate(!autoRotate)}
-            >
-              {autoRotate ? <RotateCw className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-              <span className="sr-only">{autoRotate ? '自动旋转中' : '已暂停旋转'}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">{autoRotate ? '自动旋转 (点击暂停)' : '旋转已暂停 (点击恢复)'}</TooltipContent>
-        </Tooltip>
+        {!cameraConfig.is2D && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-7 w-7 backdrop-blur-sm hover:bg-background/70 ${autoRotate ? 'bg-background/40 text-emerald-600 dark:text-emerald-400' : 'bg-background/60 text-muted-foreground'}`}
+                onClick={() => setAutoRotate(!autoRotate)}
+              >
+                {autoRotate ? <RotateCw className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+                <span className="sr-only">{autoRotate ? '自动旋转中' : '已暂停旋转'}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">{autoRotate ? '自动旋转 (点击暂停)' : '旋转已暂停 (点击恢复)'}</TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -402,17 +426,21 @@ export function Viewport() {
       <div className="absolute bottom-2 right-2 z-10 pointer-events-none">
         <div className="flex items-center gap-1 text-[9px] text-muted-foreground/50 bg-background/40 backdrop-blur-sm px-1.5 py-0.5 rounded">
           <Move3d className="h-2.5 w-2.5" />
-          拖拽旋转 · 滚轮缩放
+          {cameraConfig.is2D ? '拖拽平移 · 滚轮缩放' : '拖拽旋转 · 滚轮缩放'}
         </div>
       </div>
 
       <SceneErrorBoundary onRetry={() => setSceneKey(prev => prev + 1)}>
         <Suspense fallback={<LoadingIndicator />}>
           <Canvas
-            camera={{ position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
+            camera={cameraConfig.is2D ? undefined : { position: cameraConfig.position, fov: cameraConfig.fov, near: 0.1, far: 100 }}
+            orthographic={cameraConfig.is2D}
             gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
             dpr={[1, 2]}
           >
+            {cameraConfig.is2D && (
+              <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />
+            )}
             {/* Enhanced lighting */}
             <ambientLight intensity={0.5} />
             <directionalLight position={[10, 15, 10]} intensity={0.8} color="#ffffff" />
@@ -426,6 +454,7 @@ export function Viewport() {
               rotateSpeed={0.5}
               minDistance={3}
               maxDistance={25}
+              enableRotate={!cameraConfig.is2D}
             />
           </Canvas>
         </Suspense>

@@ -5815,6 +5815,959 @@ function VolumeRev1Scene() {
   )
 }
 
+// --- 2D Axes helper for single-variable calculus modes ---
+function Axes2D({ xRange = 3, yRange = 3 }: { xRange?: number; yRange?: number }) {
+  const gridPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -Math.floor(xRange); i <= Math.floor(xRange); i++) {
+      pts.push(i, 0.001, -yRange, i, 0.001, yRange)
+    }
+    for (let j = -Math.floor(yRange); j <= Math.floor(yRange); j++) {
+      pts.push(-xRange, 0.001, j, xRange, 0.001, j)
+    }
+    return new Float32Array(pts)
+  }, [xRange, yRange])
+
+  return (
+    <group>
+      {/* X axis */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([-xRange, 0.01, 0, xRange, 0.01, 0]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#888888" linewidth={1} />
+      </line>
+      {/* Y axis (mathematical y = R3F z) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.01, -yRange, 0, 0.01, yRange]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#888888" linewidth={1} />
+      </line>
+      {/* Grid */}
+      <lineSegments>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[gridPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#cccccc" transparent opacity={0.2} />
+      </lineSegments>
+      {/* Axis labels */}
+      <Text position={[xRange + 0.3, 0.01, 0]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">x</Text>
+      <Text position={[0, 0.01, yRange + 0.3]} fontSize={0.25} color="#666666" anchorX="center" anchorY="middle">y</Text>
+      {/* Tick marks */}
+      {Array.from({ length: Math.floor(xRange) * 2 + 1 }, (_, i) => i - Math.floor(xRange)).filter(v => v !== 0).map(v => (
+        <group key={`xt${v}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([v, 0.01, -0.08, v, 0.01, 0.08]), 3]} count={2} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#888888" />
+          </line>
+          <Text position={[v, 0.01, -0.25]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+        </group>
+      ))}
+      {Array.from({ length: Math.floor(yRange) * 2 + 1 }, (_, i) => i - Math.floor(yRange)).filter(v => v !== 0).map(v => (
+        <group key={`yt${v}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([-0.08, 0.01, v, 0.08, 0.01, v]), 3]} count={2} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#888888" />
+          </line>
+          <Text position={[0.25, 0.01, v]} fontSize={0.15} color="#888888" anchorX="center" anchorY="middle">{v}</Text>
+        </group>
+      ))}
+    </group>
+  )
+}
+
+// --- 2D filled region between curve and axis ---
+function FilledRegion2D({ xMin, xMax, fn, color = '#10b981', opacity = 0.25, yBase = 0, res = 80 }: {
+  xMin: number; xMax: number; fn: (x: number) => number; color?: string; opacity?: number; yBase?: number; res?: number
+}) {
+  const geometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const dx = (xMax - xMin) / res
+    for (let i = 0; i <= res; i++) {
+      const x = xMin + i * dx
+      vertices.push(x, 0.005, fn(x))
+      vertices.push(x, 0.005, yBase)
+    }
+    for (let i = 0; i < res; i++) {
+      const a = i * 2; const b = a + 1; const c = a + 2; const d = a + 3
+      indices.push(a, c, b, b, c, d)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [xMin, xMax, fn, yBase, res])
+  return (
+    <mesh geometry={geometry}>
+      <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} />
+    </mesh>
+  )
+}
+
+// 1. continuity1 - 函数连续性
+function Continuity1Scene() {
+  const { paramValue } = useLabStore()
+  const isContinuous = paramValue >= 1
+
+  const contPoints = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, x * x)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const discontLeft = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i < 0; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, x * x + 1)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const discontRight = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, x * x - 0.5)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  return (
+    <group>
+      <Axes2D xRange={3.5} yRange={4} />
+      {/* Continuous function f(x)=x² (always shown) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[contPoints, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#22c55e" linewidth={2} />
+      </line>
+      {/* Discontinuous function g(x) with jump at x=0 */}
+      {!isContinuous && (
+        <>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[discontLeft, 3]} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ef4444" linewidth={2} />
+          </line>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[discontRight, 3]} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ef4444" linewidth={2} />
+          </line>
+          {/* Open/closed circles at discontinuity */}
+          <mesh position={[0, 0.02, 1]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+          <mesh position={[0, 0.02, -0.5]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+          {/* Dashed line for missing point */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, -0.5, 0, 0.02, 0]), 3]} count={2} />
+            </bufferGeometry>
+            <lineBasicMaterial color="#ef4444" opacity={0.4} transparent />
+          </line>
+        </>
+      )}
+      <Html position={[0, 0.02, 4.2]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-green-600 dark:text-green-400 font-semibold">连续函数 f(x) = x²</div>
+          {!isContinuous && <div className="text-red-600 dark:text-red-400 font-semibold">不连续函数 g(x)：x=0处跳跃间断</div>}
+          <div className="text-muted-foreground mt-1">连续性: {isContinuous ? '✓ 连续' : '✗ 不连续'}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 2. discontinuity1 - 间断点类型
+function Discontinuity1Scene() {
+  const { paramValue } = useLabStore()
+  const dtype = Math.round(paramValue)
+
+  // Removable (hole) at x=1: f(x) = (x²-1)/(x-1) = x+1 except hole at x=1
+  const removablePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      if (Math.abs(x - 1) < 0.05) continue
+      pts.push(x, 0.02, x + 1)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // Jump (step) at x=2
+  const jumpLeft = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i < 200; i++) { const x = (i / 100) * 3; if (x >= 2) break; pts.push(x, 0.02, x > 0 ? 1 : -1) }
+    return new Float32Array(pts)
+  }, [])
+  const jumpRight = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x < 2) continue; pts.push(x, 0.02, -1) }
+    return new Float32Array(pts)
+  }, [])
+
+  // Infinite at x=3: f(x) = 1/(x-3)
+  const infiniteLeft = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x >= 3 - 0.1) break; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, 0.02, y) }
+    return new Float32Array(pts)
+  }, [])
+  const infiniteRight = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) { const x = (i / 100) * 3; if (x <= 3 + 0.1) continue; const y = 1 / (x - 3); if (Math.abs(y) < 5) pts.push(x, 0.02, y) }
+    return new Float32Array(pts)
+  }, [])
+
+  // Oscillating: f(x) = sin(1/x) near x=0
+  const oscPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 200) * 3
+      if (Math.abs(x) < 0.02) continue
+      const y = Math.sin(1 / x)
+      pts.push(x, 0.02, y)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const titles: Record<number, { name: string; desc: string; color: string }> = {
+    1: { name: '可去间断点', desc: 'f(x)=(x²-1)/(x-1)，x=1处有洞', color: '#3b82f6' },
+    2: { name: '跳跃间断点', desc: 'f(x)在x=2处左右极限不相等', color: '#f59e0b' },
+    3: { name: '无穷间断点', desc: 'f(x)=1/(x-3)，x=3处趋向无穷', color: '#ef4444' },
+    4: { name: '振荡间断点', desc: 'f(x)=sin(1/x)，x=0处无限振荡', color: '#8b5cf6' },
+  }
+  const info = titles[dtype] || titles[1]
+
+  return (
+    <group>
+      <Axes2D xRange={3.5} yRange={4} />
+      {dtype === 1 && (<>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[removablePts, 3]} /></bufferGeometry><lineBasicMaterial color="#3b82f6" linewidth={2} /></line>
+        <mesh position={[1, 0.02, 2]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([1, 0.02, 1.85, 1, 0.02, 2.15]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#3b82f6" opacity={0.3} transparent /></line>
+      </>)}
+      {dtype === 2 && (<>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[jumpLeft, 3]} /></bufferGeometry><lineBasicMaterial color="#f59e0b" linewidth={2} /></line>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[jumpRight, 3]} /></bufferGeometry><lineBasicMaterial color="#f59e0b" linewidth={2} /></line>
+        <mesh position={[2, 0.02, 1]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+      </>)}
+      {dtype === 3 && (<>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[infiniteLeft, 3]} /></bufferGeometry><lineBasicMaterial color="#ef4444" linewidth={2} /></line>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[infiniteRight, 3]} /></bufferGeometry><lineBasicMaterial color="#ef4444" linewidth={2} /></line>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[new Float32Array([3, 0.02, -4, 3, 0.02, 4]), 3]} count={2} /></bufferGeometry><lineBasicMaterial color="#ef4444" opacity={0.3} transparent linewidth={1} /></line>
+      </>)}
+      {dtype === 4 && (<>
+        <line><bufferGeometry><bufferAttribute attach="attributes-position" args={[oscPts, 3]} /></bufferGeometry><lineBasicMaterial color="#8b5cf6" linewidth={2} /></line>
+      </>)}
+      <Html position={[0, 0.02, 4.2]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="font-semibold" style={{ color: info.color }}>{info.name}</div>
+          <div className="text-muted-foreground">{info.desc}</div>
+          <div className="text-muted-foreground mt-1">类型 {dtype}/4：1=可去 2=跳跃 3=无穷 4=振荡</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 3. important_limits1 - 两个重要极限
+function ImportantLimits1Scene() {
+  const { paramValue: xVal } = useLabStore()
+
+  // sin(x)/x → 1
+  const sinOverXPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 200; i++) {
+      const x = (i / 200) * 10
+      const y = Math.sin(x) / x
+      pts.push(x, 0.02, y + 4)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  // (1+1/x)^x → e
+  const expLimitPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 200; i++) {
+      const x = (i / 200) * 10
+      if (x < 0.1) continue
+      const y = Math.pow(1 + 1 / x, x)
+      pts.push(x, 0.02, y - 1.5)
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const sinVal = xVal > 0.001 ? Math.sin(xVal) / xVal : 1
+  const expVal = xVal > 0.1 ? Math.pow(1 + 1 / xVal, xVal) : Math.E
+
+  return (
+    <group>
+      <Axes2D xRange={5.5} yRange={4} />
+      {/* Top: sin(x)/x → 1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[sinOverXPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* Dashed line at y=1 (shifted up 4) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, 5, 5, 0.02, 5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.5} />
+      </line>
+      <Text position={[5.5, 0.02, 5]} fontSize={0.18} color="#ef4444" anchorX="left">y=1</Text>
+
+      {/* Bottom: (1+1/x)^x → e */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[expLimitPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Dashed line at y=e (shifted down 1.5) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, Math.E - 1.5, 5, 0.02, Math.E - 1.5]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.5} />
+      </line>
+      <Text position={[5.5, 0.02, Math.E - 1.5]} fontSize={0.18} color="#ef4444" anchorX="left">y=e</Text>
+
+      {/* Current x indicator */}
+      <mesh position={[xVal, 0.02, sinVal + 4]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+      <mesh position={[xVal, 0.02, expVal - 1.5]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+
+      <Html position={[0, 0.02, -3.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x → 1：x={xVal.toFixed(2)} 时 = {sinVal.toFixed(4)}</div>
+          <div className="text-amber-600 dark:text-amber-400 font-semibold">(1+1/x)^x → e：x={xVal.toFixed(2)} 时 = {expVal.toFixed(4)}</div>
+          <div className="text-muted-foreground">e ≈ {Math.E.toFixed(6)}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 4. lhopital1 - 洛必达法则
+function Lhopital1Scene() {
+  const { paramValue: eps } = useLabStore()
+
+  const fOverGPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 200; i++) {
+      const x = (i / 200) * eps * 4
+      if (x < 0.001) continue
+      pts.push(x, 0.02, Math.sin(x) / x)
+    }
+    return new Float32Array(pts)
+  }, [eps])
+
+  const fPrimeOverGPrimePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 200; i++) {
+      const x = (i / 200) * eps * 4
+      if (x < 0.001) continue
+      pts.push(x, 0.02, Math.cos(x) / 1)
+    }
+    return new Float32Array(pts)
+  }, [eps])
+
+  const fOverGVal = eps > 0.001 ? Math.sin(eps) / eps : 1
+  const fPrimeOverGPrimeVal = Math.cos(eps)
+
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={2} />
+      {/* f(x)/g(x) = sin(x)/x */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fOverGPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* f'(x)/g'(x) = cos(x)/1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPrimeOverGPrimePts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      {/* Limit line y=1 */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[new Float32Array([0, 0.02, 1, 3, 0.02, 1]), 3]} count={2} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#22c55e" linewidth={1} transparent opacity={0.5} />
+      </line>
+      <Text position={[3.2, 0.02, 1]} fontSize={0.18} color="#22c55e" anchorX="left">L=1</Text>
+      {/* Indicator dots */}
+      <mesh position={[eps, 0.02, fOverGVal]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#3b82f6" /></mesh>
+      <mesh position={[eps, 0.02, fPrimeOverGPrimeVal]}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+
+      <Html position={[0, 0.02, 2.3]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">sin(x)/x = {fOverGVal.toFixed(4)}</div>
+          <div className="text-red-600 dark:text-red-400 font-semibold">cos(x)/1 = {fPrimeOverGPrimeVal.toFixed(4)}</div>
+          <div className="text-green-600 dark:text-green-400 mt-1">极限值 L = 1</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 5. monotonicity1 - 函数单调性
+function Monotonicity1Scene() {
+  const { paramValue: a } = useLabStore()
+
+  const fPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, a * (x * x * x - 3 * x))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  const fPrimePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, a * (3 * x * x - 3))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={5} />
+      {/* Increasing region (green) f'>0: x<-1 or x>1 */}
+      <FilledRegion2D xMin={-3} xMax={-1} fn={() => 5} color="#22c55e" opacity={0.1} yBase={-5} />
+      <FilledRegion2D xMin={1} xMax={3} fn={() => 5} color="#22c55e" opacity={0.1} yBase={-5} />
+      {/* Decreasing region (orange) f'<0: -1<x<1 */}
+      <FilledRegion2D xMin={-1} xMax={1} fn={() => 5} color="#f97316" opacity={0.1} yBase={-5} />
+      {/* f(x) curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* f'(x) curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPrimePts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} transparent opacity={0.7} />
+      </line>
+      {/* Critical points */}
+      <mesh position={[-1, 0.02, a * (-1 + 3)]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <mesh position={[1, 0.02, a * (1 - 3)]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#f97316" /></mesh>
+      <Html position={[0, 0.02, 5.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x³-3x)</div>
+          <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(3x²-3)</div>
+          <div className="text-green-600">绿色: f&apos;&gt;0 递增</div>
+          <div className="text-orange-600">橙色: f&apos;&lt;0 递减</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 6. extrema1 - 函数极值
+function Extrema1Scene() {
+  const { paramValue: a } = useLabStore()
+
+  const fPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, a * (x * x * x * x - 4 * x * x))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  const fPrimePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, a * (4 * x * x * x - 8 * x))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  // Critical points: x=0 (local max), x=±√2 (local min)
+  const sqrt2 = Math.sqrt(2)
+
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={5} />
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPrimePts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} transparent opacity={0.6} />
+      </line>
+      {/* Local maximum at x=0 (red) */}
+      <mesh position={[0, 0.02, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+      <Text position={[0.2, 0.02, 0.3]} fontSize={0.15} color="#ef4444">极大</Text>
+      {/* Local minima at x=±√2 (green) */}
+      <mesh position={[-sqrt2, 0.02, a * (4 - 8)]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <mesh position={[sqrt2, 0.02, a * (4 - 8)]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <Text position={[-sqrt2, 0.02, a * (4 - 8) + 0.4]} fontSize={0.15} color="#22c55e">极小</Text>
+      <Text position={[sqrt2, 0.02, a * (4 - 8) + 0.4]} fontSize={0.15} color="#22c55e">极小</Text>
+      <Html position={[0, 0.02, 5.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = {a.toFixed(1)}(x⁴-4x²)</div>
+          <div className="text-red-600 dark:text-red-400">f&apos;(x) = {a.toFixed(1)}(4x³-8x)</div>
+          <div className="text-red-600">红色: 极大值点(x=0)</div>
+          <div className="text-green-600">绿色: 极小值点(x=±√2)</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 7. concavity1 - 凹凸性与拐点
+function Concavity1Scene() {
+  const { paramValue: a } = useLabStore()
+
+  const fPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      pts.push(x, 0.02, a * x * x * x)
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  // f(x)=a*x³, f''(x)=6a*x: concave up (blue) when x>0, concave down (red) when x<0
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={5} />
+      {/* Concave up region (x>0) - blue fill */}
+      <FilledRegion2D xMin={0} xMax={3} fn={(x) => a * x * x * x} color="#3b82f6" opacity={0.2} />
+      {/* Concave down region (x<0) - red fill */}
+      <FilledRegion2D xMin={-3} xMax={0} fn={(x) => a * x * x * x} color="#ef4444" opacity={0.2} />
+      {/* f(x) curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[fPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#f59e0b" linewidth={2} />
+      </line>
+      {/* Inflection point at x=0 */}
+      <mesh position={[0, 0.02, 0]}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#22c55e" /></mesh>
+      <Text position={[0.2, 0.02, 0.3]} fontSize={0.18} color="#22c55e">拐点</Text>
+      <Html position={[0, 0.02, 5.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-amber-600 dark:text-amber-400 font-semibold">f(x) = {a.toFixed(1)}x³</div>
+          <div className="text-blue-600">蓝色: 凹区间(x&gt;0, f&apos;&apos;&gt;0)</div>
+          <div className="text-red-600">红色: 凸区间(x&lt;0, f&apos;&apos;&lt;0)</div>
+          <div className="text-green-600">拐点: x=0, f&apos;&apos;(0)=0</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 8. curvature1 - 曲率
+function Curvature1Scene() {
+  const { paramValue: x0 } = useLabStore()
+
+  const f = (x: number) => Math.cos(x)
+  const fPrime = (x: number) => -Math.sin(x)
+  const fDoublePrime = (x: number) => -Math.cos(x)
+
+  const curvePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 4
+      pts.push(x, 0.02, f(x))
+    }
+    return new Float32Array(pts)
+  }, [])
+
+  const kappa = Math.abs(fDoublePrime(x0)) / Math.pow(1 + fPrime(x0) * fPrime(x0), 1.5)
+  const R = kappa > 0.001 ? 1 / kappa : 100
+  const y0 = f(x0)
+  // Center of curvature circle: normal direction
+  const nx = -fPrime(x0)
+  const ny = 1
+  const nLen = Math.sqrt(nx * nx + ny * ny)
+  const cx = x0 + (nx / nLen) * R * (fDoublePrime(x0) > 0 ? 1 : -1)
+  const cy = y0 + (ny / nLen) * R * (fDoublePrime(x0) > 0 ? 1 : -1)
+
+  const circPts = useMemo(() => {
+    const pts: number[] = []
+    const res = 64
+    for (let i = 0; i <= res; i++) {
+      const theta = (2 * Math.PI * i) / res
+      pts.push(cx + R * Math.cos(theta), 0.015, cy + R * Math.sin(theta))
+    }
+    return new Float32Array(pts)
+  }, [cx, cy, R])
+
+  return (
+    <group>
+      <Axes2D xRange={4.5} yRange={2} />
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* Curvature circle */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[circPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={1} transparent opacity={0.6} />
+      </line>
+      {/* Point on curve */}
+      <mesh position={[x0, 0.02, y0]}><sphereGeometry args={[0.1, 16, 16]} /><meshBasicMaterial color="#ef4444" /></mesh>
+      {/* Center of curvature */}
+      <mesh position={[cx, 0.015, cy]}><sphereGeometry args={[0.06, 16, 16]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+      <Html position={[0, 0.02, 2.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">f(x) = cos(x)</div>
+          <div className="text-red-600">曲率 κ = {kappa.toFixed(4)}</div>
+          <div className="text-amber-600">曲率半径 R = {R.toFixed(4)}</div>
+          <div className="text-muted-foreground">观察点 x₀ = {x0.toFixed(2)}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 9. higher_derivative1 - 高阶导数
+function HigherDerivative1Scene() {
+  const { paramValue } = useLabStore()
+  const n = Math.round(paramValue)
+
+  const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4']
+  const labels = ['f(x)=sin(x)', "f'(x)=cos(x)", "f''(x)=-sin(x)", "f'''(x)=-cos(x)", "f⁽⁴⁾(x)=sin(x)", "f⁽⁵⁾(x)=cos(x)"]
+
+  const allCurves = useMemo(() => {
+    const curves: Float32Array[] = []
+    for (let d = 0; d <= 5; d++) {
+      const pts: number[] = []
+      const phase = -d * Math.PI / 2
+      for (let i = -200; i <= 200; i++) {
+        const x = (i / 100) * 5
+        pts.push(x, 0.02, Math.sin(x + phase) * (d === 0 ? 1 : 1))
+      }
+      curves.push(new Float32Array(pts))
+    }
+    return curves
+  }, [])
+
+  return (
+    <group>
+      <Axes2D xRange={5.5} yRange={2} />
+      {/* Draw all derivatives up to n */}
+      {allCurves.map((pts, idx) => idx <= n ? (
+        <line key={idx}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+          </bufferGeometry>
+          <lineBasicMaterial color={colors[idx]} linewidth={idx === n ? 3 : 1} transparent opacity={idx === n ? 1 : 0.4} />
+        </line>
+      ) : null)}
+      <Html position={[0, 0.02, 2.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          {Array.from({ length: n + 1 }, (_, i) => (
+            <div key={i} style={{ color: colors[i] }} className={i === n ? 'font-semibold' : 'opacity-70'}>
+              {labels[i]}
+            </div>
+          ))}
+          <div className="text-muted-foreground mt-1">当前阶数: n = {n}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 10. substitution1 - 换元积分法
+function Substitution1Scene() {
+  const { paramValue: subType } = useLabStore()
+  const st = Math.round(subType)
+
+  // Type 1: ∫2x·cos(x²)dx, u=x² → ∫cos(u)du
+  // Type 2: ∫2x·e^(x²)dx, u=x² → ∫e^u du
+  // Type 3: ∫x/√(1-x²)dx, u=1-x² → -∫1/(2√u)du
+
+  const origPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 2.5
+      let y = 0
+      if (st === 1) y = 2 * x * Math.cos(x * x)
+      else if (st === 2) y = 2 * x * Math.exp(-x * x * 0.3)
+      else { if (Math.abs(x) < 1) y = x / Math.sqrt(Math.max(0.001, 1 - x * x)) }
+      if (Math.abs(y) < 5) pts.push(x, 0.02, y)
+    }
+    return new Float32Array(pts)
+  }, [st])
+
+  const subPts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 0; i <= 200; i++) {
+      const u = (i / 200) * 5
+      let y = 0
+      if (st === 1) y = Math.cos(u)
+      else if (st === 2) y = Math.exp(-u * 0.3)
+      else y = -1 / (2 * Math.sqrt(Math.max(0.001, u)))
+      if (Math.abs(y) < 5) pts.push(u, 0.02, y + 4)
+    }
+    return new Float32Array(pts)
+  }, [st])
+
+  const subLabels = ['u=x², ∫cos(u)du', 'u=x², ∫e^u du', 'u=1-x², -∫1/(2√u)du']
+
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={5} />
+      {/* Original function */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[origPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      {/* Substituted function (shifted up) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[subPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      <Text position={[-2.5, 0.02, -2]} fontSize={0.2} color="#3b82f6">原函数 f(g(x))g&apos;(x)</Text>
+      <Text position={[0, 0.02, 6]} fontSize={0.2} color="#ef4444">换元后 f(u)</Text>
+      <Html position={[0, 0.02, -4]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold">原积分变量 x</div>
+          <div className="text-red-600 dark:text-red-400 font-semibold">换元: {subLabels[st - 1]}</div>
+          <div className="text-muted-foreground">类型 {st}/3</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 11. integration_by_parts1 - 分部积分法
+function IntegrationByParts1Scene() {
+  const { paramValue: uType } = useLabStore()
+  const ut = Math.round(uType)
+
+  // u=x, dv=e^x dx → uv - ∫v du = x·e^x - ∫e^x dx
+  // Type 1: u=x, v=e^x
+  // Type 2: u=x², v=e^x
+  // Type 3: u=ln(x), v=x
+
+  const uCurve = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      let y = 0
+      if (ut === 1) y = x
+      else if (ut === 2) y = x * x
+      else if (x > 0.01) y = Math.log(x)
+      if (Math.abs(y) < 5) pts.push(x, 0.02, y)
+    }
+    return new Float32Array(pts)
+  }, [ut])
+
+  const vCurve = useMemo(() => {
+    const pts: number[] = []
+    for (let i = -200; i <= 200; i++) {
+      const x = (i / 100) * 3
+      let y = 0
+      if (ut === 1 || ut === 2) y = Math.exp(x * 0.5)
+      else y = x
+      if (Math.abs(y) < 5) pts.push(x, 0.02, y + 3)
+    }
+    return new Float32Array(pts)
+  }, [ut])
+
+  const uvLabel = ut === 1 ? 'u=x, dv=e^x dx' : ut === 2 ? 'u=x², dv=e^x dx' : 'u=ln(x), dv=x dx'
+
+  return (
+    <group>
+      <Axes2D xRange={3} yRange={5} />
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[uCurve, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#3b82f6" linewidth={2} />
+      </line>
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[vCurve, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#ef4444" linewidth={2} />
+      </line>
+      <Text position={[-2.5, 0.02, 2]} fontSize={0.2} color="#3b82f6">u(x)</Text>
+      <Text position={[-2.5, 0.02, 5]} fontSize={0.2} color="#ef4444">v(x)</Text>
+      <Html position={[0, 0.02, -4]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="font-semibold text-emerald-600">∫u dv = uv - ∫v du</div>
+          <div className="text-blue-600 dark:text-blue-400">u(x) (蓝色)</div>
+          <div className="text-red-600 dark:text-red-400">v(x) (红色)</div>
+          <div className="text-muted-foreground">{uvLabel}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 12. improper_integral1 - 反常积分
+function ImproperIntegral1Scene() {
+  const { paramValue: p } = useLabStore()
+  const convergent = p > 1
+
+  const curvePts = useMemo(() => {
+    const pts: number[] = []
+    for (let i = 1; i <= 300; i++) {
+      const x = 0.5 + (i / 300) * 9.5
+      const y = 1 / Math.pow(x, p)
+      if (y < 5) pts.push(x - 5, 0.02, y)
+    }
+    return new Float32Array(pts)
+  }, [p])
+
+  const fillFn = useMemo(() => (x: number) => {
+    const realX = x + 5
+    if (realX < 1) return 0
+    return Math.min(1 / Math.pow(realX, p), 5)
+  }, [p])
+
+  // Compute integral value (numerical approximation)
+  const integralVal = useMemo(() => {
+    let sum = 0
+    const n = 1000
+    const dx = 20 / n
+    for (let i = 0; i < n; i++) {
+      const x = 1 + (i + 0.5) * dx
+      sum += (1 / Math.pow(x, p)) * dx
+    }
+    return sum
+  }, [p])
+
+  return (
+    <group>
+      <Axes2D xRange={5.5} yRange={4} />
+      {/* Filled area under curve */}
+      <FilledRegion2D xMin={-4} xMax={5} fn={fillFn} color={convergent ? '#3b82f6' : '#ef4444'} opacity={0.25} yBase={0} res={120} />
+      {/* Curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[curvePts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={convergent ? '#3b82f6' : '#ef4444'} linewidth={2} />
+      </line>
+      <Html position={[0, 0.02, 4.5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="font-semibold" style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
+            ∫₁^∞ 1/x^{p.toFixed(1)} dx
+          </div>
+          <div style={{ color: convergent ? '#3b82f6' : '#ef4444' }}>
+            {convergent ? '✓ 收敛' : '✗ 发散'}
+          </div>
+          <div className="text-muted-foreground">近似值 ≈ {integralVal.toFixed(4)}</div>
+          <div className="text-muted-foreground">p = {p.toFixed(1)} {convergent ? '(p>1)' : '(p≤1)'}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+// 13. polar_area1 - 极坐标面积
+function PolarArea1Scene() {
+  const { paramValue: a } = useLabStore()
+
+  const polarPts = useMemo(() => {
+    const pts: number[] = []
+    const res = 200
+    for (let i = 0; i <= res; i++) {
+      const theta = (2 * Math.PI * i) / res
+      const r = a + Math.cos(theta)
+      pts.push(r * Math.cos(theta), 0.02, r * Math.sin(theta))
+    }
+    return new Float32Array(pts)
+  }, [a])
+
+  // Filled area using triangulated mesh
+  const areaGeom = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const vertices: number[] = []
+    const indices: number[] = []
+    const res = 100
+    // Center vertex
+    vertices.push(0, 0.01, 0)
+    for (let i = 0; i <= res; i++) {
+      const theta = (2 * Math.PI * i) / res
+      const r = a + Math.cos(theta)
+      vertices.push(r * Math.cos(theta), 0.01, r * Math.sin(theta))
+    }
+    for (let i = 0; i < res; i++) {
+      indices.push(0, i + 1, i + 2)
+    }
+    geom.setIndex(indices)
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geom.computeVertexNormals()
+    return geom
+  }, [a])
+
+  // Area = ½∫₀²π (a+cosθ)² dθ = π(a² + 1/2)
+  const area = Math.PI * (a * a + 0.5)
+
+  return (
+    <group>
+      <Axes2D xRange={4.5} yRange={4.5} />
+      {/* Filled area */}
+      <mesh geometry={areaGeom}>
+        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.25} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Polar curve */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[polarPts, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#8b5cf6" linewidth={2} />
+      </line>
+      <Html position={[0, 0.02, 5]} center>
+        <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+          <div className="text-violet-600 dark:text-violet-400 font-semibold">r = {a.toFixed(1)} + cos(θ)</div>
+          <div className="text-violet-600">S = ½∫r²(θ)dθ</div>
+          <div className="text-emerald-600 dark:text-emerald-400">S = π({a.toFixed(1)}² + ½) = {area.toFixed(4)}</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
 export function SceneRenderer() {
   const { mode, paramValue, paramValue2 } = useLabStore()
 
@@ -6190,6 +7143,47 @@ export function SceneRenderer() {
 
       {mode === 'volume_rev1' && (
         <VolumeRev1Scene />
+      )}
+
+      {/* Single-variable calculus 2D modes */}
+      {mode === 'continuity1' && (
+        <Continuity1Scene />
+      )}
+      {mode === 'discontinuity1' && (
+        <Discontinuity1Scene />
+      )}
+      {mode === 'important_limits1' && (
+        <ImportantLimits1Scene />
+      )}
+      {mode === 'lhopital1' && (
+        <Lhopital1Scene />
+      )}
+      {mode === 'monotonicity1' && (
+        <Monotonicity1Scene />
+      )}
+      {mode === 'extrema1' && (
+        <Extrema1Scene />
+      )}
+      {mode === 'concavity1' && (
+        <Concavity1Scene />
+      )}
+      {mode === 'curvature1' && (
+        <Curvature1Scene />
+      )}
+      {mode === 'higher_derivative1' && (
+        <HigherDerivative1Scene />
+      )}
+      {mode === 'substitution1' && (
+        <Substitution1Scene />
+      )}
+      {mode === 'integration_by_parts1' && (
+        <IntegrationByParts1Scene />
+      )}
+      {mode === 'improper_integral1' && (
+        <ImproperIntegral1Scene />
+      )}
+      {mode === 'polar_area1' && (
+        <PolarArea1Scene />
       )}
     </>
   )
