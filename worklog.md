@@ -2758,3 +2758,39 @@ Stage Summary:
 - "二重积分基本性质"从7个减少到3个（区域可加、估值、中值）
 - "收敛演示"从2个减少到1个（保留收敛动画）
 - 所有修改通过lint和浏览器验证
+
+---
+Task ID: 14
+Agent: Main
+Task: Remove "最近访问" (recent visits) feature and clean up 10 deleted mode remnants
+
+Work Log:
+- Removed `recentModes` state from `src/store/lab-store.ts`:
+  - Removed `recentModes: LabMode[]` from LabState interface
+  - Removed `recentModes: ['limit1']` initial state
+  - Removed `recentModes` update logic from setMode (was tracking last 10 visited modes)
+- Removed "最近访问" section from `src/components/lab/sidebar.tsx`:
+  - Removed `Clock` icon import from lucide-react
+  - Removed `recentModes` from useLabStore destructuring
+  - Removed entire "最近访问" section (lines 912-947) with Clock icon, tag-style buttons
+- Cleaned up dead code for 10 previously-deleted modes in scene-renderer.tsx:
+  - Removed `ImportantLimits1Scene` function (重要极限, ~81 lines)
+  - Removed `Lhopital1Scene` function (洛必达法则, ~68 lines)
+  - Removed `HigherDerivative1Scene` function (高阶导数, ~49 lines)
+  - Removed `Substitution1Scene` function (换元积分法, ~68 lines)
+  - Removed `IntegrationByParts1Scene` function (分部积分法, ~67 lines)
+  - Removed `ErrorAnalysisScene` function (误差分析/convergence2, ~128 lines)
+  - Removed 5 dead render conditions (mode === 'important_limits1', etc.)
+  - Removed `generateErrorData` import (only used by ErrorAnalysisScene)
+- Prop1, prop2, prop4, prop5 were already fully cleaned up in a previous session
+- Verified with grep: zero remaining references to any of the 10 deleted modes
+- Lint passes with zero errors
+- Dev server compiles successfully
+- Agent-browser verified: page loads correctly, mode switching works, no errors
+
+Stage Summary:
+- **"最近访问" feature completely removed** from store and sidebar
+- **Dead code cleanup**: 6 scene functions (~460 lines) and 5 render conditions removed
+- No remaining references to deleted modes in the codebase
+- App stable, lint clean, browser-verified
+

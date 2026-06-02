@@ -82,7 +82,6 @@ interface LabState {
   paramValue: number
   paramValue2: number
   visitedModes: Set<LabMode>
-  recentModes: LabMode[]
   favorites: Set<LabMode>
   autoTourActive: boolean
   autoRotate: boolean
@@ -103,7 +102,6 @@ export const useLabStore = create<LabState>((set) => ({
   paramValue: 2,
   paramValue2: 1,
   visitedModes: new Set<LabMode>(['limit1']),
-  recentModes: ['limit1'] as LabMode[],
   favorites: new Set<LabMode>(),
   autoTourActive: false,
   autoRotate: true,
@@ -111,14 +109,12 @@ export const useLabStore = create<LabState>((set) => ({
   setMode: (mode) => {
     const info = modeInfo[mode]
     set((state) => {
-      const recent = [mode, ...state.recentModes.filter(m => m !== mode)].slice(0, 10)
       const is2D = info.viewType === '2d'
       return {
         mode,
         paramValue: info.paramDefault,
         paramValue2: info.paramDefault2 ?? info.paramDefault,
         visitedModes: new Set([...state.visitedModes, mode]),
-        recentModes: recent,
         tooltip: null,
         autoRotate: is2D ? false : state.autoRotate,
       }

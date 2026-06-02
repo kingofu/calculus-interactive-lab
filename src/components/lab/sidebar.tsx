@@ -57,7 +57,6 @@ import {
   Trophy,
   RotateCw,
   Shield,
-  Clock,
   Calculator,
   type LucideIcon,
 } from 'lucide-react'
@@ -673,7 +672,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onModeSelect }: SidebarProps) {
-  const { mode, setMode, visitedModes, recentModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
+  const { mode, setMode, visitedModes, favorites, toggleFavorite, hydrateFavorites } = useLabStore()
   const activeRef = useRef<HTMLButtonElement>(null)
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(() => new Set(chapters.map(ch => ch.title)))
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
@@ -908,43 +907,6 @@ export function Sidebar({ className, onModeSelect }: SidebarProps) {
             </button>
           )}
         </div>
-
-        {/* Recently Visited section */}
-        {recentModes.length > 1 && (
-          <div className="mb-1 pt-1 border-t border-border/30">
-            <div className="flex items-center gap-1 px-2 mb-1">
-              <Clock className="h-2.5 w-2.5 text-muted-foreground/50" />
-              <span className="text-[8px] font-medium text-muted-foreground/60">最近访问</span>
-            </div>
-            <div className="flex flex-wrap gap-1 px-1">
-              {recentModes.slice(0, 5).map(recentMode => {
-                const isActive = mode === recentMode
-                const recentInfo = modeInfo[recentMode]
-                const sectionColor = modeToSectionColor[recentMode] || 'emerald'
-                const colors = colorMap[sectionColor] || colorMap.emerald
-                return (
-                  <button
-                    key={recentMode}
-                    type="button"
-                    className={cn(
-                      "text-[8px] px-1.5 py-0.5 rounded transition-all leading-none",
-                      isActive
-                        ? cn(colors.activeBg, colors.activeText, "font-semibold shadow-sm")
-                        : "bg-muted/40 text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
-                    onClick={() => {
-                      handleModeChange(recentMode)
-                      onModeSelect?.()
-                    }}
-                    title={recentInfo.title}
-                  >
-                    {recentInfo.title.length > 6 ? recentInfo.title.slice(0, 6) + '…' : recentInfo.title}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Favorites section */}
         {favoriteModes.length > 0 && (
