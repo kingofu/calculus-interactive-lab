@@ -2957,3 +2957,31 @@ Stage Summary:
 - **All pending cleanup tasks completed**: 最近访问 removed, 10 modes deleted (already gone), viewType corrections verified
 - Lint passes with zero errors, dev server compiles successfully
 - Cron job created for periodic review (15-minute interval)
+
+---
+Task ID: 17
+Agent: Main
+Task: Fix step2 coordinate range to match step1, fix 3D info panel drag background movement
+
+Work Log:
+- **Fix step2 (网格划分) coordinate range to match step1 (区域划分)**:
+  - Changed `<Axes length={3} />` → `<Axes length={axisLength} />` in step2 section
+  - Changed `<AxisLabels length={3} />` → `<AxisLabels length={axisLength} />` in step2 section
+  - `axisLength` is 5 for non-sphere_cyl modes (same as step1), making the coordinate range visually consistent
+  - This ensures step1 → step2 transition doesn't have a coordinate range "jump"
+- **Fix 3D info panel drag causing background/camera movement**:
+  - Enhanced DraggableOverlay with `onPointerDown` handler that:
+    - Calls `e.stopPropagation()` and `e.preventDefault()` to prevent event from reaching Canvas/OrbitControls
+    - Immediately sets `overlayDragging = true` via `useLabStore.getState().setOverlayDragging(true)` (synchronous)
+    - Captures pointer via `setPointerCapture(e.pointerId)` for reliable pointer tracking
+  - Added `onPointerUp` handler that releases pointer capture and resets `overlayDragging` when not dragging
+  - Added `containerRef` for pointer capture management
+  - Added `e.preventDefault()` to container's onMouseDown and onTouchStart handlers
+  - Added `e.stopPropagation()` to document mousemove/touchmove handlers during drag
+- Verified with agent-browser: step1 and step2 now have identical axis ranges (±5)
+- Lint passes with zero errors
+
+Stage Summary:
+- **step2 coordinate range fixed**: Axes now use `axisLength` (5) matching step1, eliminating coordinate jump
+- **3D info panel drag fixed**: Pointer capture + synchronous overlayDragging + stopPropagation prevents OrbitControls from moving background
+- Both fixes verified, lint passes

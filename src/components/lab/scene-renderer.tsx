@@ -46,6 +46,7 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
   const [pos, setPos] = useState({ x: defaultX, y: defaultY })
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posLeft: 0, posTop: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const startDrag = useCallback((clientX: number, clientY: number) => {
     setDragging(true)
@@ -64,15 +65,39 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()
+    e.preventDefault()
     if (e.touches.length === 1) {
       startDrag(e.touches[0].clientX, e.touches[0].clientY)
     }
   }, [startDrag])
 
+  // Block all pointer events on the container from reaching the canvas/OrbitControls
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    // Immediately disable OrbitControls when interacting with the overlay
+    useLabStore.getState().setOverlayDragging(true)
+    // Capture pointer to receive all future pointer events
+    if (containerRef.current) {
+      containerRef.current.setPointerCapture(e.pointerId)
+    }
+  }, [])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation()
+    if (!dragging) {
+      useLabStore.getState().setOverlayDragging(false)
+    }
+    if (containerRef.current) {
+      try { containerRef.current.releasePointerCapture(e.pointerId) } catch {}
+    }
+  }, [dragging])
+
   useEffect(() => {
     if (!dragging) return
     const onMouseMove = (e: MouseEvent) => {
       e.preventDefault()
+      e.stopPropagation()
       const dx = e.clientX - dragStart.current.x
       const dy = e.clientY - dragStart.current.y
       setPos({
@@ -81,6 +106,8 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
       })
     }
     const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
       if (e.touches.length === 1) {
         const dx = e.touches[0].clientX - dragStart.current.x
         const dy = e.touches[0].clientY - dragStart.current.y
@@ -108,6 +135,7 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
 
   return (
     <div
+      ref={containerRef}
       style={{
         position: 'absolute',
         left: pos.x,
@@ -118,8 +146,10 @@ function DraggableOverlay({ children, defaultX = 12, defaultY = 48 }: {
         userSelect: 'none',
       }}
       className={dragging ? 'select-none' : ''}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+      onTouchStart={(e) => { e.stopPropagation(); e.preventDefault() }}
     >
       {/* Drag handle */}
       <div
@@ -6374,7 +6404,7 @@ export function SceneRenderer() {
       <hemisphereLight args={['#b1e1ff', '#b97a20', 0.3]} />
 
       {/* Common elements - only show 3D axes/grid for 3D modes */}
-      {/* step2 has its own custom grid, skip the common grid to avoid visual confusion */}
+      {/* step2 uses same axis length as step1 for consistent coordinate range */}
       {modeInfo[mode]?.viewType !== '2d' && mode !== 'step2' && (
         <>
           <Axes length={axisLength} />
@@ -6382,11 +6412,11 @@ export function SceneRenderer() {
           <XYGrid />
         </>
       )}
-      {/* step2: show axes and labels but with custom range matching region D */}
+      {/* step2: same axis length as step1 for coordinate range consistency */}
       {mode === 'step2' && (
         <>
-          <Axes length={3} />
-          <AxisLabels length={3} />
+          <Axes length={axisLength} />
+          <AxisLabels length={axisLength} />
         </>
       )}
 
