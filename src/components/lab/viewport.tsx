@@ -35,8 +35,6 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'volume_rev1':
       return { position: [6, 5, 6], fov: 50 }
     // 多元微积分 modes
-    case 'rect_approx':
-      return { position: [6, 4, 6], fov: 50 }
     case 'sphere_cyl1':
     case 'sphere_cyl2':
       return { position: [7, 5, 7], fov: 45 }
@@ -58,14 +56,11 @@ function getCameraForMode(mode: string): { position: [number, number, number]; f
     case 'fubini1':
     case 'stokes1':
     case 'divergence1':
-    case 'arc_length1':
     case 'mass_center1':
     case 'moment_of_inertia1':
     case 'cylindrical1':
     case 'gradient1':
     case 'spherical1':
-    case 'laplace1':
-    case 'fourier1':
     case 'vector_field1':
     case 'directional1':
     case 'isosurface1':

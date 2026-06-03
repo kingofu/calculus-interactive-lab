@@ -2985,3 +2985,30 @@ Stage Summary:
 - **step2 coordinate range fixed**: Axes now use `axisLength` (5) matching step1, eliminating coordinate jump
 - **3D info panel drag fixed**: Pointer capture + synchronous overlayDragging + stopPropagation prevents OrbitControls from moving background
 - Both fixes verified, lint passes
+
+---
+Task ID: 18
+Agent: Main
+Task: Bug审查与修复
+
+Work Log:
+- 使用agent-browser对18个模式进行全面测试，所有模式正常渲染
+- **清理死代码**: 从 `getCameraForMode` switch 中移除了3个2D模式的3D相机配置（rect_approx, arc_length1, fourier1），因为 `is2DMode()` 会在switch之前返回正交相机配置
+- **修复无障碍警告**: 为Sheet组件（移动端侧边栏）添加 `SheetDescription`，消除 `Missing aria-describedby` 控制台警告
+- Lint通过，dev server无编译错误
+
+Bug审查结果:
+- ✅ 无严重bug
+- ✅ 所有模式渲染正常
+- ✅ 预设按钮工作正常（step2新增的3个预设也正常）
+- ✅ 滑块控件工作正常
+- ✅ 深色模式切换正常
+- ✅ 3D浮动面板拖拽不移动背景
+- ✅ 动画时间线（step1-4）正常
+- 🟡 THREE.Clock弃用警告（来自@react-three/drei，低优先级）
+- 🟡 WebGL上下文丢失在3D→3D模式切换时（短暂闪烁，中优先级）
+
+Stage Summary:
+- 清理3个2D模式的死代码（getCameraForMode switch）
+- 修复Sheet无障碍警告（添加SheetDescription）
+- 全面测试18个模式，无严重bug发现

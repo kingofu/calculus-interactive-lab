@@ -6,7 +6,7 @@ import { Viewport } from '@/components/lab/viewport'
 import { ControlsPanel } from '@/components/lab/controls-panel'
 import { InfoPanel } from '@/components/lab/info-panel'
 import { ToastProvider, useToast } from '@/components/lab/toast-provider'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -321,6 +321,7 @@ function HomeContent() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <SheetTitle className="px-4 pt-4 text-sm font-semibold">导航菜单</SheetTitle>
+              <SheetDescription className="sr-only">选择一个数学可视化模式</SheetDescription>
               <Sidebar onModeSelect={() => setSidebarOpen(false)} />
             </SheetContent>
           </Sheet>
