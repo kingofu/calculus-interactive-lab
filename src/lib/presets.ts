@@ -73,6 +73,11 @@ export const modePresets: Partial<Record<LabMode, Preset[]>> = {
     { name: '中区域', param1: 2, emoji: '🔷' },
     { name: '大区域', param1: 3.5, emoji: '⬛' },
   ],
+  step2: [
+    { name: '稀疏', param1: 3, emoji: '🔲' },
+    { name: '中等', param1: 8, emoji: '🔳' },
+    { name: '密集', param1: 16, emoji: '▦' },
+  ],
   step3: [
     { name: '粗略', param1: 4, emoji: '🧊' },
     { name: '中等', param1: 10, emoji: '📦' },
