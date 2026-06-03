@@ -6412,11 +6412,12 @@ export function SceneRenderer() {
           <XYGrid />
         </>
       )}
-      {/* step2: same axis length as step1 for coordinate range consistency */}
+      {/* step2: same axes + grid as step1 for coordinate display consistency */}
       {mode === 'step2' && (
         <>
           <Axes length={axisLength} />
           <AxisLabels length={axisLength} />
+          <XYGrid />
         </>
       )}
 
