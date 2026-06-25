@@ -65,7 +65,9 @@ function loadFavorites(): Set<LabMode> {
       const arr = JSON.parse(raw) as LabMode[]
       return new Set(arr)
     }
-  } catch { /* ignore */ }
+  } catch (e) {
+    console.warn('Failed to load favorites:', e)
+  }
   return new Set<LabMode>()
 }
 
@@ -74,7 +76,9 @@ function saveFavorites(favorites: Set<LabMode>) {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem('lab-favorites', JSON.stringify([...favorites]))
-  } catch { /* ignore */ }
+  } catch (e) {
+    console.warn('Failed to save favorites:', e)
+  }
 }
 
 interface LabState {

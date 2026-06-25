@@ -1970,38 +1970,56 @@ export function Viewport2D() {
   const handleScreenshot = useCallback(() => {
     const svgEl = svgRef.current
     if (!svgEl) return
+    let url: string | null = null
     try {
       const svgData = new XMLSerializer().serializeToString(svgEl)
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-      const url = URL.createObjectURL(svgBlob)
+      url = URL.createObjectURL(svgBlob)
       const img = new Image()
       img.onload = () => {
         const canvas = document.createElement('canvas')
         const rect = containerRef.current?.getBoundingClientRect()
-        if (!rect) return
+        if (!rect) {
+          if (url) URL.revokeObjectURL(url)
+          return
+        }
         canvas.width = rect.width * 2
         canvas.height = rect.height * 2
         const ctx = canvas.getContext('2d')
-        if (!ctx) return
+        if (!ctx) {
+          if (url) URL.revokeObjectURL(url)
+          return
+        }
         ctx.scale(2, 2)
         ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || '#ffffff'
         ctx.fillRect(0, 0, rect.width, rect.height)
         ctx.drawImage(img, 0, 0, rect.width, rect.height)
         canvas.toBlob((blob) => {
-          if (!blob) return
+          if (!blob) {
+            if (url) URL.revokeObjectURL(url)
+            toast('截图生成失败', 'error')
+            return
+          }
           const dataUrl = URL.createObjectURL(blob)
           const link = document.createElement('a')
           link.download = `calculus-2d-${mode}-${Date.now()}.png`
           link.href = dataUrl
           link.click()
           URL.revokeObjectURL(dataUrl)
+          if (url) URL.revokeObjectURL(url)
           toast('截图已保存！', 'success')
         }, 'image/png')
-        URL.revokeObjectURL(url)
+        // Note: url is revoked in the toBlob callback to avoid premature revocation
+      }
+      img.onerror = () => {
+        if (url) URL.revokeObjectURL(url)
+        toast('图片加载失败', 'error')
       }
       img.src = url
     } catch (e) {
       console.warn('Screenshot failed:', e)
+      if (url) URL.revokeObjectURL(url)
+      toast('截图操作失败', 'error')
     }
   }, [mode, toast])
 
